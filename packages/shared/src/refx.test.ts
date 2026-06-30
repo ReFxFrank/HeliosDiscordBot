@@ -132,17 +132,30 @@ describe('fetchRefxNodes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('returns null on 401/403 (silent fallback)', async () => {
+  it('returns null on 401/403 without consuming the error body (silent fallback)', async () => {
+    // Real backend error bodies; we must short-circuit on the status code and
+    // never read the body, so a wrong/unscoped token degrades to the public feed.
+    const json401 = vi.fn(async () => ({
+      statusCode: 401,
+      message: 'A status:read API token is required',
+    }));
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: false, status: 401 })),
+      vi.fn(async () => ({ ok: false, status: 401, json: json401 })),
     );
     expect(await fetchRefxNodes('t')).toBeNull();
+    expect(json401).not.toHaveBeenCalled();
+
+    const json403 = vi.fn(async () => ({
+      statusCode: 403,
+      message: 'Token lacks the status:read scope',
+    }));
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({ ok: false, status: 403 })),
+      vi.fn(async () => ({ ok: false, status: 403, json: json403 })),
     );
     expect(await fetchRefxNodes('t')).toBeNull();
+    expect(json403).not.toHaveBeenCalled();
   });
 
   it('parses a 200 payload and throws on 500', async () => {
