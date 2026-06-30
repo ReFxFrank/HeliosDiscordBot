@@ -12,7 +12,7 @@ export default tseslint.config(
       '**/.turbo/**',
       '**/generated/**',
       '**/*.config.{js,cjs,mjs}',
-      'next-env.d.ts',
+      '**/next-env.d.ts',
     ],
   },
   js.configs.recommended,

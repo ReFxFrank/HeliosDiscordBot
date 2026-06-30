@@ -1,0 +1,224 @@
+import type { Module } from '@helios/shared';
+import {
+  ShieldAlert,
+  ShieldBan,
+  ScrollText,
+  DoorOpen,
+  UserPlus,
+  TrendingUp,
+  Tags,
+  MessageSquareCode,
+  Star,
+  Gift,
+  Vote,
+  Lightbulb,
+  Clock,
+  CalendarClock,
+  Ticket,
+  BarChart3,
+  Link2,
+  Cake,
+  Moon,
+  Coins,
+  Music,
+  Bell,
+  Mic,
+  Wrench,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
+
+export type ModuleCategory = 'core' | 'premium' | 'utility';
+
+export interface ModuleMeta {
+  module: Module;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  category: ModuleCategory;
+  /** Slug of a dedicated config page under /servers/[id]/<slug>, if any. */
+  configSlug?: string;
+}
+
+export const MODULE_META: ModuleMeta[] = [
+  {
+    module: 'MODERATION',
+    name: 'Moderation',
+    description: 'Cases, warns, bans, mutes, escalation.',
+    icon: ShieldAlert,
+    category: 'core',
+    configSlug: 'moderation',
+  },
+  {
+    module: 'AUTOMOD',
+    name: 'Auto-moderation',
+    description: 'Spam, links, invites, bad-word filters.',
+    icon: ShieldBan,
+    category: 'core',
+  },
+  {
+    module: 'LOGGING',
+    name: 'Logging',
+    description: 'Message, member, server & voice logs.',
+    icon: ScrollText,
+    category: 'core',
+  },
+  {
+    module: 'WELCOME',
+    name: 'Welcome / Leave',
+    description: 'Greetings, goodbyes, and welcome cards.',
+    icon: DoorOpen,
+    category: 'core',
+  },
+  {
+    module: 'AUTOROLE',
+    name: 'Autoroles',
+    description: 'Roles on join, sticky & timed roles.',
+    icon: UserPlus,
+    category: 'core',
+  },
+  {
+    module: 'LEVELING',
+    name: 'Leveling / XP',
+    description: 'Text & voice XP, rank cards, rewards.',
+    icon: TrendingUp,
+    category: 'core',
+  },
+  {
+    module: 'ROLES',
+    name: 'Reaction Roles',
+    description: 'Button & select-menu role panels.',
+    icon: Tags,
+    category: 'core',
+  },
+  {
+    module: 'CUSTOM_COMMANDS',
+    name: 'Custom Commands',
+    description: 'Tags, auto-responders, embed builder.',
+    icon: MessageSquareCode,
+    category: 'core',
+  },
+  {
+    module: 'STARBOARD',
+    name: 'Starboard',
+    description: 'Highlight the best messages.',
+    icon: Star,
+    category: 'core',
+  },
+  {
+    module: 'GIVEAWAYS',
+    name: 'Giveaways',
+    description: 'Timed draws with requirements & reroll.',
+    icon: Gift,
+    category: 'core',
+  },
+  {
+    module: 'POLLS',
+    name: 'Polls',
+    description: 'Single/multi, timed, anonymous polls.',
+    icon: Vote,
+    category: 'core',
+  },
+  {
+    module: 'SUGGESTIONS',
+    name: 'Suggestions',
+    description: 'Submit, vote, and triage suggestions.',
+    icon: Lightbulb,
+    category: 'core',
+  },
+  {
+    module: 'REMINDERS',
+    name: 'Reminders',
+    description: 'Personal & server reminders.',
+    icon: Clock,
+    category: 'core',
+  },
+  {
+    module: 'SCHEDULED_MESSAGES',
+    name: 'Scheduled Messages',
+    description: 'Cron / recurring announcements.',
+    icon: CalendarClock,
+    category: 'core',
+  },
+  {
+    module: 'TICKETS',
+    name: 'Tickets',
+    description: 'Support panels, transcripts, auto-close.',
+    icon: Ticket,
+    category: 'core',
+  },
+  {
+    module: 'STATS_COUNTERS',
+    name: 'Stats Counters',
+    description: 'Auto-updating member/online channels.',
+    icon: BarChart3,
+    category: 'core',
+  },
+  {
+    module: 'INVITE_TRACKING',
+    name: 'Invite Tracking',
+    description: 'Who invited whom + leaderboard.',
+    icon: Link2,
+    category: 'core',
+  },
+  {
+    module: 'BIRTHDAYS',
+    name: 'Birthdays',
+    description: 'Announcements and a birthday role.',
+    icon: Cake,
+    category: 'core',
+  },
+  {
+    module: 'AFK',
+    name: 'AFK',
+    description: 'Away status with auto-replies.',
+    icon: Moon,
+    category: 'core',
+  },
+  {
+    module: 'ECONOMY',
+    name: 'Economy',
+    description: 'Currency, games, shop & inventory.',
+    icon: Coins,
+    category: 'premium',
+  },
+  {
+    module: 'MUSIC',
+    name: 'Music',
+    description: 'Queue, filters, DJ roles, vote-skip.',
+    icon: Music,
+    category: 'premium',
+  },
+  {
+    module: 'SOCIAL',
+    name: 'Social Alerts',
+    description: 'Twitch, YouTube, Reddit & RSS feeds.',
+    icon: Bell,
+    category: 'premium',
+  },
+  {
+    module: 'TEMP_VOICE',
+    name: 'Temp Voice',
+    description: 'Join-to-create voice channels.',
+    icon: Mic,
+    category: 'premium',
+  },
+  {
+    module: 'UTILITY',
+    name: 'Utility',
+    description: 'userinfo, serverinfo, announcements.',
+    icon: Wrench,
+    category: 'utility',
+  },
+  {
+    module: 'FUN',
+    name: 'Fun',
+    description: '8ball, trivia, memes, and more.',
+    icon: Sparkles,
+    category: 'utility',
+  },
+];
+
+export const MODULE_META_BY_KEY: Record<Module, ModuleMeta> = Object.fromEntries(
+  MODULE_META.map((meta) => [meta.module, meta]),
+) as Record<Module, ModuleMeta>;
