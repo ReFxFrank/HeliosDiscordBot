@@ -32,19 +32,49 @@ You also need a **Discord application** (next section).
 
 Helios runs on Windows — nothing in the stack needs native build tools (the one
 native module, `@napi-rs/canvas`, ships Windows prebuilds, and audio is handled
-by Lavalink inside Docker). Two ways to run it:
+by Lavalink inside Docker).
 
-- **WSL2 (recommended):** install [WSL2](https://learn.microsoft.com/windows/wsl/install)
-  + Docker Desktop (WSL2 backend). Everything is Linux-native and the commands
-  below work exactly as written.
-- **Native Windows (PowerShell + Docker Desktop):** also works, with two small
-  substitutions:
-  - `openssl` isn't built in — generate `AUTH_SECRET` with Node instead:
-    ```powershell
-    node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-    ```
-  - `cp .env.example .env` works in PowerShell (it's an alias) and Git Bash; in
-    `cmd` use `copy .env.example .env`.
+> ⚠️ **Use PowerShell, Git Bash, or WSL2 — not the legacy Command Prompt
+> (`cmd.exe`).** In `cmd`, `#` is not a comment, so pasting a line like
+> `corepack enable   # provisions pnpm` fails with `Invalid package manager
+> name '#'`. `cmd` also lacks `cp` and `openssl`. PowerShell (`PS C:\...>`)
+> understands the `#` comments and aliases `cp`, so the snippets below work
+> as written. Node **20 or newer** is fine (24 works).
+
+Two ways to run it:
+
+**WSL2 (recommended).** Install [WSL2](https://learn.microsoft.com/windows/wsl/install)
++ Docker Desktop, and in Docker Desktop enable **Settings → Resources → WSL
+Integration** for your distro so `docker` works inside WSL. Then, inside WSL:
+
+- WSL is a **separate Linux system** — your Windows Node isn't visible there, so
+  install Node + pnpm inside it:
+  ```bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  source ~/.bashrc
+  nvm install 20          # bundles corepack → pnpm
+  corepack enable         # if this errors with EACCES, it's harmless — pnpm
+                          # still works via the packageManager pin on install
+  ```
+- **Clone into your Linux home, not `/mnt/c/...`.** Running from the Windows
+  drive (especially a OneDrive-synced folder like Desktop/Documents) is slow and
+  OneDrive corrupts `node_modules` mid-install. Do:
+  ```bash
+  git clone https://github.com/ReFxFrank/HeliosDiscordBot ~/helios
+  cd ~/helios
+  ```
+  Then follow §3 onward (the commands work exactly as written).
+
+**Native Windows (PowerShell + Docker Desktop).** You already have Node — just
+two substitutions, and **clone outside OneDrive** (e.g. `C:\dev\helios`) so
+OneDrive doesn't fight `node_modules`:
+
+- `openssl` isn't built in — generate `AUTH_SECRET` with Node instead:
+  ```powershell
+  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  ```
+- `cp .env.example .env` works in PowerShell (alias) and Git Bash; in `cmd` use
+  `copy .env.example .env`.
 
 Docker Desktop must be installed and **running** before the `docker compose`
 steps.
