@@ -1,3 +1,4 @@
+import './load-env';
 import { env } from './env';
 import { logger } from './logger';
 

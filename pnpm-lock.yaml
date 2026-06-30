@@ -50,6 +50,9 @@ importers:
       discord.js:
         specifier: ^14.17.3
         version: 14.26.4
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
       ioredis:
         specifier: ^5.4.2
         version: 5.11.1

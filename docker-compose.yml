@@ -49,11 +49,9 @@ services:
       - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
     ports:
       - '${LAVALINK_PORT:-2333}:2333'
-    healthcheck:
-      test: ['CMD-SHELL', 'nc -z localhost 2333 || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    # NOTE: the official Lavalink image ships no nc/curl/wget, so a shell-based
+    # healthcheck can't run. Nothing depends on Lavalink health in Phase 0; a
+    # proper REST-based check is added alongside the music module in Phase 4.
 
   bot:
     build:
@@ -62,6 +60,13 @@ services:
     restart: unless-stopped
     profiles: ['apps']
     env_file: .env
+    # In-container the DB/Redis/Lavalink hosts are the compose service names,
+    # not the `localhost` values inherited from .env. Explicit `environment`
+    # entries take precedence over `env_file`.
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:-helios}@postgres:5432/${POSTGRES_DB:-helios}?schema=public
+      REDIS_URL: redis://redis:6379
+      LAVALINK_HOST: lavalink
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,6 +80,10 @@ services:
     restart: unless-stopped
     profiles: ['apps']
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:-helios}@postgres:5432/${POSTGRES_DB:-helios}?schema=public
+      REDIS_URL: redis://redis:6379
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
     ports:
       - '${WEB_PORT:-3000}:3000'
     depends_on:
