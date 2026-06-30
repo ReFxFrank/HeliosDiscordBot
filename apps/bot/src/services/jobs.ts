@@ -77,6 +77,32 @@ export class JobService {
     });
   }
 
+  /**
+   * Arm a job only if one with the same id isn't already queued. Unlike
+   * `schedule` (which removes-then-adds, resetting the delay), this no-ops when
+   * a job already exists — so kicking a live self-rescheduling loop can't starve
+   * it by perpetually pushing the next run back.
+   */
+  async ensureScheduled(
+    queueName: string,
+    jobName: string,
+    data: unknown,
+    options: ScheduleOptions = {},
+  ): Promise<void> {
+    if (options.jobId) {
+      const existing = await this.queue(queueName).getJob(options.jobId);
+      if (existing) return;
+    }
+    await this.queue(queueName).add(jobName, data, {
+      delay: Math.max(0, options.delayMs ?? 0),
+      jobId: options.jobId,
+      attempts: options.attempts ?? 5,
+      backoff: { type: 'exponential', delay: 10_000 },
+      removeOnComplete: true,
+      removeOnFail: 1000,
+    });
+  }
+
   /** Cancel a scheduled job by id. */
   async cancel(queueName: string, jobId: string): Promise<void> {
     const job = await this.queue(queueName).getJob(jobId);
@@ -227,4 +253,9 @@ export function birthdayJobId(guildId: string): string {
 /** Stable job id for a guild's stats-counter refresh. */
 export function statsCounterJobId(guildId: string): string {
   return `stats-${guildId}`;
+}
+
+/** Stable job id for a guild's recurring voice-XP tick. */
+export function voiceXpJobId(guildId: string): string {
+  return `voicexp-${guildId}`;
 }

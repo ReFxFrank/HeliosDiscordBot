@@ -29,3 +29,40 @@ export function xpProgress(xp: number): { level: number; current: number; needed
   const next = xpForLevel(level + 1);
   return { level, current: xp - base, needed: next - base };
 }
+
+// ── Voice XP eligibility (pure, testable) ────────────────────────────────────
+
+export interface VoiceMemberView {
+  id: string;
+  bot: boolean;
+  /** Self- or server-deafened — deafened members earn no voice XP. */
+  deaf: boolean;
+  roleIds: string[];
+}
+
+export interface VoiceChannelView {
+  channelId: string;
+  /** The guild's designated AFK channel earns no XP. */
+  isAfkChannel: boolean;
+  members: VoiceMemberView[];
+}
+
+/**
+ * Which members in a voice channel earn XP this tick. A channel must hold at
+ * least two active (non-bot, non-deafened) humans — this blocks the classic
+ * sit-alone-in-voice farm. Deafened members, bots, AFK/excluded channels, and
+ * no-XP roles are all filtered out.
+ */
+export function eligibleVoiceMembers(
+  channel: VoiceChannelView,
+  noXpChannelIds: string[],
+  noXpRoleIds: string[],
+): string[] {
+  if (channel.isAfkChannel || noXpChannelIds.includes(channel.channelId)) return [];
+  const active = channel.members.filter((member) => !member.bot && !member.deaf);
+  if (active.length < 2) return [];
+  const excluded = new Set(noXpRoleIds);
+  return active
+    .filter((member) => !member.roleIds.some((roleId) => excluded.has(roleId)))
+    .map((member) => member.id);
+}

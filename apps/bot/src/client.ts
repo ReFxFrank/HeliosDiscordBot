@@ -26,10 +26,12 @@ import { handleTicketAutoClose } from './jobs/handlers/ticketAutoClose';
 import { handlePollEnd } from './jobs/handlers/pollEnd';
 import { handleBirthdayAnnounce } from './jobs/handlers/birthdayAnnounce';
 import { handleStatsCounterRefresh } from './jobs/handlers/statsCounterRefresh';
+import { handleVoiceXp } from './jobs/handlers/voiceXp';
 import { reconcileTickets } from './modules/tickets';
 import { reconcileAfk } from './modules/afk';
 import { reconcileBirthdays } from './modules/birthdays';
 import { reconcileStatsCounters } from './modules/statsCounters';
+import { reconcileVoiceXp } from './modules/leveling';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
 import type { BotContext } from './framework/context';
 
@@ -83,6 +85,7 @@ async function bootstrap(): Promise<void> {
   jobs.registerHandler(QUEUE_NAMES.pollEnd, handlePollEnd);
   jobs.registerHandler(QUEUE_NAMES.birthdayAnnounce, handleBirthdayAnnounce);
   jobs.registerHandler(QUEUE_NAMES.statsCounterRefresh, handleStatsCounterRefresh);
+  jobs.registerHandler(QUEUE_NAMES.voiceXp, handleVoiceXp);
 
   const liveCommands = new LiveCommandService(client, logger, jobs, config);
 
@@ -126,6 +129,7 @@ async function bootstrap(): Promise<void> {
       reconcileAfk(ready),
       reconcileBirthdays(ready, jobs),
       reconcileStatsCounters(ready, jobs),
+      reconcileVoiceXp(ready, jobs),
       cacheAllGuildInvites(ready.guilds.cache.values()),
     ]).then((results) => {
       for (const result of results) {

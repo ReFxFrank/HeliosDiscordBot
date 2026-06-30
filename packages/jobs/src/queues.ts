@@ -28,6 +28,7 @@ export const QUEUE_NAMES = {
   statsCounterRefresh: 'statsCounterRefresh',
   ticketAutoClose: 'ticketAutoClose',
   birthdayAnnounce: 'birthdayAnnounce',
+  voiceXp: 'voiceXp',
   cleanupLogs: 'cleanupLogs',
 } as const;
 
@@ -75,6 +76,11 @@ export interface BirthdayAnnounceJob {
   guildId: string;
 }
 
+/** Per-guild recurring tick that awards XP to members active in voice. */
+export interface VoiceXpJob {
+  guildId: string;
+}
+
 export interface CleanupLogsJob {
   guildId: string;
 }
@@ -90,5 +96,6 @@ export interface JobDataByQueue {
   [QUEUE_NAMES.statsCounterRefresh]: StatsCounterRefreshJob;
   [QUEUE_NAMES.ticketAutoClose]: TicketAutoCloseJob;
   [QUEUE_NAMES.birthdayAnnounce]: BirthdayAnnounceJob;
+  [QUEUE_NAMES.voiceXp]: VoiceXpJob;
   [QUEUE_NAMES.cleanupLogs]: CleanupLogsJob;
 }
