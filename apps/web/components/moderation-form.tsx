@@ -2,14 +2,10 @@
 
 import { useState, useTransition } from 'react';
 import type { ModerationConfig } from '@helios/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveModerationConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
-
-const toList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
 
 const inputClass =
   'w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/90 outline-none placeholder:text-white/30 focus:border-[var(--color-blurple)]/60 font-mono';
@@ -17,9 +13,13 @@ const inputClass =
 export function ModerationForm({
   guildId,
   initial,
+  roles,
+  channels,
 }: {
   guildId: string;
   initial: ModerationConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
 }) {
   const [config, setConfig] = useState<ModerationConfig>(initial);
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
@@ -39,39 +39,40 @@ export function ModerationForm({
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Mod roles" hint="Comma-separated role IDs treated as moderators.">
-        <input
-          className={inputClass}
-          value={config.modRoleIds.join(', ')}
-          onChange={(e) => update('modRoleIds', toList(e.target.value))}
-          placeholder="123, 456"
+      <Field label="Mod roles" hint="Roles treated as moderators.">
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.modRoleIds}
+          onChange={(ids) => update('modRoleIds', ids)}
         />
       </Field>
 
-      <Field label="Admin roles" hint="Comma-separated role IDs treated as admins.">
-        <input
-          className={inputClass}
-          value={config.adminRoleIds.join(', ')}
-          onChange={(e) => update('adminRoleIds', toList(e.target.value))}
-          placeholder="789"
+      <Field label="Admin roles" hint="Roles treated as admins.">
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.adminRoleIds}
+          onChange={(ids) => update('adminRoleIds', ids)}
         />
       </Field>
 
-      <Field label="Mute role ID" hint="Legacy mute role (timeouts are preferred).">
-        <input
-          className={inputClass}
-          value={config.muteRoleId ?? ''}
-          onChange={(e) => update('muteRoleId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Mute role" hint="Legacy mute role (timeouts are preferred).">
+        <RoleSelect
+          roles={roles}
+          placeholder="None"
+          selected={config.muteRoleId ? [config.muteRoleId] : []}
+          onChange={(ids) => update('muteRoleId', ids[0] ?? null)}
         />
       </Field>
 
-      <Field label="Mod-log channel ID" hint="Where moderation cases are posted.">
-        <input
-          className={inputClass}
-          value={config.modLogChannelId ?? ''}
-          onChange={(e) => update('modLogChannelId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Mod-log channel" hint="Where moderation cases are posted.">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.modLogChannelId ? [config.modLogChannelId] : []}
+          onChange={(ids) => update('modLogChannelId', ids[0] ?? null)}
         />
       </Field>
 
