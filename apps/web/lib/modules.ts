@@ -165,6 +165,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Auto-updating member/online channels.',
     icon: BarChart3,
     category: 'core',
+    configSlug: 'stats',
   },
   {
     module: 'INVITE_TRACKING',
@@ -179,6 +180,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Announcements and a birthday role.',
     icon: Cake,
     category: 'core',
+    configSlug: 'birthdays',
   },
   {
     module: 'AFK',

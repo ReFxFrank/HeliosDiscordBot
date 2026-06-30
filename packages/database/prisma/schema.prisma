@@ -89,6 +89,7 @@ model Guild {
   suggestions       Suggestion[]
   polls             Poll[]
   afkUsers          Afk[]
+  birthdays         Birthday[]
 
   @@index([ownerId])
 }
@@ -454,4 +455,22 @@ model Afk {
 
   @@unique([guildId, userId])
   @@index([guildId])
+}
+
+/// A user's birthday in a guild (§8). The durable `birthdayAnnounce` job greets
+/// today's birthdays and rotates the optional birthday role. `year` is optional
+/// (age display); month/day drive the announcement.
+model Birthday {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  month     Int // 1–12
+  day       Int // 1–31
+  year      Int?
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([guildId, month, day])
 }

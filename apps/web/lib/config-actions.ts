@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import type {
   AutoroleConfig,
+  BirthdaysConfig,
   CustomCommandsConfig,
   LevelingConfig,
   LoggingConfig,
@@ -11,6 +12,7 @@ import type {
   ModuleWithSchema,
   RefxAlertsConfig,
   StarboardConfig,
+  StatsCountersConfig,
   SuggestionsConfig,
   TicketsConfig,
   WelcomeConfig,
@@ -23,6 +25,7 @@ import {
   type ActionResult,
   type GuildSettingsInput,
 } from './config-core';
+import { publishLiveCommand } from './redis';
 
 export type { ActionResult, GuildSettingsInput } from './config-core';
 
@@ -123,6 +126,23 @@ export async function saveSuggestionsConfig(
   input: SuggestionsConfig,
 ): Promise<ActionResult> {
   return saveConfig(guildId, 'SUGGESTIONS', input, 'suggestions');
+}
+
+export async function saveBirthdaysConfig(
+  guildId: string,
+  input: BirthdaysConfig,
+): Promise<ActionResult> {
+  return saveConfig(guildId, 'BIRTHDAYS', input, 'birthdays');
+}
+
+export async function saveStatsCountersConfig(
+  guildId: string,
+  input: StatsCountersConfig,
+): Promise<ActionResult> {
+  const result = await saveConfig(guildId, 'STATS_COUNTERS', input, 'stats');
+  // Nudge the bot to refresh channel names immediately (and re-arm the loop).
+  if (result.ok) await publishLiveCommand(guildId, 'REFRESH_STATS').catch(() => undefined);
+  return result;
 }
 
 export async function saveGuildSettings(

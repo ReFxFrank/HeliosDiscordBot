@@ -19,6 +19,7 @@ import { endGiveaway, rerollGiveaway } from '../modules/giveaway';
 import { armScheduledMessage } from '../modules/scheduledMessages';
 import { buildTicketPanelMessage, getTicketsConfig } from '../modules/tickets';
 import { postRefxAlert } from '../modules/refxAlerts';
+import { refreshStatsCounters } from '../modules/statsCounters';
 import { scheduledMessageJobId, type JobService } from './jobs';
 import type { ConfigCache } from './configCache';
 
@@ -95,6 +96,13 @@ export class LiveCommandService {
           message.guildId,
           message.payload as RefxAlertPayload,
         );
+        return;
+      case 'REFRESH_STATS':
+        await refreshStatsCounters(message.guildId, {
+          client: this.client,
+          logger: this.logger,
+          jobs: this.jobs,
+        });
         return;
       default:
         return;

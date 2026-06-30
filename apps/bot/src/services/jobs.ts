@@ -218,3 +218,13 @@ export function scheduledMessageJobId(scheduledMessageId: string): string {
 export function ticketJobId(ticketId: string): string {
   return `ticket-${ticketId}`;
 }
+
+/** Stable job id for a guild's daily birthday announcement. */
+export function birthdayJobId(guildId: string): string {
+  return `birthday-${guildId}`;
+}
+
+/** Stable job id for a guild's stats-counter refresh. */
+export function statsCounterJobId(guildId: string): string {
+  return `stats-${guildId}`;
+}
