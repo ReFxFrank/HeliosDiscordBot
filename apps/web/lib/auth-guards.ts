@@ -1,29 +1,16 @@
 import { redirect } from 'next/navigation';
 import type { Session } from 'next-auth';
 import { auth } from '../auth';
-import { canManageGuild, fetchUserGuilds, type DiscordGuildSummary } from './discord';
-import { getRedis } from './redis';
-
-const GUILD_CACHE_TTL_SECONDS = 60;
+import type { ManageableGuild } from './discord';
 
 /**
- * Manageable guilds for the signed-in user, verified server-side against
- * Discord (never trusting a client-supplied list, §9/§10). Cached in Redis for
- * 60s per user so we don't hammer the Discord API on every read.
+ * Manageable guilds for the signed-in user. This list is derived server-side in
+ * the Auth.js JWT callback (verified against Discord, refreshed ~every 60s) and
+ * stored in the encrypted JWT, so reading it here is a server-side check — never
+ * a client-supplied claim (§9/§10).
  */
-export async function getManageableGuilds(session: Session): Promise<DiscordGuildSummary[]> {
-  if (!session.accessToken || !session.user?.id) return [];
-  const key = `dash:guilds:${session.user.id}`;
-  const redis = getRedis();
-
-  const cached = await redis.get(key).catch(() => null);
-  if (cached) return JSON.parse(cached) as DiscordGuildSummary[];
-
-  const guilds = (await fetchUserGuilds(session.accessToken)).filter(canManageGuild);
-  await redis
-    .set(key, JSON.stringify(guilds), 'EX', GUILD_CACHE_TTL_SECONDS)
-    .catch(() => undefined);
-  return guilds;
+export function getManageableGuilds(session: Session): ManageableGuild[] {
+  return session.guilds ?? [];
 }
 
 /** Require an authenticated session (for server actions). */
@@ -33,13 +20,9 @@ export async function requireSession(): Promise<Session & { user: { id: string }
   return session as Session & { user: { id: string } };
 }
 
-/**
- * Assert the session can manage the guild. Re-verified on every mutation
- * (§9/§10) — throws if not, which surfaces as an error to the caller.
- */
+/** Assert the session can manage the guild. Re-checked on every mutation. */
 export async function assertCanManage(session: Session, guildId: string): Promise<void> {
-  const guilds = await getManageableGuilds(session);
-  if (!guilds.some((guild) => guild.id === guildId)) {
+  if (!getManageableGuilds(session).some((guild) => guild.id === guildId)) {
     throw new Error('Forbidden: you do not have Manage Server on this guild.');
   }
 }
@@ -50,10 +33,10 @@ export async function assertCanManage(session: Session, guildId: string): Promis
  */
 export async function guardGuildAccess(
   guildId: string,
-): Promise<{ session: Session; guilds: DiscordGuildSummary[] }> {
+): Promise<{ session: Session; guilds: ManageableGuild[] }> {
   const session = await auth();
   if (!session?.user?.id) redirect('/');
-  const guilds = await getManageableGuilds(session);
+  const guilds = getManageableGuilds(session);
   if (!guilds.some((guild) => guild.id === guildId)) redirect('/servers');
   return { session, guilds };
 }

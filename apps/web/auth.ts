@@ -1,9 +1,13 @@
 import NextAuth from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Discord from 'next-auth/providers/discord';
+import { fetchManageableGuilds, type ManageableGuild } from './lib/discord';
 
 /** Scopes: identify (who you are) + guilds (list servers for the selector). */
 const DISCORD_SCOPES = ['identify', 'guilds'].join(' ');
+
+/** Re-derive the manageable-guild list at most this often (server-side check). */
+const GUILD_REFRESH_MS = 60_000;
 
 /** Refresh an expired Discord access token using the stored refresh token. */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
@@ -36,6 +40,18 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
+/** Fetch manageable guilds, falling back to the last known list on a blip. */
+async function safeManageableGuilds(
+  accessToken: string,
+  fallback: ManageableGuild[],
+): Promise<ManageableGuild[]> {
+  try {
+    return await fetchManageableGuilds(accessToken);
+  } catch {
+    return fallback;
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
@@ -47,23 +63,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: { strategy: 'jwt' },
   callbacks: {
-    jwt({ token, account }) {
+    async jwt({ token, account }) {
+      // Initial sign-in: capture tokens + the first manageable-guild list.
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
         token.discordId = account.providerAccountId;
+        token.guilds = await safeManageableGuilds(account.access_token ?? '', []);
+        token.guildsFetchedAt = Date.now();
         return token;
       }
-      // Still valid (with a 60s safety margin)?
-      if (token.expiresAt && Date.now() < token.expiresAt * 1000 - 60_000) {
-        return token;
+
+      // Refresh the access token shortly before it expires.
+      let next = token;
+      if (!next.expiresAt || Date.now() >= next.expiresAt * 1000 - 60_000) {
+        next = await refreshAccessToken(next);
       }
-      return refreshAccessToken(token);
+
+      // Re-derive the manageable-guild list server-side at most every 60s. The
+      // list lives only in the encrypted, httpOnly JWT — the access token is
+      // never exposed to the client (it stays on the JWT, off the session).
+      if (
+        next.accessToken &&
+        !next.error &&
+        (!next.guildsFetchedAt || Date.now() - next.guildsFetchedAt > GUILD_REFRESH_MS)
+      ) {
+        next.guilds = await safeManageableGuilds(next.accessToken, next.guilds ?? []);
+        next.guildsFetchedAt = Date.now();
+      }
+      return next;
     },
     session({ session, token }) {
       if (session.user) session.user.id = token.discordId ?? '';
-      session.accessToken = token.accessToken;
+      // Only non-secret data is exposed on the client session.
+      session.guilds = token.guilds ?? [];
       session.error = token.error;
       return session;
     },

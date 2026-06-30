@@ -30,6 +30,19 @@ export function canManageGuild(guild: DiscordGuildSummary): boolean {
   return (perms & ADMINISTRATOR) === ADMINISTRATOR || (perms & MANAGE_GUILD) === MANAGE_GUILD;
 }
 
+/** The non-secret guild summary stored on the session (id/name/icon only). */
+export interface ManageableGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+}
+
+/** Fetch the user's guilds and reduce to the manageable ones (minimal fields). */
+export async function fetchManageableGuilds(accessToken: string): Promise<ManageableGuild[]> {
+  const guilds = await fetchUserGuilds(accessToken);
+  return guilds.filter(canManageGuild).map(({ id, name, icon }) => ({ id, name, icon }));
+}
+
 export function guildIconUrl(id: string, icon: string | null, size = 64): string | null {
   if (!icon) return null;
   const ext = icon.startsWith('a_') ? 'gif' : 'png';

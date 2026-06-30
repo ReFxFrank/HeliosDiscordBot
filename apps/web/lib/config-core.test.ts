@@ -27,8 +27,13 @@ suite('applyModuleEnabled (integration)', () => {
   });
 
   it('writes the config row + audit entry and publishes the invalidation', async () => {
+    // Only resolve for *our* guild — other test files publish on this same
+    // shared channel concurrently, so ignore their messages.
     const received = new Promise<string>((resolve) => {
-      sub.on('message', (_channel, message) => resolve(message));
+      sub.on('message', (_channel, message) => {
+        const parsed = JSON.parse(message) as { guildId: string };
+        if (parsed.guildId === GUILD_ID) resolve(message);
+      });
     });
     await sub.subscribe(REDIS_CHANNELS.configUpdate);
 

@@ -3,7 +3,7 @@ import { ArrowRight, Plus } from 'lucide-react';
 import { prisma } from '@helios/database';
 import { auth } from '../../auth';
 import { getManageableGuilds } from '../../lib/auth-guards';
-import { guildIconUrl, type DiscordGuildSummary } from '../../lib/discord';
+import { guildIconUrl, type ManageableGuild } from '../../lib/discord';
 import { botInviteUrl } from '../../lib/invite';
 import { LoginButton } from '../../components/auth-buttons';
 import { GlassCard } from '../../components/ui/glass-card';
@@ -22,7 +22,7 @@ export default async function ServersPage() {
     );
   }
 
-  const guilds = await getManageableGuilds(session);
+  const guilds = getManageableGuilds(session);
   const ids = guilds.map((g) => g.id);
   const present = ids.length
     ? await prisma.guild.findMany({
@@ -108,7 +108,7 @@ function GuildRow({
   cta,
   external,
 }: {
-  guild: DiscordGuildSummary;
+  guild: ManageableGuild;
   memberCount: number | null;
   href: string;
   cta: string;
