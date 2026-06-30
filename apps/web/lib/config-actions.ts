@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import type {
+  AutomodConfig,
   AutoroleConfig,
   BirthdaysConfig,
   CustomCommandsConfig,
@@ -64,6 +65,13 @@ export async function saveModerationConfig(
   input: ModerationConfig,
 ): Promise<ActionResult> {
   return saveConfig(guildId, 'MODERATION', input, 'moderation');
+}
+
+export async function saveAutomodConfig(
+  guildId: string,
+  input: AutomodConfig,
+): Promise<ActionResult> {
+  return saveConfig(guildId, 'AUTOMOD', input, 'automod');
 }
 
 export async function saveWelcomeConfig(

@@ -56,6 +56,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Spam, links, invites, bad-word filters.',
     icon: ShieldBan,
     category: 'core',
+    configSlug: 'automod',
   },
   {
     module: 'LOGGING',
