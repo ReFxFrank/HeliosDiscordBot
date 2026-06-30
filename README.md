@@ -5,9 +5,10 @@ it's self-hosted, every feature is unlocked — there's no paywall — while an
 optional per-guild feature-flag layer lets an operator gate features into a
 "premium" tier if they ever run it for others.
 
-> **Status: Phase 0 — Foundation.** The monorepo, infra, data-model spine,
-> shared contract layer, and minimal bot/dashboard shells are in place. Feature
-> modules land in later phases (see [Roadmap](#roadmap)).
+> **Status: Phase 2 — Dashboard core.** Foundation, a sharded bot core
+> (moderation commands, durable jobs, live config cache), and the dashboard
+> (Discord login, server selector, live module toggles, audit log) are in place.
+> Feature modules land in later phases (see [Roadmap](#roadmap)).
 
 ## Architecture at a glance
 
@@ -117,10 +118,10 @@ docker compose --profile apps up -d --build
 - **Phase 0 — Foundation & infra** ✅ (this commit): monorepo, docker-compose,
   baseline Prisma schema + migration, shared contract layer, env loader,
   logging, lint/typecheck/format.
-- **Phase 1 — Bot core**: sharded client, command/event loaders, config cache +
-  Redis invalidation, permissions, BullMQ wiring, first moderation commands.
-- **Phase 2 — Dashboard core**: Auth.js Discord login, server selector, glass
-  design system, live module toggles, audit log.
+- **Phase 1 — Bot core** ✅: sharded client, command/event loaders, config cache
+  - Redis invalidation, permissions, BullMQ wiring, moderation commands.
+- **Phase 2 — Dashboard core** ✅: Auth.js Discord login, server selector
+  (Manage-Server gated), glass design system, live module toggles, audit log.
 - **Phase 3 — Core modules**: moderation/automod, logging, welcome, leveling,
   roles, custom commands, starboard, giveaways, tickets, and more.
 - **Phase 4 — Premium modules**: music, economy, social notifications, temp
