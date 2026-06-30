@@ -32,6 +32,11 @@ export default async function HomePage() {
             <LoginButton />
           )}
         </div>
+        <div className="mt-6">
+          <Link href="/status" className="text-xs text-white/40 hover:text-white/70">
+            ReFx Hosting status →
+          </Link>
+        </div>
       </div>
     </main>
   );
