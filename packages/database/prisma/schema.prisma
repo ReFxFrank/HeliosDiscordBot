@@ -64,11 +64,16 @@ model Guild {
   locale       String      @default("en-US")
   timezone     String      @default("UTC")
   prefix       String      @default("!")
+  /// Monotonic per-guild counter used to allocate ModerationCase numbers
+  /// atomically (incremented in a single UPDATE — collision-safe under
+  /// concurrency, unlike a global serial).
+  caseCounter  Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   moduleConfigs GuildModuleConfig[]
   auditLogs     DashboardAuditLog[]
+  cases         ModerationCase[]
 
   @@index([ownerId])
 }
@@ -106,4 +111,40 @@ model DashboardAuditLog {
 
   @@index([guildId])
   @@index([guildId, createdAt])
+}
+
+enum CaseType {
+  WARN
+  MUTE
+  KICK
+  BAN
+  SOFTBAN
+  TEMPBAN
+  UNBAN
+  NOTE
+}
+
+/// A numbered moderation action (§6). `caseNumber` is per-guild (see
+/// Guild.caseCounter). Temp actions carry `duration`/`expiresAt` and are
+/// reversed by the durable `tempActionExpire` job, never a timer.
+model ModerationCase {
+  id          String    @id @default(cuid())
+  guildId     String
+  caseNumber  Int
+  type        CaseType
+  targetId    String // Discord user id the action was taken against
+  moderatorId String // Discord user id of the acting moderator
+  reason      String?
+  duration    Int? // seconds, for temp actions
+  expiresAt   DateTime?
+  active      Boolean   @default(true) // false once a temp action has expired/been reversed
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId])
+  @@index([guildId, targetId])
+  @@index([active, expiresAt])
 }
