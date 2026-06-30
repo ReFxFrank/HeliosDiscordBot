@@ -32,6 +32,7 @@ import { reconcileAfk } from './modules/afk';
 import { reconcileBirthdays } from './modules/birthdays';
 import { reconcileStatsCounters } from './modules/statsCounters';
 import { reconcileVoiceXp } from './modules/leveling';
+import { syncAllGuilds } from './lib/guildSync';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
 import type { BotContext } from './framework/context';
 
@@ -122,6 +123,7 @@ async function bootstrap(): Promise<void> {
     // Re-arm any durable timers from the DB (source of truth) for guilds this
     // shard owns — self-heals after a restart or a lost enqueue.
     void Promise.allSettled([
+      syncAllGuilds(ready),
       jobs.reconcile(),
       jobs.reconcileReminders(),
       jobs.reconcileScheduledMessages(),

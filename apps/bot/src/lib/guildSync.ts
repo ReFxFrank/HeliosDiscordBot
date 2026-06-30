@@ -1,5 +1,5 @@
 import { prisma } from '@helios/database';
-import type { Guild } from 'discord.js';
+import type { Client, Guild } from 'discord.js';
 
 /** Upsert a guild's metadata mirror (§4.4) from a gateway Guild object. */
 export async function upsertGuildMeta(guild: Guild): Promise<void> {
@@ -14,6 +14,19 @@ export async function upsertGuildMeta(guild: Guild): Promise<void> {
     update: data,
     create: { id: guild.id, joinedAt: guild.joinedAt ?? new Date(), ...data },
   });
+}
+
+/**
+ * Backfill the guild-metadata mirror for every guild this shard is currently in.
+ * `guildCreate` only fires for joins that happen while the bot is online, so a
+ * guild the bot was already in at startup would otherwise have no `Guild` row —
+ * which makes the dashboard show "Invite" for a server the bot is actually in.
+ * Run on ClientReady. Per-guild failures are isolated so one bad row can't abort
+ * the rest.
+ */
+export async function syncAllGuilds(client: Client): Promise<void> {
+  const guilds = [...client.guilds.cache.values()];
+  await Promise.all(guilds.map((guild) => upsertGuildMeta(guild).catch(() => undefined)));
 }
 
 /**
