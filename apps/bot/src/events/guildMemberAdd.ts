@@ -10,8 +10,12 @@ export default defineEvent({
   name: Events.GuildMemberAdd,
   async execute(ctx, member) {
     scheduleMemberCountSync(member.guild);
-    // Resolve the inviter first (diff invites promptly to minimize races).
-    await handleInviteJoin(member, ctx.logger);
+    // Resolve the inviter first (diff invites promptly to minimize races), but
+    // isolate its failures — a transient DB error here must never suppress the
+    // welcome message, autoroles, or the join log below.
+    await handleInviteJoin(member, ctx.logger).catch((err: unknown) =>
+      ctx.logger.error({ err, guildId: member.guild.id }, 'Invite-join handling failed'),
+    );
     await handleMemberJoin(member, ctx);
 
     const embed = brandedEmbed({ kind: 'success', title: 'Member joined' })

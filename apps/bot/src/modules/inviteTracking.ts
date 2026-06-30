@@ -26,8 +26,13 @@ async function fetchSnapshots(guild: Guild): Promise<InviteSnapshot[] | null> {
   const snaps = toSnapshots(invites);
   if (guild.vanityURLCode) {
     const vanity = await guild.fetchVanityData().catch(() => null);
-    if (vanity) {
-      snaps.push({ code: guild.vanityURLCode, uses: vanity.uses ?? 0, inviterId: null });
+    // Carry forward the cached vanity count if the fetch transiently fails, so
+    // the vanity entry never flickers out of the snapshot (which would make it
+    // look freshly-incremented on its next appearance).
+    const prior = inviteCache.get(guild.id)?.find((snap) => snap.code === guild.vanityURLCode);
+    const uses = vanity?.uses ?? prior?.uses;
+    if (uses !== undefined) {
+      snaps.push({ code: guild.vanityURLCode, uses, inviterId: null });
     }
   }
   return snaps;
@@ -112,8 +117,12 @@ async function resolveAndRecordJoin(member: GuildMember, logger: Logger): Promis
 
   const resolved = hasBaseline ? diffInviteUse(before, after) : null;
   await prisma.guild.upsert({ where: { id: guild.id }, update: {}, create: { id: guild.id } });
-  await prisma.inviteUse.create({
-    data: {
+  // Upsert keyed on the invited member so a leave/rejoin updates the record
+  // rather than double-counting the inviter (one attributed join per member).
+  await prisma.inviteUse.upsert({
+    where: { guildId_invitedUserId: { guildId: guild.id, invitedUserId: member.id } },
+    update: { inviterId: resolved?.inviterId ?? null, code: resolved?.code ?? null },
+    create: {
       guildId: guild.id,
       inviterId: resolved?.inviterId ?? null,
       invitedUserId: member.id,

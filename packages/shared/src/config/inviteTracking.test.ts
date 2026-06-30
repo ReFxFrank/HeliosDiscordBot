@@ -45,4 +45,19 @@ describe('diffInviteUse', () => {
     const after = [snap('vanity', 11, null)];
     expect(diffInviteUse(before, after)).toEqual({ code: 'vanity', inviterId: null });
   });
+
+  it('ignores an invite that only appears in `after` (no baseline) and credits the real one', () => {
+    // `new` (a late/dropped InviteCreate, or a reappearing vanity) has uses ≥ 1
+    // but no prior snapshot — it must NOT mask the genuinely incremented `old`.
+    const before = [snap('old', 3, 'inviterA')];
+    const after = [snap('old', 4, 'inviterA'), snap('new', 1, 'inviterB')];
+    expect(diffInviteUse(before, after)).toEqual({ code: 'old', inviterId: 'inviterA' });
+  });
+
+  it('still resolves the vanished invite when a phantom appears alongside it', () => {
+    // single-use `old` maxed out & vanished; a reappearing vanity shows in after.
+    const before = [snap('old', 0, 'inviterA'), snap('keep', 5, 'inviterC')];
+    const after = [snap('keep', 5, 'inviterC'), snap('vanity', 99, null)];
+    expect(diffInviteUse(before, after)).toEqual({ code: 'old', inviterId: 'inviterA' });
+  });
 });

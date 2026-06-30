@@ -34,9 +34,15 @@ export function diffInviteUse(
   const beforeByCode = new Map(before.map((invite) => [invite.code, invite]));
   const afterByCode = new Map(after.map((invite) => [invite.code, invite]));
 
-  const incremented = after.filter(
-    (invite) => invite.uses > (beforeByCode.get(invite.code)?.uses ?? 0),
-  );
+  // Only count an invite as incremented if it had a real prior baseline. An
+  // invite present only in `after` (a late/dropped InviteCreate, or a vanity
+  // entry that flickered out of the snapshot on a transient fetch failure) must
+  // NOT be coerced to a baseline of 0 — that would let a phantom mask the real
+  // inviter (→ a false 2nd candidate → null) or steal attribution outright.
+  const incremented = after.filter((invite) => {
+    const prev = beforeByCode.get(invite.code);
+    return prev !== undefined && invite.uses > prev.uses;
+  });
   if (incremented.length === 1) {
     const used = incremented[0]!;
     return { code: used.code, inviterId: used.inviterId };

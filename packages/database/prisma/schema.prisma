@@ -488,6 +488,7 @@ model InviteUse {
 
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 
+  @@unique([guildId, invitedUserId])
   @@index([guildId, inviterId])
   @@index([guildId])
 }
