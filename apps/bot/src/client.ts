@@ -30,6 +30,7 @@ import { reconcileTickets } from './modules/tickets';
 import { reconcileAfk } from './modules/afk';
 import { reconcileBirthdays } from './modules/birthdays';
 import { reconcileStatsCounters } from './modules/statsCounters';
+import { cacheAllGuildInvites } from './modules/inviteTracking';
 import type { BotContext } from './framework/context';
 
 /**
@@ -48,6 +49,7 @@ async function bootstrap(): Promise<void> {
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.GuildMessageReactions,
       GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildInvites,
       GatewayIntentBits.MessageContent,
     ],
     partials: [
@@ -124,6 +126,7 @@ async function bootstrap(): Promise<void> {
       reconcileAfk(ready),
       reconcileBirthdays(ready, jobs),
       reconcileStatsCounters(ready, jobs),
+      cacheAllGuildInvites(ready.guilds.cache.values()),
     ]).then((results) => {
       for (const result of results) {
         if (result.status === 'rejected')

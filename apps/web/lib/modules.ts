@@ -173,6 +173,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Who invited whom + leaderboard.',
     icon: Link2,
     category: 'core',
+    configSlug: 'invites',
   },
   {
     module: 'BIRTHDAYS',

@@ -5,6 +5,7 @@ import type {
   AutoroleConfig,
   BirthdaysConfig,
   CustomCommandsConfig,
+  InviteTrackingConfig,
   LevelingConfig,
   LoggingConfig,
   Module,
@@ -133,6 +134,13 @@ export async function saveBirthdaysConfig(
   input: BirthdaysConfig,
 ): Promise<ActionResult> {
   return saveConfig(guildId, 'BIRTHDAYS', input, 'birthdays');
+}
+
+export async function saveInviteTrackingConfig(
+  guildId: string,
+  input: InviteTrackingConfig,
+): Promise<ActionResult> {
+  return saveConfig(guildId, 'INVITE_TRACKING', input, 'invites');
 }
 
 export async function saveStatsCountersConfig(

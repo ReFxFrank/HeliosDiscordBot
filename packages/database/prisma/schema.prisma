@@ -90,6 +90,7 @@ model Guild {
   polls             Poll[]
   afkUsers          Afk[]
   birthdays         Birthday[]
+  inviteUses        InviteUse[]
 
   @@index([ownerId])
 }
@@ -473,4 +474,20 @@ model Birthday {
 
   @@unique([guildId, userId])
   @@index([guildId, month, day])
+}
+
+/// One row per tracked join (§8 Invite tracking). `inviterId` is null for a
+/// vanity-URL or undeterminable join. Leaderboards aggregate by inviterId.
+model InviteUse {
+  id            String   @id @default(cuid())
+  guildId       String
+  inviterId     String?
+  invitedUserId String
+  code          String?
+  createdAt     DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, inviterId])
+  @@index([guildId])
 }

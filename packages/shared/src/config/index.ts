@@ -12,6 +12,7 @@ import { customCommandsConfigSchema } from './customCommands';
 import { suggestionsConfigSchema } from './suggestions';
 import { birthdaysConfigSchema } from './birthdays';
 import { statsCountersConfigSchema } from './statsCounters';
+import { inviteTrackingConfigSchema } from './inviteTracking';
 
 export * from './moderation';
 export * from './leveling';
@@ -25,6 +26,7 @@ export * from './customCommands';
 export * from './suggestions';
 export * from './birthdays';
 export * from './statsCounters';
+export * from './inviteTracking';
 
 /**
  * Registry mapping a module to the zod schema that validates its `config` JSON
@@ -46,6 +48,7 @@ export const MODULE_CONFIG_SCHEMAS = {
   SUGGESTIONS: suggestionsConfigSchema,
   BIRTHDAYS: birthdaysConfigSchema,
   STATS_COUNTERS: statsCountersConfigSchema,
+  INVITE_TRACKING: inviteTrackingConfigSchema,
 } satisfies Partial<Record<Module, z.ZodTypeAny>>;
 
 export type ModuleWithSchema = keyof typeof MODULE_CONFIG_SCHEMAS;
