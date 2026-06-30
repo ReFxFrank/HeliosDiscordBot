@@ -19,6 +19,7 @@
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",
     "ioredis": "^5.4.2",
+    "lavalink-client": "^2.10.3",
     "pino": "^9.6.0",
     "prom-client": "^15.1.3"
   },
