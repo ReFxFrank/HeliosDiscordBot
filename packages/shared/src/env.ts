@@ -32,6 +32,13 @@ export const botEnvSchema = baseEnvSchema.extend({
   LAVALINK_PASSWORD: z.string().default('youshallnotpass'),
   /** 32+ byte key used to encrypt third-party tokens at rest (§10). */
   ENCRYPTION_KEY: z.string().min(32).optional(),
+  /** Expose a Prometheus /metrics + /health HTTP server per shard. */
+  METRICS_ENABLED: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
+  /** Base metrics port; each shard binds METRICS_PORT + shardId. */
+  METRICS_PORT: z.coerce.number().int().positive().default(9090),
 });
 
 export const webEnvSchema = baseEnvSchema.extend({

@@ -23,6 +23,9 @@ export const MODULE_CONFIG_SCHEMAS = {
 
 export type ModuleWithSchema = keyof typeof MODULE_CONFIG_SCHEMAS;
 
+/** Inferred config object type for a module (so consumers needn't import zod). */
+export type ModuleConfig<M extends ModuleWithSchema> = z.infer<(typeof MODULE_CONFIG_SCHEMAS)[M]>;
+
 export function hasConfigSchema(module: Module): module is ModuleWithSchema {
   return module in MODULE_CONFIG_SCHEMAS;
 }

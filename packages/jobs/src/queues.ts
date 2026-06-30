@@ -10,16 +10,24 @@
  * in Phase 1.
  */
 
+/**
+ * BullMQ namespaces Redis keys with the `prefix` option and forbids `:` in
+ * queue names, so queue names are plain and `QUEUE_PREFIX` does the namespacing
+ * (keys become `helios:<queue>:...`). Always pass `{ prefix: QUEUE_PREFIX }`
+ * when constructing Queues/Workers so both ends agree.
+ */
+export const QUEUE_PREFIX = 'helios';
+
 export const QUEUE_NAMES = {
-  tempActionExpire: 'helios:tempActionExpire',
-  reminder: 'helios:reminder',
-  scheduledMessage: 'helios:scheduledMessage',
-  giveawayEnd: 'helios:giveawayEnd',
-  socialPoll: 'helios:socialPoll',
-  statsCounterRefresh: 'helios:statsCounterRefresh',
-  ticketAutoClose: 'helios:ticketAutoClose',
-  birthdayAnnounce: 'helios:birthdayAnnounce',
-  cleanupLogs: 'helios:cleanupLogs',
+  tempActionExpire: 'tempActionExpire',
+  reminder: 'reminder',
+  scheduledMessage: 'scheduledMessage',
+  giveawayEnd: 'giveawayEnd',
+  socialPoll: 'socialPoll',
+  statsCounterRefresh: 'statsCounterRefresh',
+  ticketAutoClose: 'ticketAutoClose',
+  birthdayAnnounce: 'birthdayAnnounce',
+  cleanupLogs: 'cleanupLogs',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
