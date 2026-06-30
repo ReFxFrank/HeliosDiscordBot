@@ -70,6 +70,8 @@ model Guild {
   caseCounter  Int         @default(0)
   /// Same atomic-increment scheme for per-guild ticket numbers.
   ticketCounter Int        @default(0)
+  /// Same atomic-increment scheme for per-guild suggestion numbers.
+  suggestionCounter Int    @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -84,6 +86,9 @@ model Guild {
   scheduledMessages ScheduledMessage[]
   tickets           Ticket[]
   customCommands    CustomCommand[]
+  suggestions       Suggestion[]
+  polls             Poll[]
+  afkUsers          Afk[]
 
   @@index([ownerId])
 }
@@ -358,5 +363,95 @@ model CustomCommand {
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 
   @@unique([guildId, name])
+  @@index([guildId])
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  DENIED
+  IMPLEMENTED
+}
+
+/// A community suggestion (§8). Posted to the configured channel with up/down
+/// vote buttons; staff move it through statuses. `number` is per-guild.
+model Suggestion {
+  id          String           @id @default(cuid())
+  guildId     String
+  channelId   String
+  messageId   String?
+  number      Int
+  authorId    String
+  content     String
+  status      SuggestionStatus @default(PENDING)
+  staffId     String?
+  staffReason String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  guild Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  votes SuggestionVote[]
+
+  @@unique([guildId, number])
+  @@index([guildId])
+}
+
+model SuggestionVote {
+  id           String @id @default(cuid())
+  suggestionId String
+  userId       String
+  value        Int // +1 or -1
+
+  suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, userId])
+  @@index([suggestionId])
+}
+
+/// A single-choice poll (§8). `options` is a JSON string[]; one vote per user
+/// (re-voting replaces). Closed by `/poll end` or the durable `pollEnd` job.
+model Poll {
+  id        String    @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String?
+  question  String
+  options   Json
+  endsAt    DateTime?
+  ended     Boolean   @default(false)
+  createdBy String
+  createdAt DateTime  @default(now())
+
+  guild Guild      @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@index([guildId])
+  @@index([ended, endsAt])
+}
+
+model PollVote {
+  id          String @id @default(cuid())
+  pollId      String
+  userId      String
+  optionIndex Int
+
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+}
+
+/// A user's AFK status in a guild (§8). Set with /afk, cleared on their next
+/// message; mentions of an AFK user trigger a notice.
+model Afk {
+  id      String   @id @default(cuid())
+  guildId String
+  userId  String
+  reason  String?
+  since   DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
   @@index([guildId])
 }

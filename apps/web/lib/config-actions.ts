@@ -11,6 +11,7 @@ import type {
   ModuleWithSchema,
   RefxAlertsConfig,
   StarboardConfig,
+  SuggestionsConfig,
   TicketsConfig,
   WelcomeConfig,
 } from '@helios/shared';
@@ -115,6 +116,13 @@ export async function saveCustomCommandsConfig(
   input: CustomCommandsConfig,
 ): Promise<ActionResult> {
   return saveConfig(guildId, 'CUSTOM_COMMANDS', input, 'commands');
+}
+
+export async function saveSuggestionsConfig(
+  guildId: string,
+  input: SuggestionsConfig,
+): Promise<ActionResult> {
+  return saveConfig(guildId, 'SUGGESTIONS', input, 'suggestions');
 }
 
 export async function saveGuildSettings(

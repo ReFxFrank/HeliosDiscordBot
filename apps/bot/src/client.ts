@@ -23,7 +23,9 @@ import { handleGiveawayEnd } from './jobs/handlers/giveawayEnd';
 import { handleReminder } from './jobs/handlers/reminder';
 import { handleScheduledMessage } from './jobs/handlers/scheduledMessage';
 import { handleTicketAutoClose } from './jobs/handlers/ticketAutoClose';
+import { handlePollEnd } from './jobs/handlers/pollEnd';
 import { reconcileTickets } from './modules/tickets';
+import { reconcileAfk } from './modules/afk';
 import type { BotContext } from './framework/context';
 
 /**
@@ -72,6 +74,7 @@ async function bootstrap(): Promise<void> {
   jobs.registerHandler(QUEUE_NAMES.reminder, handleReminder);
   jobs.registerHandler(QUEUE_NAMES.scheduledMessage, handleScheduledMessage);
   jobs.registerHandler(QUEUE_NAMES.ticketAutoClose, handleTicketAutoClose);
+  jobs.registerHandler(QUEUE_NAMES.pollEnd, handlePollEnd);
 
   const liveCommands = new LiveCommandService(client, logger, jobs, config);
 
@@ -112,6 +115,7 @@ async function bootstrap(): Promise<void> {
       jobs.reconcileReminders(),
       jobs.reconcileScheduledMessages(),
       reconcileTickets(ready, jobs, logger),
+      reconcileAfk(ready),
     ]).then((results) => {
       for (const result of results) {
         if (result.status === 'rejected')

@@ -23,6 +23,7 @@ export const QUEUE_NAMES = {
   reminder: 'reminder',
   scheduledMessage: 'scheduledMessage',
   giveawayEnd: 'giveawayEnd',
+  pollEnd: 'pollEnd',
   socialPoll: 'socialPoll',
   statsCounterRefresh: 'statsCounterRefresh',
   ticketAutoClose: 'ticketAutoClose',
@@ -54,6 +55,10 @@ export interface GiveawayEndJob {
   giveawayId: string;
 }
 
+export interface PollEndJob {
+  pollId: string;
+}
+
 export interface SocialPollJob {
   subscriptionId: string;
 }
@@ -80,6 +85,7 @@ export interface JobDataByQueue {
   [QUEUE_NAMES.reminder]: ReminderJob;
   [QUEUE_NAMES.scheduledMessage]: ScheduledMessageJob;
   [QUEUE_NAMES.giveawayEnd]: GiveawayEndJob;
+  [QUEUE_NAMES.pollEnd]: PollEndJob;
   [QUEUE_NAMES.socialPoll]: SocialPollJob;
   [QUEUE_NAMES.statsCounterRefresh]: StatsCounterRefreshJob;
   [QUEUE_NAMES.ticketAutoClose]: TicketAutoCloseJob;

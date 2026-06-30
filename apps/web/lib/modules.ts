@@ -134,6 +134,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Submit, vote, and triage suggestions.',
     icon: Lightbulb,
     category: 'core',
+    configSlug: 'suggestions',
   },
   {
     module: 'REMINDERS',

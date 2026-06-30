@@ -199,6 +199,11 @@ export function giveawayJobId(giveawayId: string): string {
   return `giveaway-${giveawayId}`;
 }
 
+/** Stable job id for a poll's scheduled close. */
+export function pollJobId(pollId: string): string {
+  return `poll-${pollId}`;
+}
+
 /** Stable job id for a reminder's delivery. */
 export function reminderJobId(reminderId: string): string {
   return `reminder-${reminderId}`;
