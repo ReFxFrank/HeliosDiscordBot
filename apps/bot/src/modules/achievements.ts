@@ -15,26 +15,31 @@ export interface AchievementDeps {
   logger: Logger;
 }
 
-interface UserStats {
+export interface UserStats {
   level: number;
   messages: number;
   coins: number;
   voiceMinutes: number;
 }
 
-function meets(type: AchievementType, stats: UserStats, threshold: number): boolean {
+/** The member's current value for the stat an achievement tracks. */
+export function statForType(type: AchievementType, stats: UserStats): number {
   switch (type) {
     case 'LEVEL':
-      return stats.level >= threshold;
+      return stats.level;
     case 'MESSAGES':
-      return stats.messages >= threshold;
+      return stats.messages;
     case 'COINS':
-      return stats.coins >= threshold;
+      return stats.coins;
     case 'VOICE_MINUTES':
-      return stats.voiceMinutes >= threshold;
+      return stats.voiceMinutes;
     default:
-      return false;
+      return 0;
   }
+}
+
+function meets(type: AchievementType, stats: UserStats, threshold: number): boolean {
+  return statForType(type, stats) >= threshold;
 }
 
 async function loadStats(guildId: string, userId: string): Promise<UserStats> {
@@ -114,6 +119,18 @@ async function announce(
       allowedMentions: { users: [userId], roles: [] },
     })
     .catch(() => undefined);
+}
+
+/** A member's current stats + the set of achievement ids they've unlocked. */
+export async function getAchievementStatus(
+  guildId: string,
+  userId: string,
+): Promise<{ stats: UserStats; unlocked: Set<string> }> {
+  const [stats, rows] = await Promise.all([
+    loadStats(guildId, userId),
+    prisma.userAchievement.findMany({ where: { guildId, userId }, select: { achievementId: true } }),
+  ]);
+  return { stats, unlocked: new Set(rows.map((r: { achievementId: string }) => r.achievementId)) };
 }
 
 /**
