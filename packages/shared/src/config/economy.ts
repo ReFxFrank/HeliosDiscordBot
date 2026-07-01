@@ -1,5 +1,26 @@
 import { z } from 'zod';
 
+/** Casino games sub-config. Games read this to gate themselves and set payouts. */
+export const casinoConfigSchema = z
+  .object({
+    /** Per-game on/off switches. */
+    blackjack: z.boolean().default(true),
+    roulette: z.boolean().default(true),
+    coinflip: z.boolean().default(true),
+    slots: z.boolean().default(true),
+    /** Bet bounds for every casino game. */
+    minBet: z.number().int().min(1).max(100_000_000).default(10),
+    maxBet: z.number().int().min(1).max(100_000_000).default(10_000),
+    /** Slots payout multipliers (total returned = stake × multiplier). */
+    slotsTripleMultiplier: z.number().min(1).max(1000).default(3),
+    slotsPairMultiplier: z.number().min(0).max(1000).default(1.5),
+    /** Blackjack natural (two-card 21) payout multiplier. Standard is 2.5 (3:2). */
+    blackjackMultiplier: z.number().min(1).max(10).default(2.5),
+  })
+  .default({});
+
+export type CasinoConfig = z.infer<typeof casinoConfigSchema>;
+
 /**
  * Economy module config (premium). Currency naming, earn amounts + cooldowns,
  * and gambling limits. Balances live in the EconomyUser table; these are the
@@ -23,6 +44,8 @@ export const economyConfigSchema = z.object({
   maxBet: z.number().int().min(1).max(100_000_000).default(10_000),
   /** Whether /rob is available. */
   robEnabled: z.boolean().default(true),
+  /** Casino games + their limits and payouts. */
+  casino: casinoConfigSchema,
 });
 
 export type EconomyConfig = z.infer<typeof economyConfigSchema>;

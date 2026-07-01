@@ -190,8 +190,11 @@ export function resolveBet(
   amount: number,
   wallet: number,
   maxBet: number,
+  minBet = 1,
 ): { ok: true; amount: number } | { ok: false; error: string } {
-  if (!Number.isFinite(amount) || amount < 1) return { ok: false, error: 'Bet at least 1.' };
+  if (!Number.isFinite(amount) || amount < minBet) {
+    return { ok: false, error: `Bet at least ${minBet.toLocaleString('en-US')}.` };
+  }
   if (amount > maxBet) return { ok: false, error: `The max bet is ${maxBet.toLocaleString('en-US')}.` };
   if (amount > wallet) return { ok: false, error: "You don't have that much in your wallet." };
   return { ok: true, amount };

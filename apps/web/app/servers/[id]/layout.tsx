@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Crown, LayoutDashboard, ScrollText, Settings2 } from 'lucide-react';
+import { ChevronLeft, Crown, Dices, LayoutDashboard, ScrollText, Settings2 } from 'lucide-react';
 import { prisma } from '@solari/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { guildIconUrl } from '../../../lib/discord';
@@ -49,6 +49,15 @@ export default async function GuildLayout({
       locked: m.category === 'premium' && !isPremium,
       disabledGlobally: globallyOff.has(m.module),
     };
+  });
+  // Casino is a sub-surface of the (premium) Economy module — its games spend the
+  // Economy currency — so it locks/disables in lockstep with Economy.
+  moduleNav.push({
+    href: `/servers/${id}/casino`,
+    label: 'Casino',
+    icon: <Dices className="h-4 w-4 shrink-0" />,
+    locked: !isPremium,
+    disabledGlobally: globallyOff.has('ECONOMY'),
   });
 
   return (

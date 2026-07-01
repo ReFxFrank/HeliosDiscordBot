@@ -23,9 +23,16 @@ const command: Command = {
     if (!interaction.inCachedGuild()) return;
     const amount = interaction.options.getInteger('amount', true);
     const config = await ctx.config.getConfig(interaction.guildId, 'ECONOMY');
+    if (!config.casino.slots) {
+      await interaction.reply({
+        embeds: [errorEmbed('Slots is disabled on this server.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     const eco = await getEconomyUser(interaction.guildId, interaction.user.id, config.startingBalance);
 
-    const bet = resolveBet(amount, eco.wallet, config.maxBet);
+    const bet = resolveBet(amount, eco.wallet, config.casino.maxBet, config.casino.minBet);
     if (!bet.ok) {
       await interaction.reply({ embeds: [errorEmbed(bet.error)], flags: MessageFlags.Ephemeral });
       return;
@@ -33,10 +40,10 @@ const command: Command = {
 
     const reels = spin();
     const [a, b, c] = reels;
-    // Payout = TOTAL returned: 3-of-a-kind = 3x, any pair = 1.5x, otherwise 0.
+    // Payout = TOTAL returned: 3-of-a-kind and any-pair multipliers are configurable.
     let payout = 0;
-    if (a === b && b === c) payout = amount * 3;
-    else if (a === b || b === c || a === c) payout = Math.floor(amount * 1.5);
+    if (a === b && b === c) payout = Math.floor(amount * config.casino.slotsTripleMultiplier);
+    else if (a === b || b === c || a === c) payout = Math.floor(amount * config.casino.slotsPairMultiplier);
 
     // Escrow the bet and pay out atomically.
     if (!(await settleBet(interaction.guildId, interaction.user.id, amount, payout))) {

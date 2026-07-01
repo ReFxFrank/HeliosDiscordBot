@@ -97,9 +97,16 @@ const command: Command = {
     const userId = interaction.user.id;
     const amount = interaction.options.getInteger('amount', true);
     const config = await ctx.config.getConfig(guildId, 'ECONOMY');
+    if (!config.casino.blackjack) {
+      await interaction.reply({
+        embeds: [errorEmbed('Blackjack is disabled on this server.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     const eco = await getEconomyUser(guildId, userId, config.startingBalance);
 
-    const bet = resolveBet(amount, eco.wallet, config.maxBet);
+    const bet = resolveBet(amount, eco.wallet, config.casino.maxBet, config.casino.minBet);
     if (!bet.ok) {
       await interaction.reply({ embeds: [errorEmbed(bet.error)], flags: MessageFlags.Ephemeral });
       return;
@@ -121,7 +128,7 @@ const command: Command = {
     // Natural blackjack resolves immediately (pays 3:2, or pushes vs a dealer natural).
     if (isBlackjack(player)) {
       const dealerNatural = isBlackjack(dealer);
-      const payout = dealerNatural ? amount : Math.floor(amount * 2.5);
+      const payout = dealerNatural ? amount : Math.floor(amount * config.casino.blackjackMultiplier);
       await addWallet(guildId, userId, payout);
       await interaction.reply({
         embeds: [

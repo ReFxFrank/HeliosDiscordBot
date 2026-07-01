@@ -60,9 +60,16 @@ const command: Command = {
     const userId = interaction.user.id;
     const amount = interaction.options.getInteger('amount', true);
     const config = await ctx.config.getConfig(guildId, 'ECONOMY');
+    if (!config.casino.roulette) {
+      await interaction.reply({
+        embeds: [errorEmbed('Roulette is disabled on this server.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     const eco = await getEconomyUser(guildId, userId, config.startingBalance);
 
-    const bet = resolveBet(amount, eco.wallet, config.maxBet);
+    const bet = resolveBet(amount, eco.wallet, config.casino.maxBet, config.casino.minBet);
     if (!bet.ok) {
       await interaction.reply({ embeds: [errorEmbed(bet.error)], flags: MessageFlags.Ephemeral });
       return;

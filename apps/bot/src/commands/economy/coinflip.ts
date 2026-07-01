@@ -25,9 +25,16 @@ const command: Command = {
     const amount = interaction.options.getInteger('amount', true);
     const side = interaction.options.getString('side', true);
     const config = await ctx.config.getConfig(interaction.guildId, 'ECONOMY');
+    if (!config.casino.coinflip) {
+      await interaction.reply({
+        embeds: [errorEmbed('Coinflip is disabled on this server.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     const eco = await getEconomyUser(interaction.guildId, interaction.user.id, config.startingBalance);
 
-    const bet = resolveBet(amount, eco.wallet, config.maxBet);
+    const bet = resolveBet(amount, eco.wallet, config.casino.maxBet, config.casino.minBet);
     if (!bet.ok) {
       await interaction.reply({ embeds: [errorEmbed(bet.error)], flags: MessageFlags.Ephemeral });
       return;
