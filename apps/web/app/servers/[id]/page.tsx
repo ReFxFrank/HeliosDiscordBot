@@ -26,7 +26,14 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
       select: { caseNumber: true, type: true, targetId: true, createdAt: true },
     }),
   ]);
+  // Kept out of the Promise.all above so the (stale-client) globalModuleFlag
+  // type can't degrade the other results to `any`.
+  const flagRows = await prisma.globalModuleFlag.findMany({
+    where: { enabled: false },
+    select: { module: true },
+  });
 
+  const disabledModules = (flagRows as { module: string }[]).map((f) => f.module);
   const tier = guild?.premiumTier ?? 'FREE';
   const isPremium = tier === 'PREMIUM';
   // Plain object so it serializes into the client <ModuleGrid />.
@@ -48,7 +55,12 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
         <Stat label="Plan" value={isPremium ? 'Premium' : 'Free'} accent={isPremium} />
       </section>
 
-      <ModuleGrid guildId={id} enabled={enabled} isPremium={isPremium} />
+      <ModuleGrid
+        guildId={id}
+        enabled={enabled}
+        isPremium={isPremium}
+        disabledModules={disabledModules}
+      />
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-white/80">Recent moderation</h2>

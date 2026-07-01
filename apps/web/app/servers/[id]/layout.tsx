@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { Bot, Crown, Dices, LayoutDashboard, ScrollText, Settings2 } from 'lucide-react';
 import { prisma } from '@solari/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
-import { groupedModuleMeta } from '../../../lib/modules';
+import { groupedModuleMeta, moduleBySlug } from '../../../lib/modules';
 import { NavLink } from '../../../components/nav-link';
 import { ServerSwitcher } from '../../../components/server-switcher';
 import { SignOutButton } from '../../../components/auth-buttons';
@@ -36,6 +37,17 @@ export default async function GuildLayout({
 
   const globallyOff = new Set((flagRows as { module: string }[]).map((f) => f.module));
   const isPremium = guild.premiumTier === 'PREMIUM';
+
+  // Hard-block direct navigation to a config page whose module the owner has
+  // globally disabled — slug-based, so it covers every current and future
+  // module automatically. Casino is a sub-surface of ECONOMY.
+  const pathname = (await headers()).get('x-pathname') ?? '';
+  const slug = pathname.split('/')[3];
+  if (slug) {
+    const slugModule = moduleBySlug(slug);
+    if (slugModule && globallyOff.has(slugModule)) notFound();
+    if (slug === 'casino' && globallyOff.has('ECONOMY')) notFound();
+  }
 
   // Icons are rendered to elements here (server-side). NavLink is a client
   // component and React cannot serialize a component/function across that
@@ -88,10 +100,17 @@ export default async function GuildLayout({
             <NavLink href={`/servers/${id}/premium`} label="Premium" premium />
           </div>
 
-          {moduleGroups.map(({ group, modules }) => (
+          {moduleGroups.map(({ group, modules }) => {
+            // Globally-disabled modules are hidden entirely (not just dimmed), so
+            // a user never sees or reaches a feature the owner turned off.
+            const visible = modules.filter((m) => !globallyOff.has(m.module));
+            const showCasino = group === 'Games & Fun' && !globallyOff.has('ECONOMY');
+            const showPersonalizer = group === 'Server Management';
+            if (visible.length === 0 && !showCasino && !showPersonalizer) return null;
+            return (
             <div key={group} className="flex flex-col gap-0.5">
               <SectionLabel>{group}</SectionLabel>
-              {modules.map((m) => {
+              {visible.map((m) => {
                 const Icon = m.icon;
                 return (
                   <NavLink
@@ -100,33 +119,31 @@ export default async function GuildLayout({
                     label={m.name}
                     icon={<Icon className="h-4 w-4 shrink-0" />}
                     locked={m.category === 'premium' && !isPremium}
-                    disabledGlobally={globallyOff.has(m.module)}
                   />
                 );
               })}
               {/* Casino is a sub-surface of the (premium) Economy module — its games
-                  spend the Economy currency — so it locks/disables in lockstep. */}
-              {group === 'Games & Fun' && (
+                  spend the Economy currency — so it hides with Economy. */}
+              {showCasino && (
                 <NavLink
                   href={`/servers/${id}/casino`}
                   label="Casino"
                   icon={<Dices className="h-4 w-4 shrink-0" />}
                   locked={!isPremium}
-                  disabledGlobally={globallyOff.has('ECONOMY')}
                 />
               )}
               {/* Bot Personalizer is a premium-only surface with no global module flag. */}
-              {group === 'Server Management' && (
+              {showPersonalizer && (
                 <NavLink
                   href={`/servers/${id}/personalizer`}
                   label="Bot Personalizer"
                   icon={<Bot className="h-4 w-4 shrink-0" />}
                   locked={!isPremium}
-                  disabledGlobally={false}
                 />
               )}
             </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="min-w-0">{children}</div>

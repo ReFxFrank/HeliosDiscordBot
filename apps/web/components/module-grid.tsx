@@ -23,26 +23,31 @@ export function ModuleGrid({
   guildId,
   enabled,
   isPremium,
+  disabledModules = [],
 }: {
   guildId: string;
   /** module key -> enabled. Plain object so it serializes across the server boundary. */
   enabled: Record<string, boolean>;
   isPremium: boolean;
+  /** Modules the owner has globally disabled — hidden from the grid entirely. */
+  disabledModules?: string[];
 }) {
   const [filter, setFilter] = useState<Filter>('all');
 
   // Cards render grouped MEE6-style: for each group, its cards under a heading.
-  // The active filter narrows each group's cards; empty groups drop out.
-  const groups = useMemo(
-    () =>
-      groupedModuleMeta()
-        .map((entry) => ({
-          ...entry,
-          modules: entry.modules.filter((m) => filter === 'all' || m.category === filter),
-        }))
-        .filter((entry) => entry.modules.length > 0),
-    [filter],
-  );
+  // The active filter narrows each group's cards; empty groups drop out. Modules
+  // the owner globally disabled are hidden, so users never see or reach them.
+  const groups = useMemo(() => {
+    const off = new Set(disabledModules);
+    return groupedModuleMeta()
+      .map((entry) => ({
+        ...entry,
+        modules: entry.modules.filter(
+          (m) => !off.has(m.module) && (filter === 'all' || m.category === filter),
+        ),
+      }))
+      .filter((entry) => entry.modules.length > 0);
+  }, [filter, disabledModules]);
 
   return (
     <section className="flex flex-col gap-6">

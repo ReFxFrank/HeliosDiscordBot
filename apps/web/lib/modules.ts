@@ -315,6 +315,11 @@ export const MODULE_META_BY_KEY: Record<Module, ModuleMeta> = Object.fromEntries
   MODULE_META.map((meta) => [meta.module, meta]),
 ) as Record<Module, ModuleMeta>;
 
+/** The module owning a config-page slug (e.g. "leveling" → "LEVELING"), if any. */
+export function moduleBySlug(slug: string): Module | null {
+  return MODULE_META.find((meta) => meta.configSlug === slug)?.module ?? null;
+}
+
 // ── MEE6-style grouping (sidebar sections + categorized plugin grid) ──────────
 
 export const MODULE_GROUPS = [
