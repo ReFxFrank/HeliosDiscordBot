@@ -1,10 +1,10 @@
 /**
  * Social Alerts fetchers. YouTube (via its public RSS feed), Reddit (public
- * JSON), and generic RSS/Atom need no API keys; Twitch needs an app token from
- * TWITCH_CLIENT_ID/SECRET. Each fetcher returns items newest-first; the poller
- * dedups against the stored lastItemId.
+ * JSON), Bluesky (public AppView API), and generic RSS/Atom need no API keys;
+ * Twitch needs an app token from TWITCH_CLIENT_ID/SECRET. Each fetcher returns
+ * items newest-first; the poller dedups against the stored lastItemId.
  */
-export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'reddit', 'rss'] as const;
+export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'reddit', 'bluesky', 'rss'] as const;
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
 export interface SocialItem {
@@ -182,6 +182,59 @@ async function fetchReddit(subreddit: string): Promise<SocialItem[]> {
   );
 }
 
+// ── Bluesky (public AppView — no credentials) ────────────────────────────────
+
+/**
+ * Web URL for a post: the at-uri's record key + the author handle.
+ * `at://did:plc:xyz/app.bsky.feed.post/3k44…` → `https://bsky.app/profile/{handle}/post/3k44…`
+ */
+export function blueskyPostUrl(uri: string, handle: string): string {
+  const rkey = uri.split('/').pop() ?? '';
+  return `https://bsky.app/profile/${encodeURIComponent(handle)}/post/${encodeURIComponent(rkey)}`;
+}
+
+/** First line of the post text, truncated for an embed title. */
+export function blueskyTitle(text: string | undefined): string {
+  const firstLine = (text ?? '').split('\n')[0]?.trim() ?? '';
+  if (!firstLine) return 'New post';
+  return firstLine.length > 120 ? `${firstLine.slice(0, 117)}…` : firstLine;
+}
+
+interface BskyAuthorFeed {
+  feed?: {
+    /** Present on reposts (reasonRepost) — we only alert on original posts. */
+    reason?: unknown;
+    post?: {
+      uri?: string;
+      author?: { handle?: string; displayName?: string };
+      record?: { text?: string };
+    };
+  }[];
+}
+
+async function fetchBluesky(handle: string): Promise<SocialItem[]> {
+  const actor = handle.replace(/^@/, '').trim();
+  const feed = await fetchJson<BskyAuthorFeed>(
+    `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(actor)}&limit=${MAX_ITEMS}&filter=posts_no_replies`,
+  );
+  const entries = feed?.feed ?? [];
+  const items: SocialItem[] = [];
+  for (const entry of entries) {
+    if (entry.reason) continue; // repost, not an original
+    const post = entry.post;
+    if (!post?.uri) continue;
+    const author = post.author?.handle ?? actor;
+    items.push({
+      id: post.uri,
+      title: blueskyTitle(post.record?.text),
+      url: blueskyPostUrl(post.uri, author),
+      author: post.author?.displayName || author,
+    });
+    if (items.length >= MAX_ITEMS) break;
+  }
+  return items;
+}
+
 // ── Twitch (app token → live check) ─────────────────────────────────────────
 
 let twitchToken: { token: string; expiresAt: number } | null = null;
@@ -239,6 +292,8 @@ export async function fetchLatest(
       return fetchYouTube(target);
     case 'reddit':
       return fetchReddit(target);
+    case 'bluesky':
+      return fetchBluesky(target);
     case 'rss':
       return fetchRss(target);
     case 'twitch':

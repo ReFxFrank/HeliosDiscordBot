@@ -12,7 +12,7 @@ const MAX_PER_GUILD = 25;
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName('social')
-    .setDescription('Manage social media alerts (Twitch, YouTube, Reddit, RSS).')
+    .setDescription('Manage social media alerts (Twitch, YouTube, Reddit, Bluesky, RSS).')
     .addSubcommand((s) =>
       s
         .setName('add')
@@ -26,13 +26,14 @@ const command: Command = {
               { name: 'Twitch (goes live)', value: 'twitch' },
               { name: 'YouTube (new videos)', value: 'youtube' },
               { name: 'Reddit (new posts)', value: 'reddit' },
+              { name: 'Bluesky (new posts)', value: 'bluesky' },
               { name: 'RSS / Atom feed', value: 'rss' },
             ),
         )
         .addStringOption((o) =>
           o
             .setName('target')
-            .setDescription('Twitch login · YouTube channel id (UC…) · subreddit · feed URL')
+            .setDescription('Twitch login · YouTube channel id (UC…) · subreddit · Bluesky handle · feed URL')
             .setRequired(true),
         )
         .addChannelOption((o) =>

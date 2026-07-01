@@ -29,7 +29,7 @@ export interface PricingTier {
 export const PREMIUM_FEATURES: readonly string[] = [
   'Music — queues, filters, DJ roles & vote-skip',
   'Economy — currency, games, shop & inventory',
-  'Social Alerts — Twitch, YouTube, Reddit & RSS',
+  'Social Alerts — Twitch, YouTube, Reddit, Bluesky & RSS',
   'Temp Voice — join-to-create voice channels',
   'Higher limits across every module',
   'Priority support',

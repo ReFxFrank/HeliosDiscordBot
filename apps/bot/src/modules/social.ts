@@ -16,6 +16,7 @@ const PLATFORM_LABEL: Record<SocialPlatform, string> = {
   twitch: 'Twitch',
   youtube: 'YouTube',
   reddit: 'Reddit',
+  bluesky: 'Bluesky',
   rss: 'RSS',
 };
 

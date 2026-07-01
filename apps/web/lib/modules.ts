@@ -280,7 +280,7 @@ export const MODULE_META: ModuleMeta[] = [
   {
     module: 'SOCIAL',
     name: 'Social Alerts',
-    description: 'Twitch, YouTube, Reddit & RSS feeds.',
+    description: 'Twitch, YouTube, Reddit, Bluesky & RSS.',
     icon: Bell,
     category: 'premium',
     accent: 'sky',
