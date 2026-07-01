@@ -1,28 +1,11 @@
-import { fileURLToPath } from 'node:url';
-import { createCanvas, GlobalFonts, loadImage, type SKRSContext2D } from '@napi-rs/canvas';
+import { createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas';
 import { logger } from '../logger';
+import { ensureFonts, FONT_BOLD, FONT_REGULAR } from './canvasFonts';
 
 /**
  * Rank-card renderer (§7). Pure pixels in, PNG buffer out — no Discord types, so
- * the `/rank` command stays a thin caller. Fonts are vendored under
- * `assets/fonts` and registered once at module load because the slim production
- * image has no system fonts.
+ * the `/rank` command stays a thin caller. Fonts are shared via `canvasFonts`.
  */
-
-const FONT_REGULAR = 'SolariSans';
-const FONT_BOLD = 'SolariSans Bold';
-
-function fontPath(file: string): string {
-  return fileURLToPath(new URL(`../../assets/fonts/${file}`, import.meta.url));
-}
-
-let fontsReady = false;
-function ensureFonts(): void {
-  if (fontsReady) return;
-  GlobalFonts.registerFromPath(fontPath('DejaVuSans.ttf'), FONT_REGULAR);
-  GlobalFonts.registerFromPath(fontPath('DejaVuSans-Bold.ttf'), FONT_BOLD);
-  fontsReady = true;
-}
 
 export interface RankCardInput {
   displayName: string;

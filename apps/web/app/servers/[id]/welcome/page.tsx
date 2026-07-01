@@ -3,7 +3,6 @@ import { welcomeConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { WelcomeForm } from '../../../../components/welcome-form';
-import { GlassCard } from '../../../../components/ui/glass-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +27,7 @@ export default async function WelcomeConfigPage({ params }: { params: Promise<{ 
           Greet new members and announce departures. Saved changes reach the bot in ~1s.
         </p>
       </div>
-      <GlassCard className="p-5">
-        <WelcomeForm guildId={id} initial={initial} roles={roles} channels={channels} />
-      </GlassCard>
+      <WelcomeForm guildId={id} initial={initial} roles={roles} channels={channels} />
     </div>
   );
 }

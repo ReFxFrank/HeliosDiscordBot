@@ -1,5 +1,6 @@
-import type { GuildMember, PartialGuildMember } from 'discord.js';
+import { AttachmentBuilder, type GuildMember, type PartialGuildMember } from 'discord.js';
 import { applyPlaceholders } from '../lib/placeholders';
+import { renderWelcomeCard } from '../lib/welcomeCard';
 import type { BotContext } from '../framework/context';
 
 async function fetchSendableChannel(member: GuildMember, channelId: string) {
@@ -21,8 +22,23 @@ async function sendWelcome(member: GuildMember, ctx: BotContext): Promise<void> 
   if (config.channelId) {
     const channel = await fetchSendableChannel(member, config.channelId);
     if (channel) {
+      const files: AttachmentBuilder[] = [];
+      if (config.cardEnabled) {
+        try {
+          const png = await renderWelcomeCard({
+            displayName: member.displayName,
+            avatarUrl: member.displayAvatarURL({ extension: 'png', size: 256 }),
+            title: 'Welcome',
+            subtitle: `Member #${member.guild.memberCount}`,
+            backgroundUrl: config.cardBackground,
+          });
+          files.push(new AttachmentBuilder(png, { name: 'welcome.png' }));
+        } catch (err) {
+          ctx.logger.warn({ err, guildId: member.guild.id }, 'Welcome card render failed');
+        }
+      }
       await channel
-        .send({ content: applyPlaceholders(config.message, member) })
+        .send({ content: applyPlaceholders(config.message, member), files })
         .catch((err: unknown) =>
           ctx.logger.warn({ err, guildId: member.guild.id }, 'Welcome send failed'),
         );

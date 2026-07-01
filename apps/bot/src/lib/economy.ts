@@ -22,6 +22,48 @@ export async function addWallet(guildId: string, userId: string, delta: number):
   });
 }
 
+export type BalanceField = 'wallet' | 'bank';
+
+/**
+ * Admin edit: add (or subtract, if `delta` is negative) to a balance field,
+ * flooring at 0. Lazily creates the row and returns the new balance.
+ */
+export async function addToBalance(
+  guildId: string,
+  userId: string,
+  delta: number,
+  field: BalanceField,
+  startingBalance = 0,
+): Promise<number> {
+  const user = await getEconomyUser(guildId, userId, startingBalance);
+  const next = Math.max(0, (field === 'wallet' ? user.wallet : user.bank) + delta);
+  await prisma.economyUser.update({
+    where: { guildId_userId: { guildId, userId } },
+    data: field === 'wallet' ? { wallet: next } : { bank: next },
+  });
+  return next;
+}
+
+/** Admin edit: set a balance field to an exact amount. Lazily creates the row. */
+export async function setBalance(
+  guildId: string,
+  userId: string,
+  amount: number,
+  field: BalanceField,
+  startingBalance = 0,
+): Promise<void> {
+  await getEconomyUser(guildId, userId, startingBalance);
+  await prisma.economyUser.update({
+    where: { guildId_userId: { guildId, userId } },
+    data: field === 'wallet' ? { wallet: amount } : { bank: amount },
+  });
+}
+
+/** Admin edit: wipe every economy balance in a guild. Returns the row count removed. */
+export function resetGuildEconomy(guildId: string): Promise<{ count: number }> {
+  return prisma.economyUser.deleteMany({ where: { guildId } });
+}
+
 /**
  * Race-safe conditional debit: decrement only if the wallet still holds at least
  * `amount`. Returns true if the debit applied. Prevents a wallet going negative
