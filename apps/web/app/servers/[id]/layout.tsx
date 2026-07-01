@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Crown, Dices, LayoutDashboard, ScrollText, Settings2 } from 'lucide-react';
+import { Bot, ChevronLeft, Crown, Dices, LayoutDashboard, ScrollText, Settings2 } from 'lucide-react';
 import { prisma } from '@solari/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { guildIconUrl } from '../../../lib/discord';
@@ -58,6 +58,14 @@ export default async function GuildLayout({
     icon: <Dices className="h-4 w-4 shrink-0" />,
     locked: !isPremium,
     disabledGlobally: globallyOff.has('ECONOMY'),
+  });
+  // Bot Personalizer is a premium-only surface with no global module flag.
+  moduleNav.push({
+    href: `/servers/${id}/personalizer`,
+    label: 'Bot Personalizer',
+    icon: <Bot className="h-4 w-4 shrink-0" />,
+    locked: !isPremium,
+    disabledGlobally: false,
   });
 
   return (

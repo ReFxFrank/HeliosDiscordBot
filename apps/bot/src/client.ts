@@ -38,6 +38,7 @@ import { reconcileSocial } from './modules/social';
 import { syncAllGuilds } from './lib/guildSync';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
 import { createMusicManager } from './services/music';
+import { CustomBotManager } from './services/customBots';
 import type { BotContext } from './framework/context';
 
 /**
@@ -94,7 +95,16 @@ async function bootstrap(): Promise<void> {
   jobs.registerHandler(QUEUE_NAMES.voiceXp, handleVoiceXp);
   jobs.registerHandler(QUEUE_NAMES.socialPoll, handleSocialPoll);
 
-  const liveCommands = new LiveCommandService(client, logger, jobs, config);
+  // Premium per-guild custom bots (Bot Personalizer). Reuses the loaded commands
+  // + handlers; each token runs an isolated client. Music stays on the main bot.
+  const customBots = new CustomBotManager(
+    { logger, prisma, config, jobs, redis, music },
+    commands,
+    componentHandlers,
+    logger,
+  );
+
+  const liveCommands = new LiveCommandService(client, logger, jobs, config, customBots);
 
   for (const event of events) {
     const run = (...args: ClientEvents[typeof event.name]): void => {
@@ -147,6 +157,7 @@ async function bootstrap(): Promise<void> {
       reconcileVoiceXp(ready, jobs),
       reconcileTempVoice(ready, prisma, logger),
       reconcileSocial(ready, jobs, logger),
+      customBots.reconcile(),
       cacheAllGuildInvites(ready.guilds.cache.values()),
     ]).then((results) => {
       for (const result of results) {
@@ -163,6 +174,7 @@ async function bootstrap(): Promise<void> {
     shuttingDown = true;
     logger.info({ signal }, 'Shutting down shard');
     try {
+      await customBots.closeAll();
       await jobs.close();
       if (stopMetrics) await stopMetrics();
       await closeRedis();

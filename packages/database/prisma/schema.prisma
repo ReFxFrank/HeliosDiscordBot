@@ -78,6 +78,32 @@ model GlobalModuleFlag {
   updatedAt DateTime @updatedAt @default(now())
 }
 
+/// Per-guild custom bot (premium Bot Personalizer). A server supplies its OWN
+/// Discord application: the bot boots a dedicated client on this token so that
+/// server sees a bot with its own name/avatar/banner/presence. The token is
+/// stored AES-256-GCM encrypted; it is never returned to the dashboard.
+model CustomBot {
+  guildId       String   @id
+  /// AES-256-GCM encrypted bot token (iv:tag:ciphertext).
+  tokenEnc      String
+  applicationId String?
+  /// Desired identity — applied to the custom bot on (re)start.
+  botName       String?
+  avatarUrl     String?
+  bannerUrl     String?
+  /// Presence: online | idle | dnd | invisible.
+  status        String   @default("online")
+  /// PLAYING | LISTENING | WATCHING | COMPETING | STREAMING.
+  activityType  String?
+  activityText  String?
+  streamUrl     String?
+  enabled       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+}
+
 /// Guild metadata mirror (§4.4). The bot upserts these rows from gateway
 /// events so the dashboard never needs to hit the Discord API for basics.
 model Guild {
@@ -123,6 +149,7 @@ model Guild {
   tempVoiceChannels TempVoiceChannel[]
   economyUsers      EconomyUser[]
   socialSubscriptions SocialSubscription[]
+  customBot         CustomBot?
 
   @@index([ownerId])
 }

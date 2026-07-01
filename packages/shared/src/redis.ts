@@ -30,7 +30,8 @@ export type LiveCommandType =
   | 'SCHEDULE_MESSAGE'
   | 'CANCEL_SCHEDULED_MESSAGE'
   | 'DEPLOY_TICKET_PANEL'
-  | 'REFX_ALERT';
+  | 'REFX_ALERT'
+  | 'RESTART_CUSTOM_BOT';
 
 export interface LiveCommandMessage<TPayload = unknown> {
   type: LiveCommandType;

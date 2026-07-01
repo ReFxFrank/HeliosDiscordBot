@@ -22,6 +22,7 @@ import { postRefxAlert } from '../modules/refxAlerts';
 import { refreshStatsCounters } from '../modules/statsCounters';
 import { scheduledMessageJobId, type JobService } from './jobs';
 import type { ConfigCache } from './configCache';
+import type { CustomBotManager } from './customBots';
 
 /**
  * Subscribes to `helios:command` (§4.3). Uses broadcast-and-filter: every shard
@@ -33,6 +34,7 @@ export class LiveCommandService {
     private readonly logger: Logger,
     private readonly jobs: JobService,
     private readonly config: ConfigCache,
+    private readonly customBots: CustomBotManager,
   ) {}
 
   async start(): Promise<void> {
@@ -51,6 +53,10 @@ export class LiveCommandService {
     if (!this.client.guilds.cache.has(message.guildId)) return; // not our shard's guild
 
     switch (message.type) {
+      case 'RESTART_CUSTOM_BOT':
+        // (Re)start or stop this guild's custom bot from its latest DB row.
+        await this.customBots.start(message.guildId);
+        return;
       case 'DEPLOY_PANEL':
         await this.deployPanel(message.guildId, message.payload as DeployPanelPayload);
         return;
