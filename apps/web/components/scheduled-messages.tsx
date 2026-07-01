@@ -13,8 +13,10 @@ import {
   deleteScheduledMessage,
   toggleScheduledMessage,
 } from '../lib/scheduled-actions';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
+import { ChannelSelect } from './ui/entity-select';
 import { GlassCard } from './ui/glass-card';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
 export interface ScheduledSummary {
   id: string;
@@ -37,9 +39,13 @@ const emptyForm = {
 export function ScheduledMessages({
   guildId,
   messages,
+  roles: _roles,
+  channels,
 }: {
   guildId: string;
   messages: ScheduledSummary[];
+  roles: RoleOption[];
+  channels: ChannelOption[];
 }) {
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -97,12 +103,13 @@ export function ScheduledMessages({
               placeholder="Daily reminder"
             />
           </Field>
-          <Field label="Channel ID" hint="Where to post.">
-            <input
-              className={monoInputClass}
-              value={form.channelId}
-              onChange={(e) => setForm((f) => ({ ...f, channelId: e.target.value.trim() }))}
-              placeholder="123456789012345678"
+          <Field label="Channel" hint="Where to post.">
+            <ChannelSelect
+              channels={channels}
+              only="text"
+              placeholder="None"
+              selected={form.channelId ? [form.channelId] : []}
+              onChange={(ids) => setForm((f) => ({ ...f, channelId: ids[0] ?? '' }))}
             />
           </Field>
         </div>

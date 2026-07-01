@@ -8,7 +8,9 @@ import {
   type RefxSeverity,
   type RefxWebhookEvent,
 } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveRefxAlertsConfig } from '../lib/config-actions';
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
 import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
 
 const toList = (value: string): string[] =>
@@ -31,9 +33,13 @@ function severityValue(value: RefxSeverity | null): string {
 export function RefxAlertsForm({
   guildId,
   initial,
+  roles,
+  channels,
 }: {
   guildId: string;
   initial: RefxAlertsConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
 }) {
   const [config, setConfig] = useState<RefxAlertsConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -60,12 +66,13 @@ export function RefxAlertsForm({
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Alert channel ID" hint="Where ReFx incident & status alerts are posted.">
-        <input
-          className={monoInputClass}
-          value={config.channelId ?? ''}
-          onChange={(e) => update('channelId', e.target.value.trim() || null)}
-          placeholder="channel ID"
+      <Field label="Alert channel" hint="Where ReFx incident & status alerts are posted.">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.channelId ? [config.channelId] : []}
+          onChange={(ids) => update('channelId', ids[0] ?? null)}
         />
       </Field>
 
@@ -134,12 +141,12 @@ export function RefxAlertsForm({
         </Field>
       </div>
 
-      <Field label="Mention role ID" hint="Role to ping on qualifying alerts. Blank = no ping.">
-        <input
-          className={monoInputClass}
-          value={config.mentionRoleId ?? ''}
-          onChange={(e) => update('mentionRoleId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Mention role" hint="Role to ping on qualifying alerts. Blank = no ping.">
+        <RoleSelect
+          roles={roles}
+          placeholder="None"
+          selected={config.mentionRoleId ? [config.mentionRoleId] : []}
+          onChange={(ids) => update('mentionRoleId', ids[0] ?? null)}
         />
       </Field>
 

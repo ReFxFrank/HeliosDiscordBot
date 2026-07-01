@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { birthdaysConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { BirthdaysForm } from '../../../../components/birthdays-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,12 +11,13 @@ export default async function BirthdaysPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const [row, count] = await Promise.all([
+  const [row, count, { roles, channels }] = await Promise.all([
     prisma.guildModuleConfig.findUnique({
       where: { guildId_module: { guildId: id, module: 'BIRTHDAYS' } },
       select: { config: true },
     }),
     prisma.birthday.count({ where: { guildId: id } }),
+    getGuildEntities(id),
   ]);
   const initial = birthdaysConfigSchema.parse(row?.config ?? {});
 
@@ -29,7 +31,7 @@ export default async function BirthdaysPage({ params }: { params: Promise<{ id: 
         </p>
       </div>
       <GlassCard className="p-5">
-        <BirthdaysForm guildId={id} initial={initial} />
+        <BirthdaysForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

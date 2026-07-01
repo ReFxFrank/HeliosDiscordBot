@@ -2,10 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import type { BirthdaysConfig } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveBirthdaysConfig } from '../lib/config-actions';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
-export function BirthdaysForm({ guildId, initial }: { guildId: string; initial: BirthdaysConfig }) {
+export function BirthdaysForm({
+  guildId,
+  initial,
+  roles,
+  channels,
+}: {
+  guildId: string;
+  initial: BirthdaysConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<BirthdaysConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
@@ -24,23 +36,24 @@ export function BirthdaysForm({ guildId, initial }: { guildId: string; initial: 
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Announcement channel ID" hint="Where daily birthday greetings post.">
-        <input
-          className={monoInputClass}
-          value={config.channelId ?? ''}
-          onChange={(e) => update('channelId', e.target.value.trim() || null)}
-          placeholder="channel ID"
+      <Field label="Announcement channel" hint="Where daily birthday greetings post.">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.channelId ? [config.channelId] : []}
+          onChange={(ids) => update('channelId', ids[0] ?? null)}
         />
       </Field>
       <Field
-        label="Birthday role ID"
+        label="Birthday role"
         hint="Granted on a member's birthday, removed the next day. Optional."
       >
-        <input
-          className={monoInputClass}
-          value={config.roleId ?? ''}
-          onChange={(e) => update('roleId', e.target.value.trim() || null)}
-          placeholder="optional"
+        <RoleSelect
+          roles={roles}
+          placeholder="None"
+          selected={config.roleId ? [config.roleId] : []}
+          onChange={(ids) => update('roleId', ids[0] ?? null)}
         />
       </Field>
       <Field label="Message" hint="Supports {user}, {server}.">

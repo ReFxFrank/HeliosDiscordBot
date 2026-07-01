@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react';
 import type { LoggingConfig } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveLoggingConfig } from '../lib/config-actions';
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
 import { Field, SaveBar, monoInputClass, type SaveStatus } from './ui/form';
 
 const toList = (value: string): string[] =>
@@ -11,7 +13,17 @@ const toList = (value: string): string[] =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-export function LoggingForm({ guildId, initial }: { guildId: string; initial: LoggingConfig }) {
+export function LoggingForm({
+  guildId,
+  initial,
+  roles,
+  channels,
+}: {
+  guildId: string;
+  initial: LoggingConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<LoggingConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
@@ -32,12 +44,13 @@ export function LoggingForm({ guildId, initial }: { guildId: string; initial: Lo
     label: string,
     key: 'messageChannelId' | 'memberChannelId' | 'serverChannelId' | 'voiceChannelId',
   ) => (
-    <Field label={label} hint="Channel ID — blank to disable this category.">
-      <input
-        className={monoInputClass}
-        value={config[key] ?? ''}
-        onChange={(e) => update(key, e.target.value.trim() || null)}
-        placeholder="optional"
+    <Field label={label} hint="Blank to disable this category.">
+      <ChannelSelect
+        channels={channels}
+        only="text"
+        placeholder="None"
+        selected={config[key] ? [config[key] as string] : []}
+        onChange={(ids) => update(key, ids[0] ?? null)}
       />
     </Field>
   );
@@ -49,18 +62,21 @@ export function LoggingForm({ guildId, initial }: { guildId: string; initial: Lo
       {channelField('Server log channel', 'serverChannelId')}
       {channelField('Voice log channel', 'voiceChannelId')}
 
-      <Field label="Ignored channels" hint="Comma-separated channel IDs to skip.">
-        <input
-          className={monoInputClass}
-          value={config.ignoredChannelIds.join(', ')}
-          onChange={(e) => update('ignoredChannelIds', toList(e.target.value))}
+      <Field label="Ignored channels" hint="Channels to skip.">
+        <ChannelSelect
+          channels={channels}
+          multiple
+          only="text"
+          selected={config.ignoredChannelIds}
+          onChange={(ids) => update('ignoredChannelIds', ids)}
         />
       </Field>
       <Field label="Ignored roles" hint="Events from members with these roles are skipped.">
-        <input
-          className={monoInputClass}
-          value={config.ignoredRoleIds.join(', ')}
-          onChange={(e) => update('ignoredRoleIds', toList(e.target.value))}
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.ignoredRoleIds}
+          onChange={(ids) => update('ignoredRoleIds', ids)}
         />
       </Field>
       <Field label="Ignored users" hint="Comma-separated user IDs to skip.">

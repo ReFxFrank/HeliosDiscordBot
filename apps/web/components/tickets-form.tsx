@@ -3,17 +3,23 @@
 import { useState, useTransition } from 'react';
 import { Send } from 'lucide-react';
 import type { TicketsConfig } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveTicketsConfig } from '../lib/config-actions';
 import { deployTicketPanel } from '../lib/tickets-actions';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
 
-const toList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-export function TicketsForm({ guildId, initial }: { guildId: string; initial: TicketsConfig }) {
+export function TicketsForm({
+  guildId,
+  initial,
+  roles,
+  channels,
+}: {
+  guildId: string;
+  initial: TicketsConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<TicketsConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [deployMsg, setDeployMsg] = useState<string | null>(null);
@@ -41,30 +47,33 @@ export function TicketsForm({ guildId, initial }: { guildId: string; initial: Ti
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Ticket category ID" hint="New ticket channels are created under this category.">
-        <input
-          className={monoInputClass}
-          value={config.categoryId ?? ''}
-          onChange={(e) => update('categoryId', e.target.value.trim() || null)}
-          placeholder="category channel ID"
+      <Field label="Ticket category" hint="New ticket channels are created under this category.">
+        <ChannelSelect
+          channels={channels}
+          only="category"
+          placeholder="None"
+          selected={config.categoryId ? [config.categoryId] : []}
+          onChange={(ids) => update('categoryId', ids[0] ?? null)}
         />
       </Field>
-      <Field label="Support role IDs" hint="Comma-separated. These roles see and manage tickets.">
-        <input
-          className={monoInputClass}
-          value={config.supportRoleIds.join(', ')}
-          onChange={(e) => update('supportRoleIds', toList(e.target.value))}
+      <Field label="Support roles" hint="These roles see and manage tickets.">
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.supportRoleIds}
+          onChange={(ids) => update('supportRoleIds', ids)}
         />
       </Field>
       <Field
-        label="Transcript channel ID"
-        hint="Where closed-ticket transcripts are posted. Blank to disable."
+        label="Transcript channel"
+        hint="Where closed-ticket transcripts are posted. None to disable."
       >
-        <input
-          className={monoInputClass}
-          value={config.transcriptChannelId ?? ''}
-          onChange={(e) => update('transcriptChannelId', e.target.value.trim() || null)}
-          placeholder="optional"
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.transcriptChannelId ? [config.transcriptChannelId] : []}
+          onChange={(ids) => update('transcriptChannelId', ids[0] ?? null)}
         />
       </Field>
 
@@ -130,14 +139,15 @@ export function TicketsForm({ guildId, initial }: { guildId: string; initial: Ti
             />
           </Field>
           <Field
-            label="Panel channel ID"
+            label="Panel channel"
             hint="Where the panel is deployed. Save first, then deploy."
           >
-            <input
-              className={monoInputClass}
-              value={config.panelChannelId ?? ''}
-              onChange={(e) => update('panelChannelId', e.target.value.trim() || null)}
-              placeholder="channel ID"
+            <ChannelSelect
+              channels={channels}
+              only="text"
+              placeholder="None"
+              selected={config.panelChannelId ? [config.panelChannelId] : []}
+              onChange={(ids) => update('panelChannelId', ids[0] ?? null)}
             />
           </Field>
           <div className="flex items-center gap-3">

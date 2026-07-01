@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import type { ScheduleRepeat } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import {
   ScheduledMessages,
   type ScheduledSummary,
@@ -12,11 +13,14 @@ export default async function ScheduledPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const rows = await prisma.scheduledMessage.findMany({
-    where: { guildId: id },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  });
+  const [rows, { roles, channels }] = await Promise.all([
+    prisma.scheduledMessage.findMany({
+      where: { guildId: id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }),
+    getGuildEntities(id),
+  ]);
   const messages: ScheduledSummary[] = rows.map((message) => ({
     id: message.id,
     name: message.name,
@@ -35,7 +39,7 @@ export default async function ScheduledPage({ params }: { params: Promise<{ id: 
           One-off or recurring announcements posted by the bot — durable across restarts.
         </p>
       </div>
-      <ScheduledMessages guildId={id} messages={messages} />
+      <ScheduledMessages guildId={id} messages={messages} roles={roles} channels={channels} />
     </div>
   );
 }

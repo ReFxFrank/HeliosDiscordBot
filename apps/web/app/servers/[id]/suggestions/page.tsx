@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { suggestionsConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { SuggestionsForm } from '../../../../components/suggestions-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,12 +11,13 @@ export default async function SuggestionsPage({ params }: { params: Promise<{ id
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const [row, pending] = await Promise.all([
+  const [row, pending, { roles, channels }] = await Promise.all([
     prisma.guildModuleConfig.findUnique({
       where: { guildId_module: { guildId: id, module: 'SUGGESTIONS' } },
       select: { config: true },
     }),
     prisma.suggestion.count({ where: { guildId: id, status: 'PENDING' } }),
+    getGuildEntities(id),
   ]);
   const initial = suggestionsConfigSchema.parse(row?.config ?? {});
 
@@ -30,7 +32,7 @@ export default async function SuggestionsPage({ params }: { params: Promise<{ id
         </p>
       </div>
       <GlassCard className="p-5">
-        <SuggestionsForm guildId={id} initial={initial} />
+        <SuggestionsForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

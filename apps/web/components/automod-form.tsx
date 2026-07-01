@@ -8,8 +8,10 @@ import {
   type AutomodConfig,
   type GateAction,
 } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveAutomodConfig } from '../lib/config-actions';
 import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { ChannelSelect, RoleSelect } from './ui/entity-select';
 
 const toList = (value: string): string[] =>
   value
@@ -33,7 +35,17 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   words: 'Blocked words',
 };
 
-export function AutomodForm({ guildId, initial }: { guildId: string; initial: AutomodConfig }) {
+export function AutomodForm({
+  guildId,
+  initial,
+  roles,
+  channels,
+}: {
+  guildId: string;
+  initial: AutomodConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<AutomodConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
@@ -119,22 +131,25 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Exempt role IDs" hint="Comma-separated. Never auto-moderated.">
-          <input
-            className={monoInputClass}
-            value={config.exemptRoleIds.join(', ')}
-            onChange={(e) => {
-              setConfig((p) => ({ ...p, exemptRoleIds: toList(e.target.value) }));
+        <Field label="Exempt roles" hint="Never auto-moderated.">
+          <RoleSelect
+            roles={roles}
+            multiple
+            selected={config.exemptRoleIds}
+            onChange={(ids) => {
+              setConfig((p) => ({ ...p, exemptRoleIds: ids }));
               setStatus('idle');
             }}
           />
         </Field>
-        <Field label="Exempt channel IDs" hint="Comma-separated.">
-          <input
-            className={monoInputClass}
-            value={config.exemptChannelIds.join(', ')}
-            onChange={(e) => {
-              setConfig((p) => ({ ...p, exemptChannelIds: toList(e.target.value) }));
+        <Field label="Exempt channels" hint="Never auto-moderated.">
+          <ChannelSelect
+            channels={channels}
+            multiple
+            only="text"
+            selected={config.exemptChannelIds}
+            onChange={(ids) => {
+              setConfig((p) => ({ ...p, exemptChannelIds: ids }));
               setStatus('idle');
             }}
           />
@@ -362,13 +377,15 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
               )}
             </div>
             <Field
-              label="Alert channel ID"
-              hint="Where the “raid engaged” notice posts. Blank = member log."
+              label="Alert channel"
+              hint="Where the “raid engaged” notice posts. None = member log."
             >
-              <input
-                className={monoInputClass}
-                value={raid.alertChannelId}
-                onChange={(e) => patchRaid({ alertChannelId: e.target.value.trim() })}
+              <ChannelSelect
+                channels={channels}
+                only="text"
+                placeholder="None"
+                selected={raid.alertChannelId ? [raid.alertChannelId] : []}
+                onChange={(ids) => patchRaid({ alertChannelId: ids[0] ?? '' })}
               />
             </Field>
           </div>
@@ -392,18 +409,20 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
         {verification.enabled && (
           <div className="mt-3 flex flex-col gap-3">
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Verified role ID" hint="Granted on a successful verify.">
-                <input
-                  className={monoInputClass}
-                  value={verification.verifiedRoleId}
-                  onChange={(e) => patchVerification({ verifiedRoleId: e.target.value.trim() })}
+              <Field label="Verified role" hint="Granted on a successful verify.">
+                <RoleSelect
+                  roles={roles}
+                  placeholder="None"
+                  selected={verification.verifiedRoleId ? [verification.verifiedRoleId] : []}
+                  onChange={(ids) => patchVerification({ verifiedRoleId: ids[0] ?? '' })}
                 />
               </Field>
-              <Field label="Unverified role ID" hint="Optional. Added on join, removed on verify.">
-                <input
-                  className={monoInputClass}
-                  value={verification.unverifiedRoleId}
-                  onChange={(e) => patchVerification({ unverifiedRoleId: e.target.value.trim() })}
+              <Field label="Unverified role" hint="Optional. Added on join, removed on verify.">
+                <RoleSelect
+                  roles={roles}
+                  placeholder="None"
+                  selected={verification.unverifiedRoleId ? [verification.unverifiedRoleId] : []}
+                  onChange={(ids) => patchVerification({ unverifiedRoleId: ids[0] ?? '' })}
                 />
               </Field>
             </div>

@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { automodConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { AutomodForm } from '../../../../components/automod-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,10 +11,13 @@ export default async function AutomodPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const row = await prisma.guildModuleConfig.findUnique({
-    where: { guildId_module: { guildId: id, module: 'AUTOMOD' } },
-    select: { config: true },
-  });
+  const [row, { roles, channels }] = await Promise.all([
+    prisma.guildModuleConfig.findUnique({
+      where: { guildId_module: { guildId: id, module: 'AUTOMOD' } },
+      select: { config: true },
+    }),
+    getGuildEntities(id),
+  ]);
   const initial = automodConfigSchema.parse(row?.config ?? {});
 
   return (
@@ -26,7 +30,7 @@ export default async function AutomodPage({ params }: { params: Promise<{ id: st
         </p>
       </div>
       <GlassCard className="p-5">
-        <AutomodForm guildId={id} initial={initial} />
+        <AutomodForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

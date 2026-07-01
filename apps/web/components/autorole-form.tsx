@@ -2,19 +2,28 @@
 
 import { useState, useTransition } from 'react';
 import type { AutoroleConfig } from '@solari/shared';
+import type { RoleOption } from '../lib/discord-guild';
 import { saveAutoroleConfig } from '../lib/config-actions';
-import { Field, SaveBar, monoInputClass, type SaveStatus } from './ui/form';
+import { Field, SaveBar, type SaveStatus } from './ui/form';
+import { RoleSelect } from './ui/entity-select';
 
-const toList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-export function AutoroleForm({ guildId, initial }: { guildId: string; initial: AutoroleConfig }) {
+export function AutoroleForm({
+  guildId,
+  initial,
+  roles,
+}: {
+  guildId: string;
+  initial: AutoroleConfig;
+  roles: RoleOption[];
+}) {
   const [config, setConfig] = useState<AutoroleConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
+
+  function update<K extends keyof AutoroleConfig>(key: K, value: AutoroleConfig[K]): void {
+    setConfig((prev) => ({ ...prev, [key]: value }));
+    setStatus('idle');
+  }
 
   function save(): void {
     startTransition(async () => {
@@ -25,27 +34,21 @@ export function AutoroleForm({ guildId, initial }: { guildId: string; initial: A
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Roles for humans" hint="Comma-separated role IDs granted to people on join.">
-        <input
-          className={monoInputClass}
-          value={config.humanRoleIds.join(', ')}
-          onChange={(e) => {
-            setConfig((prev) => ({ ...prev, humanRoleIds: toList(e.target.value) }));
-            setStatus('idle');
-          }}
-          placeholder="123, 456"
+      <Field label="Roles for humans" hint="Roles granted to people on join.">
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.humanRoleIds}
+          onChange={(ids) => update('humanRoleIds', ids)}
         />
       </Field>
 
-      <Field label="Roles for bots" hint="Comma-separated role IDs granted to bots on join.">
-        <input
-          className={monoInputClass}
-          value={config.botRoleIds.join(', ')}
-          onChange={(e) => {
-            setConfig((prev) => ({ ...prev, botRoleIds: toList(e.target.value) }));
-            setStatus('idle');
-          }}
-          placeholder="789"
+      <Field label="Roles for bots" hint="Roles granted to bots on join.">
+        <RoleSelect
+          roles={roles}
+          multiple
+          selected={config.botRoleIds}
+          onChange={(ids) => update('botRoleIds', ids)}
         />
       </Field>
 

@@ -9,17 +9,21 @@ import {
   type StatCounterType,
   type StatsCountersConfig,
 } from '@solari/shared';
+import type { ChannelOption } from '../lib/discord-guild';
 import { saveStatsCountersConfig } from '../lib/config-actions';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { ChannelSelect } from './ui/entity-select';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
 const blank: StatCounter = { channelId: '', type: 'members', template: '{count} members' };
 
 export function StatsCountersForm({
   guildId,
   initial,
+  channels,
 }: {
   guildId: string;
   initial: StatsCountersConfig;
+  channels: ChannelOption[];
 }) {
   const [config, setConfig] = useState<StatsCountersConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -65,11 +69,11 @@ export function StatsCountersForm({
         {config.counters.map((counter, index) => (
           <div key={index} className="rounded-lg border border-white/10 p-3">
             <div className="grid gap-2 sm:grid-cols-[1fr_140px_auto]">
-              <input
-                className={monoInputClass}
-                placeholder="channel ID"
-                value={counter.channelId}
-                onChange={(e) => patch(index, { channelId: e.target.value.trim() })}
+              <ChannelSelect
+                channels={channels}
+                placeholder="None"
+                selected={counter.channelId ? [counter.channelId] : []}
+                onChange={(ids) => patch(index, { channelId: ids[0] ?? '' })}
               />
               <select
                 className={inputClass}

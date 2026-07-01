@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { loggingConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { LoggingForm } from '../../../../components/logging-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,10 +11,13 @@ export default async function LoggingConfigPage({ params }: { params: Promise<{ 
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const row = await prisma.guildModuleConfig.findUnique({
-    where: { guildId_module: { guildId: id, module: 'LOGGING' } },
-    select: { config: true },
-  });
+  const [row, { roles, channels }] = await Promise.all([
+    prisma.guildModuleConfig.findUnique({
+      where: { guildId_module: { guildId: id, module: 'LOGGING' } },
+      select: { config: true },
+    }),
+    getGuildEntities(id),
+  ]);
   const initial = loggingConfigSchema.parse(row?.config ?? {});
 
   return (
@@ -25,7 +29,7 @@ export default async function LoggingConfigPage({ params }: { params: Promise<{ 
         </p>
       </div>
       <GlassCard className="p-5">
-        <LoggingForm guildId={id} initial={initial} />
+        <LoggingForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

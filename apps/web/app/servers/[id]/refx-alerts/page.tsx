@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { refxAlertsConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { RefxAlertsForm } from '../../../../components/refx-alerts-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,10 +11,13 @@ export default async function RefxAlertsPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const row = await prisma.guildModuleConfig.findUnique({
-    where: { guildId_module: { guildId: id, module: 'REFX_ALERTS' } },
-    select: { config: true },
-  });
+  const [row, { roles, channels }] = await Promise.all([
+    prisma.guildModuleConfig.findUnique({
+      where: { guildId_module: { guildId: id, module: 'REFX_ALERTS' } },
+      select: { config: true },
+    }),
+    getGuildEntities(id),
+  ]);
   const initial = refxAlertsConfigSchema.parse(row?.config ?? {});
   const base = (process.env.AUTH_URL ?? '').replace(/\/$/, '');
   const webhookUrl = base ? `${base}/api/integrations/refx` : '/api/integrations/refx';
@@ -43,7 +47,7 @@ export default async function RefxAlertsPage({ params }: { params: Promise<{ id:
       </GlassCard>
 
       <GlassCard className="p-5">
-        <RefxAlertsForm guildId={id} initial={initial} />
+        <RefxAlertsForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

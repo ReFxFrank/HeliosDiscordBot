@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { inviteTrackingConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { InviteTrackingForm } from '../../../../components/invite-tracking-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,12 +11,13 @@ export default async function InvitesPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const [row, tracked] = await Promise.all([
+  const [row, tracked, { roles, channels }] = await Promise.all([
     prisma.guildModuleConfig.findUnique({
       where: { guildId_module: { guildId: id, module: 'INVITE_TRACKING' } },
       select: { config: true },
     }),
     prisma.inviteUse.count({ where: { guildId: id, inviterId: { not: null } } }),
+    getGuildEntities(id),
   ]);
   const initial = inviteTrackingConfigSchema.parse(row?.config ?? {});
 
@@ -29,7 +31,7 @@ export default async function InvitesPage({ params }: { params: Promise<{ id: st
         </p>
       </div>
       <GlassCard className="p-5">
-        <InviteTrackingForm guildId={id} initial={initial} />
+        <InviteTrackingForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
     </div>
   );

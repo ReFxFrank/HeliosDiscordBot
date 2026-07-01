@@ -2,11 +2,23 @@
 
 import { useState, useTransition } from 'react';
 import type { WelcomeConfig } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveWelcomeConfig } from '../lib/config-actions';
+import { ChannelSelect } from './ui/entity-select';
 import { Switch } from './ui/switch';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
-export function WelcomeForm({ guildId, initial }: { guildId: string; initial: WelcomeConfig }) {
+export function WelcomeForm({
+  guildId,
+  initial,
+  roles: _roles,
+  channels,
+}: {
+  guildId: string;
+  initial: WelcomeConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<WelcomeConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
@@ -25,12 +37,13 @@ export function WelcomeForm({ guildId, initial }: { guildId: string; initial: We
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Welcome channel ID" hint="Where join messages are posted (blank to disable).">
-        <input
-          className={monoInputClass}
-          value={config.channelId ?? ''}
-          onChange={(e) => update('channelId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Welcome channel" hint="Where join messages are posted (blank to disable).">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.channelId ? [config.channelId] : []}
+          onChange={(ids) => update('channelId', ids[0] ?? null)}
         />
       </Field>
 
@@ -69,12 +82,13 @@ export function WelcomeForm({ guildId, initial }: { guildId: string; initial: We
         </Field>
       )}
 
-      <Field label="Leave channel ID" hint="Where leave messages are posted (blank to disable).">
-        <input
-          className={monoInputClass}
-          value={config.leaveChannelId ?? ''}
-          onChange={(e) => update('leaveChannelId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Leave channel" hint="Where leave messages are posted (blank to disable).">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.leaveChannelId ? [config.leaveChannelId] : []}
+          onChange={(ids) => update('leaveChannelId', ids[0] ?? null)}
         />
       </Field>
 

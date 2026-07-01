@@ -1,6 +1,7 @@
 import { prisma } from '@solari/database';
 import { levelingConfigSchema, xpProgress } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
+import { getGuildEntities } from '../../../../lib/discord-guild';
 import { LevelingForm } from '../../../../components/leveling-form';
 import { GlassCard } from '../../../../components/ui/glass-card';
 
@@ -10,7 +11,7 @@ export default async function LevelingConfigPage({ params }: { params: Promise<{
   const { id } = await params;
   await guardGuildAccess(id);
 
-  const [row, top] = await Promise.all([
+  const [row, top, { roles, channels }] = await Promise.all([
     prisma.guildModuleConfig.findUnique({
       where: { guildId_module: { guildId: id, module: 'LEVELING' } },
       select: { config: true },
@@ -21,6 +22,7 @@ export default async function LevelingConfigPage({ params }: { params: Promise<{
       take: 10,
       select: { userId: true, xp: true },
     }),
+    getGuildEntities(id),
   ]);
   const initial = levelingConfigSchema.parse(row?.config ?? {});
 
@@ -32,7 +34,7 @@ export default async function LevelingConfigPage({ params }: { params: Promise<{
       </div>
 
       <GlassCard className="p-5">
-        <LevelingForm guildId={id} initial={initial} />
+        <LevelingForm guildId={id} initial={initial} roles={roles} channels={channels} />
       </GlassCard>
 
       <div>

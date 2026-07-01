@@ -2,17 +2,21 @@
 
 import { useState, useTransition } from 'react';
 import type { StarboardConfig } from '@solari/shared';
+import type { ChannelOption } from '../lib/discord-guild';
 import { saveStarboardConfig } from '../lib/config-actions';
+import { ChannelSelect } from './ui/entity-select';
 import { Switch } from './ui/switch';
-import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
+import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
-const toList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-export function StarboardForm({ guildId, initial }: { guildId: string; initial: StarboardConfig }) {
+export function StarboardForm({
+  guildId,
+  initial,
+  channels,
+}: {
+  guildId: string;
+  initial: StarboardConfig;
+  channels: ChannelOption[];
+}) {
   const [config, setConfig] = useState<StarboardConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
@@ -31,12 +35,13 @@ export function StarboardForm({ guildId, initial }: { guildId: string; initial: 
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Starboard channel ID" hint="Where starred messages are posted.">
-        <input
-          className={monoInputClass}
-          value={config.channelId ?? ''}
-          onChange={(e) => update('channelId', e.target.value.trim() || null)}
-          placeholder="optional"
+      <Field label="Starboard channel" hint="Where starred messages are posted.">
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.channelId ? [config.channelId] : []}
+          onChange={(ids) => update('channelId', ids[0] ?? null)}
         />
       </Field>
 
@@ -59,11 +64,13 @@ export function StarboardForm({ guildId, initial }: { guildId: string; initial: 
         </Field>
       </div>
 
-      <Field label="Ignored channels" hint="Comma-separated channel IDs to exclude.">
-        <input
-          className={monoInputClass}
-          value={config.ignoredChannelIds.join(', ')}
-          onChange={(e) => update('ignoredChannelIds', toList(e.target.value))}
+      <Field label="Ignored channels" hint="Channels to exclude from starboard.">
+        <ChannelSelect
+          channels={channels}
+          multiple
+          only="text"
+          selected={config.ignoredChannelIds}
+          onChange={(ids) => update('ignoredChannelIds', ids)}
         />
       </Field>
 

@@ -2,15 +2,21 @@
 
 import { useState, useTransition } from 'react';
 import type { InviteTrackingConfig } from '@solari/shared';
+import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveInviteTrackingConfig } from '../lib/config-actions';
-import { Field, SaveBar, monoInputClass, type SaveStatus } from './ui/form';
+import { ChannelSelect } from './ui/entity-select';
+import { Field, SaveBar, type SaveStatus } from './ui/form';
 
 export function InviteTrackingForm({
   guildId,
   initial,
+  roles: _roles,
+  channels,
 }: {
   guildId: string;
   initial: InviteTrackingConfig;
+  roles: RoleOption[];
+  channels: ChannelOption[];
 }) {
   const [config, setConfig] = useState<InviteTrackingConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -26,17 +32,18 @@ export function InviteTrackingForm({
   return (
     <div className="flex flex-col gap-5">
       <Field
-        label="Join-log channel ID"
+        label="Join-log channel"
         hint="Posts “X joined, invited by Y”. Blank disables the log (counts still track)."
       >
-        <input
-          className={monoInputClass}
-          value={config.logChannelId ?? ''}
-          onChange={(e) => {
-            setConfig({ logChannelId: e.target.value.trim() || null });
+        <ChannelSelect
+          channels={channels}
+          only="text"
+          placeholder="None"
+          selected={config.logChannelId ? [config.logChannelId] : []}
+          onChange={(ids) => {
+            setConfig({ logChannelId: ids[0] ?? null });
             setStatus('idle');
           }}
-          placeholder="optional"
         />
       </Field>
       <p className="text-xs text-white/40">
