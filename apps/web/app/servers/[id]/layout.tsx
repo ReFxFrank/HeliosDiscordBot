@@ -27,6 +27,13 @@ export default async function GuildLayout({
   ]);
   if (!guild) notFound();
 
+  // The DB `Guild.icon`/`name` can be stale (only refreshed on the bot's guild
+  // sync). The session guild list is fetched live from Discord on each request,
+  // so prefer its icon hash + name and fall back to the DB row.
+  const sessionGuild = guilds.find((g) => g.id === id);
+  const currentName = sessionGuild?.name ?? guild.name ?? id;
+  const currentIcon = sessionGuild?.icon ?? guild.icon ?? null;
+
   const globallyOff = new Set((flagRows as { module: string }[]).map((f) => f.module));
   const isPremium = guild.premiumTier === 'PREMIUM';
 
@@ -51,7 +58,7 @@ export default async function GuildLayout({
         <div className="flex min-w-0 items-center gap-3">
           <ServerSwitcher
             currentId={id}
-            current={{ name: guild.name ?? id, icon: guild.icon }}
+            current={{ name: currentName, icon: currentIcon }}
             guilds={guilds}
           />
           {isPremium ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Folder, Hash, Search, Volume2, X } from 'lucide-react';
 import type { ChannelOption, RoleOption } from '../../lib/discord-guild';
 
@@ -57,11 +58,20 @@ export function EntitySelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // The menu is portaled to <body> so it escapes the settings cards' stacking
+  // contexts (their backdrop-filter would otherwise paint later cards on top of
+  // an in-flow dropdown). `coords` anchors the fixed-position menu to the trigger.
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     function onDocClick(event: MouseEvent): void {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKey(event: KeyboardEvent): void {
       if (event.key === 'Escape') setOpen(false);
@@ -71,6 +81,25 @@ export function EntitySelect({
     return () => {
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  // Keep the portaled menu pinned to the trigger while open (and on scroll/resize).
+  useEffect(() => {
+    if (!open) {
+      setCoords(null);
+      return;
+    }
+    function place(): void {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (rect) setCoords({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+    }
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
     };
   }, [open]);
 
@@ -115,7 +144,12 @@ export function EntitySelect({
 
   return (
     <div ref={containerRef} className="relative">
-      <button type="button" className={triggerClass} onClick={() => setOpen((o) => !o)}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={triggerClass}
+        onClick={() => setOpen((o) => !o)}
+      >
         <span className="flex flex-1 flex-wrap items-center gap-1.5 text-left">
           {selectedOptions.length === 0 ? (
             <span className="text-white/30">{placeholder}</span>
@@ -146,41 +180,48 @@ export function EntitySelect({
         <ChevronDown className="h-4 w-4 shrink-0 text-white/40" />
       </button>
 
-      {open && (
-        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--color-base-elevated)] shadow-xl">
-          <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-            <Search className="h-3.5 w-3.5 text-white/30" />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={`Search ${kind === 'role' ? 'roles' : 'channels'}…`}
-              className="w-full bg-transparent text-sm text-white/90 outline-none placeholder:text-white/30"
-            />
-          </div>
-          <div className="max-h-60 overflow-y-auto py-1">
-            {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-white/40">No matches.</p>
-            ) : (
-              filtered.map((option) => {
-                const isSelected = selected.includes(option.id);
-                return (
-                  <button
-                    type="button"
-                    key={option.id}
-                    onClick={() => toggle(option.id)}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-white/85 hover:bg-white/[0.06]"
-                  >
-                    <OptionGlyph option={option} />
-                    <span className="flex-1 truncate">{option.label}</span>
-                    {isSelected && <Check className="h-4 w-4 text-[var(--color-brand)]" />}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+      {open &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{ position: 'fixed', top: coords.top, left: coords.left, width: coords.width }}
+            className="z-50 overflow-hidden rounded-lg border border-white/10 bg-[var(--color-base-elevated)] shadow-xl"
+          >
+            <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
+              <Search className="h-3.5 w-3.5 text-white/30" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search ${kind === 'role' ? 'roles' : 'channels'}…`}
+                className="w-full bg-transparent text-sm text-white/90 outline-none placeholder:text-white/30"
+              />
+            </div>
+            <div className="max-h-60 overflow-y-auto py-1">
+              {filtered.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-white/40">No matches.</p>
+              ) : (
+                filtered.map((option) => {
+                  const isSelected = selected.includes(option.id);
+                  return (
+                    <button
+                      type="button"
+                      key={option.id}
+                      onClick={() => toggle(option.id)}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-white/85 hover:bg-white/[0.06]"
+                    >
+                      <OptionGlyph option={option} />
+                      <span className="flex-1 truncate">{option.label}</span>
+                      {isSelected && <Check className="h-4 w-4 text-[var(--color-brand)]" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

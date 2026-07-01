@@ -46,6 +46,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Native <select> dropdowns. `color-scheme: dark` makes Chromium render the
+ * popup on a dark surface (instead of the default white box that left our white
+ * option text invisible); the explicit option colors are the belt-and-suspenders
+ * fallback for browsers that don't fully honor color-scheme on the listbox.
+ */
+select {
+  color-scheme: dark;
+}
+select option,
+select optgroup {
+  background-color: #161221;
+  color: #e7e7ee;
+}
+
 /* Glass panel primitive used across module cards and stat surfaces. */
 .glass {
   background: rgba(255, 255, 255, 0.035);
