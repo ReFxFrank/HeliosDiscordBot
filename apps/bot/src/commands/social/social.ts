@@ -4,7 +4,7 @@ import type { Command } from '../../framework/command';
 import { RequireGuild, RequirePremium, RequireUserPermissions } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
 import { env } from '../../env';
-import { isSocialPlatform, platformAvailable } from '../../lib/social';
+import { isSafePublicUrl, isSocialPlatform, platformAvailable } from '../../lib/social';
 import { baselineSubscription, cancelSocialPoll, scheduleSocialPoll } from '../../modules/social';
 
 const MAX_PER_GUILD = 25;
@@ -126,6 +126,15 @@ const command: Command = {
     }
 
     const target = interaction.options.getString('target', true).trim();
+    // SSRF guard: an rss target is a raw URL the bot will fetch — require a
+    // public http(s) host (no localhost / private / link-local addresses).
+    if (platform === 'rss' && !isSafePublicUrl(target)) {
+      await interaction.reply({
+        embeds: [errorEmbed('Provide a public `http(s)` feed URL (private/local addresses are blocked).')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     const channelId = interaction.options.getChannel('channel')?.id ?? interaction.channelId;
     const mention = interaction.options.getRole('mention');
 
@@ -150,7 +159,7 @@ const command: Command = {
     });
     // Baseline to the current latest so we don't dump the backlog, then start polling.
     await baselineSubscription(created.id).catch(() => undefined);
-    await scheduleSocialPoll(ctx.jobs, created.id, 60_000);
+    await scheduleSocialPoll(ctx.jobs, created.id);
 
     await interaction.editReply({
       embeds: [

@@ -68,7 +68,48 @@ function decodeEntities(value: string): string {
 function firstTag(block: string, name: string): string | null {
   const match = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, 'i'));
   const inner = match?.[1];
-  return inner === undefined ? null : decodeEntities(inner);
+  if (inner === undefined) return null;
+  const decoded = decodeEntities(inner);
+  // Treat an empty/whitespace tag as missing so `??` fallbacks kick in.
+  return decoded === '' ? null : decoded;
+}
+
+/** Atom entries have multiple <link> tags; prefer the human page (rel="alternate"). */
+function atomLink(block: string): string {
+  const links = [...block.matchAll(/<link\b([^>]*)>/gi)].map((m) => m[1] ?? '');
+  const href = (attrs: string): string | undefined => attrs.match(/href="([^"]+)"/i)?.[1];
+  const alternate = links.find((a) => /rel="alternate"/i.test(a));
+  const noRel = links.find((a) => !/\brel=/i.test(a));
+  for (const candidate of [alternate, noRel, ...links]) {
+    if (candidate !== undefined) {
+      const url = href(candidate);
+      if (url) return url;
+    }
+  }
+  return '';
+}
+
+/**
+ * Guard against SSRF: only allow http(s) to public hosts. Blocks loopback,
+ * RFC1918, link-local (incl. the 169.254.169.254 cloud-metadata endpoint), and
+ * IPv6 ULA/loopback. (A hostname that later resolves to a private IP — DNS
+ * rebinding — is a residual risk noted for the RSS platform.)
+ */
+export function isSafePublicUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || host.endsWith('.localhost')) return false;
+  if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host)) return false;
+  const b = host.match(/^172\.(\d{1,3})\./);
+  if (b && Number(b[1]) >= 16 && Number(b[1]) <= 31) return false;
+  if (host === '::1' || /^(fc|fd|fe80)/.test(host)) return false;
+  return true;
 }
 
 function parseFeed(xml: string): SocialItem[] {
@@ -81,11 +122,10 @@ function parseFeed(xml: string): SocialItem[] {
     if (!block) continue;
     const id = firstTag(block, 'yt:videoId') ?? firstTag(block, 'id');
     if (!id) continue;
-    const linkHref = block.match(/<link[^>]*href="([^"]+)"/i)?.[1];
     items.push({
       id,
       title: firstTag(block, 'title') ?? 'New post',
-      url: linkHref ?? firstTag(block, 'link') ?? '',
+      url: atomLink(block) || (firstTag(block, 'link') ?? ''),
       author: firstTag(block, 'name') ?? undefined,
     });
   }
@@ -108,6 +148,7 @@ function parseFeed(xml: string): SocialItem[] {
 }
 
 async function fetchRss(feedUrl: string): Promise<SocialItem[]> {
+  if (!isSafePublicUrl(feedUrl)) return []; // defence-in-depth (also validated on /social add)
   const xml = await fetchText(feedUrl);
   return xml === null ? [] : parseFeed(xml);
 }
@@ -163,7 +204,7 @@ async function twitchAppToken(env: TwitchEnv): Promise<string | null> {
 }
 
 interface TwitchStreams {
-  data?: { id: string; title: string; user_name: string; user_login: string }[];
+  data?: { id: string; title: string; user_name: string; user_login: string; started_at: string }[];
 }
 
 async function fetchTwitch(login: string, env: TwitchEnv): Promise<SocialItem[]> {
@@ -177,7 +218,9 @@ async function fetchTwitch(login: string, env: TwitchEnv): Promise<SocialItem[]>
   if (!stream) return []; // offline — the poller keeps lastItemId so it re-posts next go-live
   return [
     {
-      id: stream.id, // unique per live session, so a new stream id = a new go-live
+      // started_at is stable for a continuous broadcast (unlike stream.id, which
+      // can rotate mid-stream), so a new value == a genuine new go-live.
+      id: stream.started_at || stream.id,
       title: `${stream.user_name} is live — ${stream.title}`,
       url: `https://twitch.tv/${stream.user_login}`,
       author: stream.user_name,

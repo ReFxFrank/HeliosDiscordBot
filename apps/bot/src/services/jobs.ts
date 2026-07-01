@@ -106,7 +106,45 @@ export class JobService {
   /** Cancel a scheduled job by id. */
   async cancel(queueName: string, jobId: string): Promise<void> {
     const job = await this.queue(queueName).getJob(jobId);
-    await job?.remove();
+    await job?.remove().catch(() => undefined);
+  }
+
+  /**
+   * Arm a REPEATING job via BullMQ's native job scheduler — the correct
+   * primitive for recurring work. A handler cannot reliably re-arm its own
+   * jobId from inside itself (BullMQ no-ops `add()` while the job key is still
+   * locked/active, then `removeOnComplete` deletes it, so the loop dies after
+   * one run). The scheduler re-arms after each run completes. Idempotent per
+   * `schedulerId`; safe to call repeatedly (e.g. from reconcile).
+   */
+  async scheduleRecurring(
+    queueName: string,
+    schedulerId: string,
+    everyMs: number,
+    jobName: string,
+    data: unknown,
+  ): Promise<void> {
+    await this.queue(queueName).upsertJobScheduler(
+      schedulerId,
+      { every: Math.max(1000, everyMs) },
+      {
+        name: jobName,
+        data,
+        opts: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 10_000 },
+          removeOnComplete: true,
+          removeOnFail: 100,
+        },
+      },
+    );
+  }
+
+  /** Stop a repeating job scheduler (safe if it doesn't exist). */
+  async cancelRecurring(queueName: string, schedulerId: string): Promise<void> {
+    await this.queue(queueName)
+      .removeJobScheduler(schedulerId)
+      .catch(() => undefined);
   }
 
   // ── Temp-action convenience (moderation) ──────────────────────────────────
