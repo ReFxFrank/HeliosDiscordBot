@@ -360,23 +360,37 @@ AUTH_URL=https://solari.gg               # must be the https domain
   the new **signing secret** into `STRIPE_WEBHOOK_SECRET`. (In live mode, also
   swap `STRIPE_SECRET_KEY` / `STRIPE_PREMIUM_PRICE_ID` to their live values.)
 
-**6. Launch the stack with the production overlay:**
+**6. Launch the stack.** Pick the edge that fits your VPS.
+
+*Nothing else uses ports 80/443* — let Solari's bundled Caddy own the HTTPS
+front door (add `--profile edge`):
 
 ```bash
 docker compose up -d                                   # Postgres + Redis
 pnpm db:deploy                                          # apply migrations (from host)
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-  --profile apps up -d --build                          # bot + web + Caddy
+  --profile apps --profile edge up -d --build          # bot + web + Caddy
+docker compose logs -f caddy                           # watch it serve
 ```
 
-Add `--profile music` to that last command if you want Lavalink too.
+*You already run nginx / another proxy on 80/443* (e.g. other sites on the box):
+drop `--profile edge` — the dashboard binds to `127.0.0.1:3000` and your existing
+proxy fronts it. See `infra/nginx/solari.gg.conf` for a ready server block.
 
-Watch `docker compose logs -f caddy`; once it's serving, `https://solari.gg` is
-live through Cloudflare. The dashboard's plaintext `:3000` is now bound to
-localhost only — Cloudflare → Caddy is the single public entrypoint. Every service
-has `restart: unless-stopped`, so the stack comes back automatically after a
-reboot or crash. To update after a `git pull`, re-run the same `up -d --build`
-command.
+```bash
+docker compose up -d && pnpm db:deploy
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+  --profile apps up -d --build                          # bot + web (no Caddy)
+# then add solari.gg to nginx (infra/nginx/solari.gg.conf) and reload
+```
+
+Add `--profile music` to the `up` command if you want Lavalink too.
+
+Once the edge is serving, `https://solari.gg` is live through Cloudflare. The
+dashboard's plaintext `:3000` is bound to localhost only — your edge proxy is the
+single public entrypoint. Every service has `restart: unless-stopped`, so the
+stack comes back automatically after a reboot or crash. To update after a
+`git pull`, re-run the same `up -d --build` command.
 
 > **Keeping it alive across reboots:** Docker's own service must start on boot —
 > `sudo systemctl enable docker`. That plus `restart: unless-stopped` is all the

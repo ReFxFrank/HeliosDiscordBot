@@ -1,23 +1,31 @@
 name: helios
 
-# Production overlay for a VPS with a real domain, fronted by Cloudflare (proxied
-# / orange cloud) with a Cloudflare Origin Certificate. Layer it on top of the
-# base compose file and the `apps` profile:
+# Production overlay for a VPS with a real domain behind Cloudflare. Layer it on
+# top of the base compose file:
 #
+#   # bot + web only (web bound to localhost) — front it with your OWN proxy
+#   # (e.g. an existing nginx). Nothing binds :80/:443, so it never conflicts.
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
 #     --profile apps up -d --build
 #
+#   # ...OR also run the bundled Caddy edge (Cloudflare Origin cert on :80/:443).
+#   # Only use this if nothing else owns :80/:443 on the host.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     --profile apps --profile edge up -d --build
+#
 # What it changes vs. the base file:
-#   * Adds a Caddy edge that serves the Cloudflare Origin Certificate for
-#     SOLARI_DOMAIN and reverse-proxies to the dashboard over the internal network.
-#   * Stops publishing the dashboard's plaintext :3000 to the world — it's bound
-#     to localhost only, so Cloudflare → Caddy is the single public entrypoint.
+#   * Binds the dashboard to 127.0.0.1:3000 only (never public) — your edge proxy
+#     (Caddy here, or your own nginx) is the single public entrypoint.
+#   * Behind the `edge` profile: a Caddy edge serving the Cloudflare Origin
+#     Certificate for SOLARI_DOMAIN. If you already run nginx/another proxy, skip
+#     `--profile edge` and point that proxy at http://127.0.0.1:3000 instead
+#     (see infra/nginx/solari.gg.conf).
 #
 # `restart: unless-stopped` on every service (base file) gives you the keep-alive:
 # the stack comes back on VPS reboot / crash without any systemd unit.
 
 services:
-  # Only reachable from the host itself now; Caddy proxies to it internally.
+  # Only reachable from the host itself now; the edge proxy reaches it via loopback.
   web:
     ports: !override
       - '127.0.0.1:${WEB_PORT:-3000}:3000'
@@ -25,7 +33,10 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    profiles: ['apps']
+    # Behind its own profile so `--profile apps` alone never tries to bind
+    # :80/:443 (which conflicts with an existing host proxy). Opt in with
+    # `--profile edge` when you want Solari to own the HTTPS front door.
+    profiles: ['edge']
     environment:
       # Fail fast with a clear message if the domain wasn't set.
       SOLARI_DOMAIN: ${SOLARI_DOMAIN:?set SOLARI_DOMAIN to your dashboard domain (e.g. solari.gg)}
