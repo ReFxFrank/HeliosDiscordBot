@@ -4,7 +4,7 @@ import {
   Events,
   GatewayIntentBits,
   Partials,
-  PresenceUpdateStatus,
+  type PresenceStatusData,
 } from 'discord.js';
 import { prisma } from '@solari/database';
 import { decryptSecret } from '../lib/crypto';
@@ -31,11 +31,11 @@ interface CustomBotRow {
   enabled: boolean;
 }
 
-const STATUS: Record<string, PresenceUpdateStatus> = {
-  online: PresenceUpdateStatus.Online,
-  idle: PresenceUpdateStatus.Idle,
-  dnd: PresenceUpdateStatus.DoNotDisturb,
-  invisible: PresenceUpdateStatus.Invisible,
+const STATUS: Record<string, PresenceStatusData> = {
+  online: 'online',
+  idle: 'idle',
+  dnd: 'dnd',
+  invisible: 'invisible',
 };
 
 const ACTIVITY: Record<string, ActivityType> = {
@@ -144,7 +144,7 @@ export class CustomBotManager {
     const { guildId } = row;
 
     ready.user.setPresence({
-      status: STATUS[row.status] ?? PresenceUpdateStatus.Online,
+      status: STATUS[row.status] ?? 'online',
       activities: row.activityText
         ? [
             {
