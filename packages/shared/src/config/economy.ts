@@ -8,6 +8,7 @@ export const casinoConfigSchema = z
     roulette: z.boolean().default(true),
     coinflip: z.boolean().default(true),
     slots: z.boolean().default(true),
+    dice: z.boolean().default(true),
     /** Bet bounds for every casino game. */
     minBet: z.number().int().min(1).max(100_000_000).default(10),
     maxBet: z.number().int().min(1).max(100_000_000).default(10_000),

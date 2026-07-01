@@ -4,6 +4,7 @@ import {
   handValue,
   isBlackjack,
   isBust,
+  rollDice,
   rouletteColor,
   roulettePayout,
   settleBlackjack,
@@ -71,5 +72,19 @@ describe('roulette', () => {
   it('pays a green bet 36x only on 0', () => {
     expect(roulettePayout('green', 0)).toBe(36);
     expect(roulettePayout('green', 5)).toBe(0);
+  });
+});
+
+describe('dice', () => {
+  it('rolls two dice in range with a matching total', () => {
+    for (let i = 0; i < 50; i++) {
+      const { dice, total } = rollDice();
+      expect(dice).toHaveLength(2);
+      expect(dice[0]).toBeGreaterThanOrEqual(1);
+      expect(dice[0]).toBeLessThanOrEqual(6);
+      expect(dice[1]).toBeGreaterThanOrEqual(1);
+      expect(dice[1]).toBeLessThanOrEqual(6);
+      expect(total).toBe((dice[0] as number) + (dice[1] as number));
+    }
   });
 });

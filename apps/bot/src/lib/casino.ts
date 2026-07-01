@@ -101,6 +101,27 @@ export function settleBlackjack(player: Card[], dealer: Card[]): BlackjackOutcom
   return 'push';
 }
 
+// ── Dice ─────────────────────────────────────────────────────────────────────
+
+const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+/** Roll a single d6 (1–6). */
+export function rollDie(): number {
+  return 1 + Math.floor(Math.random() * 6);
+}
+
+/** Roll two dice and return the pips and total. */
+export function rollDice(): { dice: [number, number]; total: number } {
+  const a = rollDie();
+  const b = rollDie();
+  return { dice: [a, b], total: a + b };
+}
+
+/** Render dice as their face glyphs, e.g. "⚂ ⚄". */
+export function renderDice(dice: number[]): string {
+  return dice.map((d) => DICE_FACES[d - 1] ?? `${d}`).join(' ');
+}
+
 // ── Roulette ─────────────────────────────────────────────────────────────────
 
 /** European single-zero wheel: red pockets (everything else 1–36 is black; 0 is green). */

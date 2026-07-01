@@ -6,11 +6,16 @@ import { saveEconomyConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
 import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 
-const GAMES: { key: keyof Pick<CasinoConfig, 'blackjack' | 'roulette' | 'coinflip' | 'slots'>; label: string; desc: string }[] = [
+const GAMES: {
+  key: keyof Pick<CasinoConfig, 'blackjack' | 'roulette' | 'coinflip' | 'slots' | 'dice'>;
+  label: string;
+  desc: string;
+}[] = [
   { key: 'blackjack', label: 'Blackjack', desc: 'Hit/Stand/Double vs. the dealer.' },
   { key: 'roulette', label: 'Roulette', desc: 'Bet a colour or range, spin the wheel.' },
   { key: 'coinflip', label: 'Coinflip', desc: 'Double-or-nothing heads/tails.' },
   { key: 'slots', label: 'Slots', desc: 'Three-reel slot machine.' },
+  { key: 'dice', label: 'Dice', desc: 'Roll against the house — highest total wins.' },
 ];
 
 function num(value: string, min: number, fallback: number): number {
