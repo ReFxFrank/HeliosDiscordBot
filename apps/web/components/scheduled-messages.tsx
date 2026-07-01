@@ -130,7 +130,7 @@ export function ScheduledMessages({
               onChange={(e) => setForm((f) => ({ ...f, repeat: e.target.value as ScheduleRepeat }))}
             >
               {SCHEDULE_REPEATS.map((repeat) => (
-                <option key={repeat} value={repeat} className="bg-[#1a1b26]">
+                <option key={repeat} value={repeat} className="bg-[var(--color-base-elevated)]">
                   {REPEAT_LABELS[repeat]}
                 </option>
               ))}

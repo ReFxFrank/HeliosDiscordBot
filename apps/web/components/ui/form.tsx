@@ -43,7 +43,7 @@ export function SaveBar({
         type="button"
         onClick={onSave}
         disabled={pending}
-        className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand)]/85 disabled:opacity-50"
+        className="rounded-lg bg-[var(--color-brand-strong)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-strong)]/85 disabled:opacity-50"
       >
         {pending ? 'Saving…' : label}
       </button>

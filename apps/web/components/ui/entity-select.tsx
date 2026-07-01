@@ -147,7 +147,7 @@ export function EntitySelect({
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-lg border border-white/10 bg-[#1a1b26] shadow-xl">
+        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--color-base-elevated)] shadow-xl">
           <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
             <Search className="h-3.5 w-3.5 text-white/30" />
             <input

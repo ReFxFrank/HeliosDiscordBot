@@ -14,7 +14,7 @@ export async function SiteNav() {
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[var(--color-base)]/80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight text-white">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand-strong)] text-sm">
             {BRAND.name.slice(0, 1)}
           </span>
           {BRAND.name}
@@ -36,7 +36,7 @@ export async function SiteNav() {
           {session?.user ? (
             <Link
               href="/servers"
-              className="rounded-full bg-[var(--color-brand)] px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand)]/85"
+              className="rounded-full bg-[var(--color-brand-strong)] px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-strong)]/85"
             >
               Dashboard
             </Link>
@@ -46,7 +46,7 @@ export async function SiteNav() {
                 href={botInviteUrl(clientId)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden rounded-full bg-[var(--color-brand)] px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand)]/85 sm:inline-block"
+                className="hidden rounded-full bg-[var(--color-brand-strong)] px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-strong)]/85 sm:inline-block"
               >
                 Add to Discord
               </a>

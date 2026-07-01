@@ -104,11 +104,11 @@ export function RefxAlertsForm({
               update('minSeverity', e.target.value ? (e.target.value as RefxSeverity) : null)
             }
           >
-            <option value="" className="bg-[#1a1b26]">
+            <option value="" className="bg-[var(--color-base-elevated)]">
               Any
             </option>
             {REFX_SEVERITIES.map((sev) => (
-              <option key={sev} value={sev} className="bg-[#1a1b26]">
+              <option key={sev} value={sev} className="bg-[var(--color-base-elevated)]">
                 {sev}
               </option>
             ))}
@@ -122,11 +122,11 @@ export function RefxAlertsForm({
               update('mentionMinSeverity', e.target.value ? (e.target.value as RefxSeverity) : null)
             }
           >
-            <option value="" className="bg-[#1a1b26]">
+            <option value="" className="bg-[var(--color-base-elevated)]">
               Every alert
             </option>
             {REFX_SEVERITIES.map((sev) => (
-              <option key={sev} value={sev} className="bg-[#1a1b26]">
+              <option key={sev} value={sev} className="bg-[var(--color-base-elevated)]">
                 {sev}
               </option>
             ))}

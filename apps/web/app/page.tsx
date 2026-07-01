@@ -60,7 +60,7 @@ export default async function HomePage() {
               href={invite}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand)]/85"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-strong)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand-strong)]/85"
             >
               Add to Discord <ArrowRight className="h-4 w-4" />
             </a>

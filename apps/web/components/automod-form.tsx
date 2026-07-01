@@ -89,7 +89,7 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
               }
             >
               {AUTOMOD_ACTIONS.map((action) => (
-                <option key={action} value={action} className="bg-[#1a1b26]">
+                <option key={action} value={action} className="bg-[var(--color-base-elevated)]">
                   {action}
                 </option>
               ))}
@@ -278,7 +278,7 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
                   onChange={(e) => patchRaid({ accountAgeAction: e.target.value as GateAction })}
                 >
                   {GATE_ACTIONS.map((action) => (
-                    <option key={action} value={action} className="bg-[#1a1b26]">
+                    <option key={action} value={action} className="bg-[var(--color-base-elevated)]">
                       {action}
                     </option>
                   ))}
@@ -321,7 +321,7 @@ export function AutomodForm({ guildId, initial }: { guildId: string; initial: Au
                   onChange={(e) => patchRaid({ raidAction: e.target.value as GateAction })}
                 >
                   {GATE_ACTIONS.map((action) => (
-                    <option key={action} value={action} className="bg-[#1a1b26]">
+                    <option key={action} value={action} className="bg-[var(--color-base-elevated)]">
                       {action}
                     </option>
                   ))}

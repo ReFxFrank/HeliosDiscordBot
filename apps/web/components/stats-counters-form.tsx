@@ -77,7 +77,7 @@ export function StatsCountersForm({
                 onChange={(e) => patch(index, { type: e.target.value as StatCounterType })}
               >
                 {STAT_COUNTER_TYPES.map((t) => (
-                  <option key={t} value={t} className="bg-[#1a1b26]">
+                  <option key={t} value={t} className="bg-[var(--color-base-elevated)]">
                     {STAT_COUNTER_LABELS[t]}
                   </option>
                 ))}

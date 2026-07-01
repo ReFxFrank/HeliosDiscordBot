@@ -114,7 +114,7 @@ export function AutoRespondersForm({
                     }
                   >
                     {AUTO_RESPONDER_MATCHES.map((m) => (
-                      <option key={m} value={m} className="bg-[#1a1b26]">
+                      <option key={m} value={m} className="bg-[var(--color-base-elevated)]">
                         {m}
                       </option>
                     ))}

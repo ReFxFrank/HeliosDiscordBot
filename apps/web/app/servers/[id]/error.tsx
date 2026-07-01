@@ -13,7 +13,7 @@ export default function GuildError({ reset }: { error: Error; reset: () => void 
         <button
           type="button"
           onClick={reset}
-          className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-lg bg-[var(--color-brand-strong)] px-4 py-2 text-sm font-semibold text-white"
         >
           Try again
         </button>

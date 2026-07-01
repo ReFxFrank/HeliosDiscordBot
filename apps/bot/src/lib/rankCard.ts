@@ -44,7 +44,7 @@ const BG = '#141020';
 const PANEL = '#1e1830';
 const TRACK = '#332a4a';
 const TEXT = '#ffffff';
-const MUTED = '#9aa0b4';
+const MUTED = '#a29bb4';
 
 function roundRect(
   ctx: SKRSContext2D,

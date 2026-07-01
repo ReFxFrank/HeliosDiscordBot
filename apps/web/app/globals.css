@@ -12,6 +12,9 @@
   --color-base-elevated: #161221;
   --color-brand: #8b5cf6;
   --color-brand-bright: #a78bfa;
+  /* Darker violet for FILLS behind white text (buttons, logo marks) — #8b5cf6
+   * is too light for white text (4.23:1); this clears WCAG AA (5.70:1). */
+  --color-brand-strong: #7c3aed;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #f43f5e;
