@@ -6,6 +6,7 @@ import type { TicketsConfig } from '@solari/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveTicketsConfig } from '../lib/config-actions';
 import { deployTicketPanel } from '../lib/tickets-actions';
+import { SettingsSection } from './ui/settings-section';
 import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 import { ChannelSelect, RoleSelect } from './ui/entity-select';
 
@@ -46,73 +47,88 @@ export function TicketsForm({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <Field label="Ticket category" hint="New ticket channels are created under this category.">
-        <ChannelSelect
-          channels={channels}
-          only="category"
-          placeholder="None"
-          selected={config.categoryId ? [config.categoryId] : []}
-          onChange={(ids) => update('categoryId', ids[0] ?? null)}
-        />
-      </Field>
-      <Field label="Support roles" hint="These roles see and manage tickets.">
-        <RoleSelect
-          roles={roles}
-          multiple
-          selected={config.supportRoleIds}
-          onChange={(ids) => update('supportRoleIds', ids)}
-        />
-      </Field>
-      <Field
-        label="Transcript channel"
-        hint="Where closed-ticket transcripts are posted. None to disable."
+    <div className="flex flex-col gap-4">
+      <SettingsSection
+        title="Ticket Setup"
+        description="Where tickets are created, who can see them, and where transcripts go."
       >
-        <ChannelSelect
-          channels={channels}
-          only="text"
-          placeholder="None"
-          selected={config.transcriptChannelId ? [config.transcriptChannelId] : []}
-          onChange={(ids) => update('transcriptChannelId', ids[0] ?? null)}
-        />
-      </Field>
+        <div className="flex max-w-2xl flex-col gap-5">
+          <Field label="Ticket category" hint="New ticket channels are created under this category.">
+            <ChannelSelect
+              channels={channels}
+              only="category"
+              placeholder="None"
+              selected={config.categoryId ? [config.categoryId] : []}
+              onChange={(ids) => update('categoryId', ids[0] ?? null)}
+            />
+          </Field>
+          <Field label="Support roles" hint="These roles see and manage every ticket.">
+            <RoleSelect
+              roles={roles}
+              multiple
+              selected={config.supportRoleIds}
+              onChange={(ids) => update('supportRoleIds', ids)}
+            />
+          </Field>
+          <Field
+            label="Transcript channel"
+            hint="Where closed-ticket transcripts are posted. None disables transcripts."
+          >
+            <ChannelSelect
+              channels={channels}
+              only="text"
+              placeholder="None"
+              selected={config.transcriptChannelId ? [config.transcriptChannelId] : []}
+              onChange={(ids) => update('transcriptChannelId', ids[0] ?? null)}
+            />
+          </Field>
+        </div>
+      </SettingsSection>
 
-      <Field label="Opening message" hint="Posted in every new ticket.">
-        <textarea
-          className={`${inputClass} min-h-20 resize-y`}
-          value={config.openMessage}
-          onChange={(e) => update('openMessage', e.target.value)}
-          maxLength={1500}
-        />
-      </Field>
+      <SettingsSection
+        title="Ticket Behavior"
+        description="The opening message and limits for how members open tickets."
+      >
+        <div className="flex flex-col gap-5">
+          <Field label="Opening message" hint="Posted at the top of every new ticket.">
+            <textarea
+              className={`${inputClass} min-h-20 resize-y`}
+              value={config.openMessage}
+              onChange={(e) => update('openMessage', e.target.value)}
+              maxLength={1500}
+            />
+          </Field>
+          <div className="grid max-w-xl gap-5 sm:grid-cols-2">
+            <Field label="Max open per user">
+              <input
+                type="number"
+                min={1}
+                max={10}
+                className={inputClass}
+                value={config.maxOpenPerUser}
+                onChange={(e) => update('maxOpenPerUser', Math.max(1, Number(e.target.value) || 1))}
+              />
+            </Field>
+            <Field label="Auto-close after (hours)" hint="0 disables inactivity auto-close.">
+              <input
+                type="number"
+                min={0}
+                max={720}
+                className={inputClass}
+                value={config.autoCloseHours}
+                onChange={(e) => update('autoCloseHours', Math.max(0, Number(e.target.value) || 0))}
+              />
+            </Field>
+          </div>
+        </div>
+      </SettingsSection>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Max open per user">
-          <input
-            type="number"
-            min={1}
-            max={10}
-            className={inputClass}
-            value={config.maxOpenPerUser}
-            onChange={(e) => update('maxOpenPerUser', Math.max(1, Number(e.target.value) || 1))}
-          />
-        </Field>
-        <Field label="Auto-close after (hours)" hint="0 disables inactivity auto-close.">
-          <input
-            type="number"
-            min={0}
-            max={720}
-            className={inputClass}
-            value={config.autoCloseHours}
-            onChange={(e) => update('autoCloseHours', Math.max(0, Number(e.target.value) || 0))}
-          />
-        </Field>
-      </div>
-
-      <div className="border-t border-white/5 pt-5">
-        <h3 className="mb-3 text-sm font-semibold text-white/80">Panel</h3>
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+      <SettingsSection
+        title="Ticket Panel"
+        description="The embed + button members click to open a ticket. Save, then deploy it to a channel."
+      >
+        <div className="flex flex-col gap-5">
+          <div className="grid max-w-xl gap-5 sm:grid-cols-2">
             <Field label="Panel title">
               <input
                 className={inputClass}
@@ -138,33 +154,34 @@ export function TicketsForm({
               maxLength={2000}
             />
           </Field>
-          <Field
-            label="Panel channel"
-            hint="Where the panel is deployed. Save first, then deploy."
-          >
-            <ChannelSelect
-              channels={channels}
-              only="text"
-              placeholder="None"
-              selected={config.panelChannelId ? [config.panelChannelId] : []}
-              onChange={(ids) => update('panelChannelId', ids[0] ?? null)}
-            />
-          </Field>
+          <div className="max-w-md">
+            <Field label="Panel channel" hint="Where the panel is deployed. Save first, then deploy.">
+              <ChannelSelect
+                channels={channels}
+                only="text"
+                placeholder="None"
+                selected={config.panelChannelId ? [config.panelChannelId] : []}
+                onChange={(ids) => update('panelChannelId', ids[0] ?? null)}
+              />
+            </Field>
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={deploy}
               disabled={pending || !config.panelChannelId}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white/80 hover:text-white disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
             >
               <Send className="h-4 w-4" /> Deploy panel
             </button>
             {deployMsg && <span className="text-sm text-white/60">{deployMsg}</span>}
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
-      <SaveBar pending={pending} status={status} onSave={save} />
+      <div className="pt-1">
+        <SaveBar pending={pending} status={status} onSave={save} />
+      </div>
     </div>
   );
 }

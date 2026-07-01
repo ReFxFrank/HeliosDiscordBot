@@ -33,12 +33,18 @@ export default async function LevelingConfigPage({ params }: { params: Promise<{
         <p className="text-sm text-white/50">Text XP, announcements, and role rewards.</p>
       </div>
 
-      <GlassCard className="p-5">
-        <LevelingForm guildId={id} initial={initial} roles={roles} channels={channels} />
-      </GlassCard>
+      <LevelingForm guildId={id} initial={initial} roles={roles} channels={channels} />
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-white/80">Top members</h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-white/80">Top members</h3>
+          <a
+            href={`/servers/${id}/leaderboard`}
+            className="text-xs font-medium text-[var(--color-brand-bright)] hover:underline"
+          >
+            See full leaderboard →
+          </a>
+        </div>
         <GlassCard className="divide-y divide-white/5 p-0">
           {top.length === 0 ? (
             <p className="p-4 text-sm text-white/40">No XP earned yet.</p>

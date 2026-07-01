@@ -1,6 +1,8 @@
 import type { Client, GuildMember } from 'discord.js';
 import { prisma } from '@solari/database';
 import {
+  ACHIEVEMENT_TIER_EMOJI,
+  ACHIEVEMENT_TIER_LABELS,
   parseModuleConfig,
   type Achievement,
   type AchievementType,
@@ -109,9 +111,9 @@ async function announce(
       embeds: [
         brandedEmbed({
           kind: 'success',
-          title: '🏆 Achievement unlocked!',
+          title: `${ACHIEVEMENT_TIER_EMOJI[ach.tier]} Achievement unlocked!`,
           description:
-            `<@${userId}> unlocked **${ach.name}**` +
+            `<@${userId}> unlocked **${ach.name}** _(${ACHIEVEMENT_TIER_LABELS[ach.tier]})_` +
             (ach.description ? `\n${ach.description}` : '') +
             (rewards ? `\n\n**Rewards:** ${rewards}` : ''),
         }),

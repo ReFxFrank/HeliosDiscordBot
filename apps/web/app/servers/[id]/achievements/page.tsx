@@ -3,7 +3,6 @@ import { achievementsConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { AchievementsForm } from '../../../../components/achievements-form';
-import { GlassCard } from '../../../../components/ui/glass-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +27,7 @@ export default async function AchievementsPage({ params }: { params: Promise<{ i
           Milestone rewards for level, messages, coins, and voice time.
         </p>
       </div>
-      <GlassCard className="p-5">
-        <AchievementsForm guildId={id} initial={initial} roles={roles} channels={channels} />
-      </GlassCard>
+      <AchievementsForm guildId={id} initial={initial} roles={roles} channels={channels} />
     </div>
   );
 }

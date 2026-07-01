@@ -16,6 +16,24 @@ export const ACHIEVEMENT_TYPE_LABELS: Record<AchievementType, string> = {
   VOICE_MINUTES: 'Minutes in voice',
 };
 
+/** Prestige tiers, purely for display/organization (badge colour + emoji). */
+export const ACHIEVEMENT_TIERS = ['bronze', 'silver', 'gold', 'diamond'] as const;
+export type AchievementTier = (typeof ACHIEVEMENT_TIERS)[number];
+
+export const ACHIEVEMENT_TIER_LABELS: Record<AchievementTier, string> = {
+  bronze: 'Bronze',
+  silver: 'Silver',
+  gold: 'Gold',
+  diamond: 'Diamond',
+};
+
+export const ACHIEVEMENT_TIER_EMOJI: Record<AchievementTier, string> = {
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  diamond: '💎',
+};
+
 export const achievementSchema = z.object({
   /** Stable id (used to record who unlocked what — must not be reused). */
   id: z.string().min(1).max(40),
@@ -23,6 +41,8 @@ export const achievementSchema = z.object({
   description: z.string().max(200).optional(),
   type: z.enum(ACHIEVEMENT_TYPES),
   threshold: z.number().int().min(1).max(1_000_000_000),
+  /** Prestige tier (display only). */
+  tier: z.enum(ACHIEVEMENT_TIERS).default('bronze'),
   /** Optional rewards granted once, on unlock. */
   rewardRoleId: z.string().nullable().default(null),
   rewardCoins: z.number().int().min(0).max(1_000_000).default(0),

@@ -3,7 +3,6 @@ import { ticketsConfigSchema } from '@solari/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { TicketsForm } from '../../../../components/tickets-form';
-import { GlassCard } from '../../../../components/ui/glass-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +29,7 @@ export default async function TicketsConfigPage({ params }: { params: Promise<{ 
           <span className="font-mono text-white/40">{openCount} open</span>
         </p>
       </div>
-      <GlassCard className="p-5">
-        <TicketsForm guildId={id} initial={initial} roles={roles} channels={channels} />
-      </GlassCard>
+      <TicketsForm guildId={id} initial={initial} roles={roles} channels={channels} />
     </div>
   );
 }
