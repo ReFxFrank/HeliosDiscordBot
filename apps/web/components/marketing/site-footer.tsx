@@ -12,7 +12,7 @@ export function SiteFooter() {
           <span className="text-white/70">{BRAND.name}</span>
           <span className="text-white/30">— the all-in-one Discord bot</span>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link href="/pricing" className="hover:text-white/80">
             Pricing
           </Link>
@@ -21,6 +21,12 @@ export function SiteFooter() {
           </Link>
           <Link href="/status" className="hover:text-white/80">
             Status
+          </Link>
+          <Link href="/terms" className="hover:text-white/80">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-white/80">
+            Privacy
           </Link>
         </div>
       </div>
