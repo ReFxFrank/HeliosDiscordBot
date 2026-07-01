@@ -250,18 +250,33 @@ starboard, giveaways, and more.
 
 ---
 
-## 8. (Optional) Music / Lavalink
+## 8. (Premium) Music / Lavalink
 
-> Music commands (`/play`, queue, skip…) are **in active development** and not
-> wired up yet. You can start Lavalink now to have the backend ready.
+The Music module (`/play`, `/queue`, `/skip`, `/pause`, `/resume`, `/stop`,
+`/volume`, `/loop`, `/shuffle`, `/nowplaying`) is a **premium** feature backed by
+Lavalink. To turn it on:
 
 ```bash
+# 1. Start a Lavalink node
 docker compose --profile music up -d lavalink
+
+# 2. Enable it in .env, then restart the bot
+#    MUSIC_ENABLED=true
+# 3. Register the new slash commands
+pnpm deploy:commands
 ```
+
+Then, in the dashboard, make sure the server is **Premium** and toggle the
+**Music** module on. The commands are gated three ways: the module must be
+enabled, the server must be Premium, and a Lavalink node must be connected —
+otherwise `/play` replies that music is unavailable.
 
 The password chain is automatic: `.env` `LAVALINK_PASSWORD` → the Lavalink
 container → the bot. Defaults to `youshallnotpass` everywhere, so it "just
 works" locally.
+
+DJ control (only DJs may skip/stop/etc.) is open by default; set DJ roles /
+`djOnly` in the Music config (dashboard config page coming next).
 
 **Heads-up on YouTube:** Lavalink **v4 removed the built-in YouTube source**, so
 out of the box only SoundCloud, Bandcamp, Twitch, Vimeo, and direct HTTP URLs

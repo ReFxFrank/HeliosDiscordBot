@@ -14,9 +14,11 @@ import { birthdaysConfigSchema } from './birthdays';
 import { statsCountersConfigSchema } from './statsCounters';
 import { inviteTrackingConfigSchema } from './inviteTracking';
 import { automodConfigSchema } from './automod';
+import { musicConfigSchema } from './music';
 
 export * from './moderation';
 export * from './automod';
+export * from './music';
 export * from './leveling';
 export * from './welcome';
 export * from './autorole';
@@ -52,6 +54,7 @@ export const MODULE_CONFIG_SCHEMAS = {
   STATS_COUNTERS: statsCountersConfigSchema,
   INVITE_TRACKING: inviteTrackingConfigSchema,
   AUTOMOD: automodConfigSchema,
+  MUSIC: musicConfigSchema,
 } satisfies Partial<Record<Module, z.ZodTypeAny>>;
 
 export type ModuleWithSchema = keyof typeof MODULE_CONFIG_SCHEMAS;

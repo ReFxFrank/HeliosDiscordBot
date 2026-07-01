@@ -34,6 +34,7 @@ import { reconcileStatsCounters } from './modules/statsCounters';
 import { reconcileVoiceXp } from './modules/leveling';
 import { syncAllGuilds } from './lib/guildSync';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
+import { createMusicManager } from './services/music';
 import type { BotContext } from './framework/context';
 
 /**
@@ -66,7 +67,8 @@ async function bootstrap(): Promise<void> {
 
   const config = new ConfigCache();
   const jobs = new JobService(client, logger);
-  const ctx: BotContext = { client, logger, prisma, config, jobs, redis };
+  const music = env.MUSIC_ENABLED ? createMusicManager(client, logger, config) : null;
+  const ctx: BotContext = { client, logger, prisma, config, jobs, redis, music };
 
   const [commands, events, componentHandlers] = await Promise.all([
     loadCommands(),
@@ -120,6 +122,13 @@ async function bootstrap(): Promise<void> {
     guildGauge.set(ready.guilds.cache.size);
     // Workers use the authed REST client, so start them once logged in.
     jobs.startWorkers();
+    // Connect to Lavalink once we have the bot user id (Music module).
+    if (music) {
+      void music
+        .init({ id: ready.user.id, username: ready.user.username })
+        .then(() => logger.info('Lavalink manager initialised'))
+        .catch((err: unknown) => logger.error({ err }, 'Lavalink init failed'));
+    }
     // Re-arm any durable timers from the DB (source of truth) for guilds this
     // shard owns — self-heals after a restart or a lost enqueue.
     void Promise.allSettled([

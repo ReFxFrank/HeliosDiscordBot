@@ -1,4 +1,5 @@
 import type { Client } from 'discord.js';
+import type { LavalinkManager } from 'lavalink-client';
 import type { PrismaClient } from '@solari/database';
 import type { Redis } from 'ioredis';
 import type { Logger } from '../logger';
@@ -17,4 +18,6 @@ export interface BotContext {
   config: ConfigCache;
   jobs: JobService;
   redis: Redis;
+  /** Lavalink manager for the Music module, or null when MUSIC_ENABLED is off. */
+  music: LavalinkManager | null;
 }

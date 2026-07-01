@@ -27,6 +27,12 @@ export const botEnvSchema = baseEnvSchema.extend({
   OWNER_IDS: z.string().default('').transform(csvToArray),
   /** Guild to register commands into for instant dev iteration. */
   DEV_GUILD_ID: z.string().optional(),
+  /** Turn on the Lavalink-backed Music module (premium). Requires a running
+   *  Lavalink node — start it with the `music` docker-compose profile. */
+  MUSIC_ENABLED: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true' || value === '1'),
   LAVALINK_HOST: z.string().default('localhost'),
   LAVALINK_PORT: z.coerce.number().int().positive().default(2333),
   LAVALINK_PASSWORD: z.string().default('youshallnotpass'),
