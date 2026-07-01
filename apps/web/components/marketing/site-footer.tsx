@@ -18,6 +18,9 @@ export function SiteFooter() {
           <Link href="/commands" className="hover:text-white/80">
             Commands
           </Link>
+          <Link href="/docs" className="hover:text-white/80">
+            Docs
+          </Link>
           <Link href="/servers" className="hover:text-white/80">
             Dashboard
           </Link>
