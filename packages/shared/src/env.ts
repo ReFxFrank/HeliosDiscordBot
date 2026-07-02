@@ -51,6 +51,8 @@ export const botEnvSchema = baseEnvSchema.extend({
    *  YouTube/Reddit/RSS work without any keys). */
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  /** top.gg bot id for the /vote link (defaults to DISCORD_CLIENT_ID). */
+  TOPGG_BOT_ID: z.string().optional(),
 });
 
 export const webEnvSchema = baseEnvSchema.extend({

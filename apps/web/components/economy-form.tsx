@@ -137,6 +137,19 @@ export function EconomyForm({
                 onChange={(e) => update('dailyAmount', clamp(e.target.value, 0, 1_000_000, 0))}
               />
             </Field>
+            <Field
+              label="Vote reward"
+              hint="Payout for a top.gg vote via /vote (doubled on weekends). 0 disables."
+            >
+              <input
+                type="number"
+                min={0}
+                max={1_000_000}
+                className={inputClass}
+                value={config.voteReward}
+                onChange={(e) => update('voteReward', clamp(e.target.value, 0, 1_000_000, 250))}
+              />
+            </Field>
             <Field label="Work cooldown (seconds)" hint="Time between /work uses (0–604800).">
               <input
                 type="number"

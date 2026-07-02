@@ -56,6 +56,8 @@ export const economyConfigSchema = z.object({
   startingBalance: z.number().int().min(0).max(1_000_000).default(0),
   /** Amount granted by /daily. */
   dailyAmount: z.number().int().min(0).max(1_000_000).default(250),
+  /** Reward for a top.gg vote (/vote; doubled on weekend votes). 0 disables. */
+  voteReward: z.number().int().min(0).max(1_000_000).default(250),
   /** /work pays a random amount in [workMin, workMax]. */
   workMin: z.number().int().min(0).max(1_000_000).default(50),
   workMax: z.number().int().min(0).max(1_000_000).default(250),

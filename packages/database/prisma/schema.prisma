@@ -253,6 +253,19 @@ model SocialSubscription {
 
 /// Per-(guild, user) economy balance (premium). `wallet` is spendable/robbable;
 /// `bank` is safe. Cooldowns for /daily and /work are timestamp-based (no jobs).
+/// A top.gg vote, stored by the webhook receiver (/api/integrations/topgg).
+/// Votes are per-bot (global); `claimedGuilds` tracks the guilds where the
+/// voter has claimed the economy reward for this particular vote.
+model TopggVote {
+  id            String   @id @default(cuid())
+  userId        String
+  isWeekend     Boolean  @default(false)
+  votedAt       DateTime @default(now())
+  claimedGuilds String[] @default([])
+
+  @@index([userId, votedAt])
+}
+
 model EconomyUser {
   id        String    @id @default(cuid())
   guildId   String
