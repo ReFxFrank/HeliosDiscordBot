@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { BarChart3, Bot, Crown, Dices, LayoutDashboard, Settings2, SquareSlash } from 'lucide-react';
+import { BarChart3, Bot, Crown, Dices, Hash, LayoutDashboard, Settings2, SquareSlash } from 'lucide-react';
 import { prisma } from '@solari/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { groupedModuleMeta, moduleBySlug } from '../../../lib/modules';
@@ -68,6 +68,7 @@ export default async function GuildLayout({
     { href: `/servers/${id}/insights`, label: 'Insights', icon: <BarChart3 className="h-4 w-4 shrink-0" /> },
     { href: `/servers/${id}/settings`, label: 'Settings', icon: <Settings2 className="h-4 w-4 shrink-0" /> },
     { href: `/servers/${id}/slash-commands`, label: 'Slash Commands', icon: <SquareSlash className="h-4 w-4 shrink-0" /> },
+    { href: `/servers/${id}/channels`, label: 'Channels', icon: <Hash className="h-4 w-4 shrink-0" /> },
   ];
 
   // Modules are grouped MEE6-style: one sidebar section per group, each listing
