@@ -32,7 +32,8 @@ lavalink:
     resamplingQuality: LOW
 
 # youtube-source plugin config. `clients` is the fallback order of the innerTube
-# clients it impersonates; MUSIC + ANDROID_VR + WEB is the resilient default.
+# clients it impersonates. TVHTML5EMBEDDED is the client OAuth applies to — it's
+# what makes playback work from datacenter IPs once oauth is enabled.
 plugins:
   youtube:
     enabled: true
@@ -42,8 +43,23 @@ plugins:
     clients:
       - MUSIC
       - ANDROID_VR
+      - TVHTML5EMBEDDED
       - WEB
       - WEBEMBEDDED
+    # YouTube blocks unauthenticated streaming from datacenter IPs ("This video
+    # requires login"). OAuth with a throwaway Google account is the supported
+    # fix. Setup (see .env.example): enable with NO refresh token → Lavalink logs
+    # a google.com/device code → authorize with a BURNER account → copy the
+    # refresh token it logs back into .env. Values come from the environment so
+    # no secret ever lives in this file.
+    oauth:
+      enabled: ${YOUTUBE_OAUTH_ENABLED:false}
+      refreshToken: '${YOUTUBE_OAUTH_REFRESH_TOKEN:}'
+    # Alternative/additional remedy: a poToken pins the WEB client to a trusted
+    # session (generate with the youtube-trusted-session-generator container).
+    pot:
+      token: '${YOUTUBE_POT_TOKEN:}'
+      visitorData: '${YOUTUBE_POT_VISITOR_DATA:}'
 
 metrics:
   prometheus:
