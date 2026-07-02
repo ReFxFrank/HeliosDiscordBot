@@ -72,6 +72,16 @@ export async function startCheckout(
     );
     redirect(`/servers/${guildId}/premium?billing_error=1`);
   }
+  // Catch the common setup slip: a Product id ("prod_…") pasted where the Price
+  // id ("price_…") belongs. Fail with a clear log instead of Stripe's cryptic
+  // "No such price".
+  if (!priceId.startsWith('price_')) {
+    console.error(
+      `[billing] STRIPE price for plan=${plan} is "${priceId}", which is not a Price id. ` +
+        'Use the Price id (starts with "price_"), not a Product id ("prod_…").',
+    );
+    redirect(`/servers/${guildId}/premium?billing_error=1`);
+  }
 
   // Everything that can raise a Stripe error lives in here so a misconfigured
   // price surfaces as a friendly banner (with the real reason in the server
