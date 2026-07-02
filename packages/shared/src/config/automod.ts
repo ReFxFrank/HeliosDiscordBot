@@ -53,6 +53,34 @@ export const raidConfigSchema = z.object({
 });
 export type RaidConfig = z.infer<typeof raidConfigSchema>;
 
+export const ANTI_NUKE_ACTIONS = ['strip-roles', 'kick', 'ban'] as const;
+export type AntiNukeAction = (typeof ANTI_NUKE_ACTIONS)[number];
+
+/**
+ * Anti-nuke (§8): protects against a compromised (or rogue) mod/admin account
+ * mass-destroying the server. Counts audit-log-attributed destructive actions
+ * per ACTOR in a rolling window; past a threshold the actor is sanctioned and
+ * the alert channel pinged. The guild owner and the bot are always exempt.
+ */
+export const antiNukeConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  /** Rolling window the counters live in. */
+  windowSeconds: z.number().int().min(10).max(600).default(60),
+  /** Bans + kicks by one actor within the window. */
+  banKickThreshold: z.number().int().min(2).max(50).default(5),
+  /** Channel deletions by one actor within the window. */
+  channelDeleteThreshold: z.number().int().min(2).max(50).default(3),
+  /** Role deletions by one actor within the window. */
+  roleDeleteThreshold: z.number().int().min(2).max(50).default(3),
+  /** What happens to the offending account. */
+  action: z.enum(ANTI_NUKE_ACTIONS).default('strip-roles'),
+  /** Extra trusted user ids (e.g. other bots) that are never sanctioned. */
+  exemptUserIds: z.array(z.string()).max(25).default([]),
+  /** Where the alert posts. Empty = member log channel. */
+  alertChannelId: z.string().default(''),
+});
+export type AntiNukeConfig = z.infer<typeof antiNukeConfigSchema>;
+
 export const automodConfigSchema = z.object({
   exemptRoleIds: z.array(z.string()).default([]),
   exemptChannelIds: z.array(z.string()).default([]),
@@ -77,6 +105,7 @@ export const automodConfigSchema = z.object({
     .default({}),
   words: z.object({ ...ruleFields, list: z.array(z.string()).max(500).default([]) }).default({}),
   raid: raidConfigSchema.default({}),
+  antiNuke: antiNukeConfigSchema.default({}),
   // NOTE: `verification` moved to its own module (config/verification.ts). Any
   // legacy key left in stored automod JSON is stripped harmlessly on parse.
 });

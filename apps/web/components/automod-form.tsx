@@ -61,7 +61,13 @@ export function AutomodForm({
     setStatus('idle');
   }
 
+  function patchAntiNuke(value: Partial<AutomodConfig['antiNuke']>): void {
+    setConfig((prev) => ({ ...prev, antiNuke: { ...prev.antiNuke, ...value } }));
+    setStatus('idle');
+  }
+
   const raid = config.raid;
+  const antiNuke = config.antiNuke;
 
   function save(): void {
     startTransition(async () => {
@@ -394,6 +400,129 @@ export function AutomodForm({
                 (Discord lifts the pause automatically; needs Manage Server)
               </span>
             </label>
+          </div>
+        )}
+      </div>
+
+      {/* Anti-nuke */}
+      <div className="glass flex flex-col gap-4 rounded-2xl p-5">
+        <label className="flex items-center gap-3 text-base font-semibold text-white/90">
+          <Switch
+            checked={antiNuke.enabled}
+            onChange={(next) => patchAntiNuke({ enabled: next })}
+            label="Anti-nuke"
+          />
+          Anti-nuke
+        </label>
+        <p className="-mt-2 text-sm text-white/50">
+          Stops a compromised or rogue mod account from mass-destroying the server: too many
+          bans/kicks, channel deletions, or role deletions by one account in a short window and
+          that account gets sanctioned. The owner and {`Solari`} are always exempt. Requires the
+          bot to have <span className="text-white/70">View Audit Log</span>.
+        </p>
+        {antiNuke.enabled && (
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Window (seconds)" hint="Rolling window the counters live in.">
+                <input
+                  type="number"
+                  min={10}
+                  max={600}
+                  className={inputClass}
+                  value={antiNuke.windowSeconds}
+                  onChange={(e) =>
+                    patchAntiNuke({
+                      windowSeconds: Math.min(600, Math.max(10, Number(e.target.value) || 60)),
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Action" hint="What happens to the offending account.">
+                <select
+                  className={inputClass}
+                  value={antiNuke.action}
+                  onChange={(e) =>
+                    patchAntiNuke({ action: e.target.value as AutomodConfig['antiNuke']['action'] })
+                  }
+                >
+                  <option value="strip-roles">Strip all roles (keep for investigation)</option>
+                  <option value="kick">Kick</option>
+                  <option value="ban">Ban</option>
+                </select>
+              </Field>
+              <Field label="Bans + kicks threshold">
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  className={inputClass}
+                  value={antiNuke.banKickThreshold}
+                  onChange={(e) =>
+                    patchAntiNuke({
+                      banKickThreshold: Math.min(50, Math.max(2, Number(e.target.value) || 5)),
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Channel deletions threshold">
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  className={inputClass}
+                  value={antiNuke.channelDeleteThreshold}
+                  onChange={(e) =>
+                    patchAntiNuke({
+                      channelDeleteThreshold: Math.min(
+                        50,
+                        Math.max(2, Number(e.target.value) || 3),
+                      ),
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Role deletions threshold">
+                <input
+                  type="number"
+                  min={2}
+                  max={50}
+                  className={inputClass}
+                  value={antiNuke.roleDeleteThreshold}
+                  onChange={(e) =>
+                    patchAntiNuke({
+                      roleDeleteThreshold: Math.min(50, Math.max(2, Number(e.target.value) || 3)),
+                    })
+                  }
+                />
+              </Field>
+              <Field
+                label="Exempt user IDs"
+                hint="Trusted accounts (e.g. other bots), comma-separated."
+              >
+                <input
+                  className={monoInputClass}
+                  value={antiNuke.exemptUserIds.join(', ')}
+                  onChange={(e) =>
+                    patchAntiNuke({
+                      exemptUserIds: e.target.value
+                        .split(',')
+                        .map((part) => part.trim())
+                        .filter(Boolean)
+                        .slice(0, 25),
+                    })
+                  }
+                />
+              </Field>
+            </div>
+            <Field label="Alert channel" hint="Where the alert posts. None = member log.">
+              <ChannelSelect
+                channels={channels}
+                only="text"
+                placeholder="None"
+                selected={antiNuke.alertChannelId ? [antiNuke.alertChannelId] : []}
+                onChange={(ids) => patchAntiNuke({ alertChannelId: ids[0] ?? '' })}
+              />
+            </Field>
           </div>
         )}
       </div>
