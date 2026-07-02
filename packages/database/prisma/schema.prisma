@@ -177,8 +177,30 @@ model Guild {
   memberStats       MemberStat[]
   insightsDays      GuildInsightsDay[]
   applicationForms  ApplicationForm[]
+  channelLocks      ChannelLock[]
 
   @@index([ownerId])
+}
+
+/// A channel currently locked by /lock or a server lockdown. Remembers the
+/// @everyone SendMessages overwrite that was in place before, so /unlock (or
+/// ending a lockdown) restores it exactly. One row per locked channel.
+model ChannelLock {
+  id          String   @id @default(cuid())
+  guildId     String
+  channelId   String
+  moderatorId String
+  reason      String?
+  /// The @everyone SendMessages overwrite before locking: 'allow' | 'deny' | 'neutral'.
+  prevState   String
+  /// True when created by a server-wide lockdown (vs a single /lock).
+  bulk        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, channelId])
+  @@index([guildId])
 }
 
 /// A configurable application/form (staff apps, ban appeals, custom

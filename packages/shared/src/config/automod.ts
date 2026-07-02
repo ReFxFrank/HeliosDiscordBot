@@ -50,6 +50,10 @@ export const raidConfigSchema = z.object({
   /** Pause server invites while raid mode is armed (Discord incident action —
    *  auto-lifts when raid mode expires; needs Manage Server). */
   pauseInvites: z.boolean().default(false),
+  /** Lock every channel (deny @everyone Send Messages) when raid mode engages.
+   *  Unlike invite-pause this does NOT auto-lift — staff run `/lockdown end`
+   *  once the wave is over, so the server can't reopen mid-raid. */
+  lockdownOnRaid: z.boolean().default(false),
 });
 export type RaidConfig = z.infer<typeof raidConfigSchema>;
 

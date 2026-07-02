@@ -10,6 +10,7 @@ import {
 } from '@solari/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveAutomodConfig } from '../lib/config-actions';
+import { liftLockdown, lockdownNow } from '../lib/lockdown-actions';
 import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
 import { ChannelSelect, RoleSelect } from './ui/entity-select';
 import { Switch } from './ui/switch';
@@ -50,6 +51,31 @@ export function AutomodForm({
   const [config, setConfig] = useState<AutomodConfig>(initial);
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [pending, startTransition] = useTransition();
+  const [lockMsg, setLockMsg] = useState<string | null>(null);
+  const [lockPending, startLock] = useTransition();
+
+  function doLockdown(): void {
+    if (
+      !window.confirm(
+        'Lock every channel now? Members won’t be able to send messages until you lift it.',
+      )
+    ) {
+      return;
+    }
+    setLockMsg(null);
+    startLock(async () => {
+      const result = await lockdownNow(guildId);
+      setLockMsg(result.ok ? 'Lockdown requested — the bot is locking channels.' : 'Could not start lockdown.');
+    });
+  }
+
+  function doLift(): void {
+    setLockMsg(null);
+    startLock(async () => {
+      const result = await liftLockdown(guildId);
+      setLockMsg(result.ok ? 'Lift requested — channels are being restored.' : 'Could not lift lockdown.');
+    });
+  }
 
   function patch<K extends FilterKey>(key: K, value: Partial<AutomodConfig[K]>): void {
     setConfig((prev) => ({ ...prev, [key]: { ...prev[key], ...value } }));
@@ -400,8 +426,52 @@ export function AutomodForm({
                 (Discord lifts the pause automatically; needs Manage Server)
               </span>
             </label>
+            <label className="flex items-center gap-3 text-sm text-white/80">
+              <Switch
+                checked={raid.lockdownOnRaid}
+                onChange={(next) => patchRaid({ lockdownOnRaid: next })}
+                label="Lock down the server during a raid"
+              />
+              Lock every channel when a raid trips
+              <span className="text-xs text-white/40">
+                (stays locked until you run <code>/lockdown end</code>; needs Manage Roles)
+              </span>
+            </label>
           </div>
         )}
+      </div>
+
+      {/* Server lockdown (manual panic button) */}
+      <div className="glass flex flex-col gap-4 rounded-2xl p-5">
+        <div>
+          <h3 className="text-base font-semibold text-white/90">Server lockdown</h3>
+          <p className="mt-1 text-sm text-white/50">
+            Instantly deny <span className="text-white/70">Send Messages</span> to @everyone in every
+            text channel — the panic button for an active raid. Lifting it restores each channel to
+            exactly how it was. You can also use <code>/lockdown start</code> and{' '}
+            <code>/lockdown end</code> in Discord. Requires the bot to have{' '}
+            <span className="text-white/70">Manage Roles</span>.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={doLockdown}
+            disabled={lockPending}
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-danger)]/15 px-4 py-2 text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/25 disabled:opacity-50"
+          >
+            🔒 Lock server now
+          </button>
+          <button
+            type="button"
+            onClick={doLift}
+            disabled={lockPending}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+          >
+            🔓 Lift lockdown
+          </button>
+          {lockMsg && <span className="text-sm text-white/60">{lockMsg}</span>}
+        </div>
       </div>
 
       {/* Anti-nuke */}

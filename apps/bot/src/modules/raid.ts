@@ -8,6 +8,7 @@ import {
 import { createModerationCase } from '../lib/cases';
 import { brandedEmbed } from '../lib/embeds';
 import { sendLog } from '../lib/logging';
+import { lockdownServer } from './lockdown';
 import type { BotContext } from '../framework/context';
 
 /**
@@ -27,6 +28,8 @@ const joinWindows = new Map<string, number[]>();
 const raidModeUntil = new Map<string, number>();
 /** guildId → the `raidModeUntil` value we've already alerted moderators about. */
 const raidAlerted = new Map<string, number>();
+/** guildId → the `raidModeUntil` value we've already auto-locked down for. */
+const raidLockedFor = new Map<string, number>();
 
 async function applyGateAction(
   member: GuildMember,
@@ -93,7 +96,10 @@ async function alertOnce(
     title: '🛡️ Raid protection engaged',
   }).setDescription(
     `A join flood was detected. New members will be **${raid.raidAction}ed** for the next ` +
-      `~${minutes} minute${minutes === 1 ? '' : 's'} unless the wave stops sooner.`,
+      `~${minutes} minute${minutes === 1 ? '' : 's'} unless the wave stops sooner.` +
+      (raid.lockdownOnRaid
+        ? '\n\n🔒 The server has been **locked down**. Run `/lockdown end` once the raid is over.'
+        : ''),
   );
 
   if (raid.alertChannelId) {
@@ -146,6 +152,17 @@ export async function handleRaidJoin(member: GuildMember, ctx: BotContext): Prom
           ),
         );
     }
+    // Auto-lockdown once per raid episode. Unlike invite-pause this stays until
+    // staff run `/lockdown end`, so the server can't reopen mid-raid. Announce
+    // is off here to avoid posting in every channel during an active flood.
+    if (raid.lockdownOnRaid && raidLockedFor.get(member.guild.id) !== until) {
+      raidLockedFor.set(member.guild.id, until);
+      await lockdownServer(member.guild, ctx.client.user?.id ?? 'system', 'Automatic raid lockdown', {
+        announce: false,
+      }).catch((err: unknown) =>
+        ctx.logger.warn({ err, guildId: member.guild.id }, 'Auto raid-lockdown failed'),
+      );
+    }
   }
   const armed = now < (raidModeUntil.get(member.guild.id) ?? 0);
   if (armed) await alertOnce(member, raid, ctx);
@@ -176,4 +193,5 @@ export function resetRaidState(): void {
   joinWindows.clear();
   raidModeUntil.clear();
   raidAlerted.clear();
+  raidLockedFor.clear();
 }

@@ -24,6 +24,20 @@ Two independent join gates:
 - **Account age** — reject accounts younger than N hours (kick, ban, or timeout).
 - **Join rate** — if X members join within Y seconds, **raid mode** arms for a cooldown and sanctions the trailing wave too. An alert posts to your chosen channel.
 - **Pause invites** — optionally flip Discord's own invites-paused switch while raid mode is armed; it lifts automatically when the window ends.
+- **Lock down on raid** — optionally lock every channel when raid mode trips. Unlike invite-pause this stays locked until you run `/lockdown end`, so the server can't reopen mid-raid.
+
+## Lockdown
+
+A panic button for an active raid — deny @everyone **Send Messages** across the server. Lifting a lockdown restores each channel to exactly the state it was in before (Solari remembers each channel's prior @everyone override). Server admins keep talking (Administrator bypasses channel overrides). Requires the bot to have **Manage Roles**.
+
+| Command | What it does |
+| --- | --- |
+| `/lock [channel] [reason]` | Lock one channel (defaults to the current one) |
+| `/unlock [channel]` | Unlock one channel |
+| `/lockdown start [reason]` | Lock every text channel |
+| `/lockdown end` | Restore every channel locked by `/lock` or a lockdown |
+
+You can also lock/lift from the dashboard's **Auto-Moderation → Server lockdown** panel.
 
 ## Anti-nuke
 

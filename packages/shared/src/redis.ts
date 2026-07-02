@@ -34,6 +34,8 @@ export type LiveCommandType =
   | 'DEPLOY_VERIFY_PANEL'
   | 'DEPLOY_APPLICATION_PANEL'
   | 'APPLICATION_SIDE_EFFECTS'
+  | 'LOCKDOWN_START'
+  | 'LOCKDOWN_END'
   | 'REFRESH_COMMAND_TOGGLES'
   | 'RESTART_CUSTOM_BOT';
 
@@ -74,6 +76,12 @@ export interface DeployApplicationPanelPayload {
 
 export interface ApplicationSideEffectsPayload {
   submissionId: string;
+}
+
+export interface LockdownStartPayload {
+  /** Moderator who triggered it (dashboard user id), for the audit case. */
+  moderatorId: string;
+  reason?: string;
 }
 
 /** Cache key used by the bot's config cache (§4.2). */

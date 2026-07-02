@@ -1,4 +1,4 @@
-import type { Client } from 'discord.js';
+import type { Client, EmbedBuilder } from 'discord.js';
 import { prisma } from '@solari/database';
 import { QUEUE_NAMES } from '@solari/jobs';
 import {
@@ -10,6 +10,7 @@ import {
   type DeployVerifyPanelPayload,
   type DeployApplicationPanelPayload,
   type ApplicationSideEffectsPayload,
+  type LockdownStartPayload,
   type LiveCommandMessage,
   type RolePanelOption,
   type ScheduledMessagePayload,
@@ -26,6 +27,8 @@ import {
   getEnabledForms,
   runDecisionSideEffects,
 } from '../modules/applications';
+import { endLockdown, lockdownServer } from '../modules/lockdown';
+import { brandedEmbed } from '../lib/embeds';
 import { refreshStatsCounters } from '../modules/statsCounters';
 import { scheduledMessageJobId, type JobService } from './jobs';
 import type { ConfigCache } from './configCache';
@@ -131,6 +134,12 @@ export class LiveCommandService {
           logger: this.logger,
         });
         return;
+      case 'LOCKDOWN_START':
+        await this.startLockdown(message.guildId, message.payload as LockdownStartPayload);
+        return;
+      case 'LOCKDOWN_END':
+        await this.liftLockdown(message.guildId);
+        return;
       case 'REFRESH_STATS':
         await refreshStatsCounters(message.guildId, {
           client: this.client,
@@ -221,6 +230,55 @@ export class LiveCommandService {
       .catch((err: unknown) =>
         this.logger.warn({ err, guildId, channelId }, 'Deploy application panel failed'),
       );
+  }
+
+  /** Post a summary embed to the guild's mod-log channel (best-effort). */
+  private async postModLog(guildId: string, embed: EmbedBuilder): Promise<void> {
+    const config = await this.config.getConfig(guildId, 'MODERATION');
+    const channelId = config.modLogChannelId;
+    if (!channelId) return;
+    const channel = await this.client.channels.fetch(channelId).catch(() => null);
+    if (channel?.isTextBased() && !channel.isDMBased() && 'send' in channel) {
+      await channel.send({ embeds: [embed] }).catch(() => undefined);
+    }
+  }
+
+  private async startLockdown(guildId: string, payload: LockdownStartPayload): Promise<void> {
+    const guild = this.client.guilds.cache.get(guildId);
+    if (!guild) return;
+    const { locked, skipped } = await lockdownServer(
+      guild,
+      payload.moderatorId,
+      payload.reason ?? null,
+      { announce: true },
+    );
+    await this.postModLog(
+      guildId,
+      brandedEmbed({
+        kind: 'danger',
+        title: '🔒 Server lockdown started',
+        description:
+          `Triggered from the dashboard.\n**Channels locked:** ${locked}` +
+          (skipped ? ` (skipped ${skipped})` : '') +
+          (payload.reason ? `\n**Reason:** ${payload.reason}` : ''),
+      }),
+    );
+  }
+
+  private async liftLockdown(guildId: string): Promise<void> {
+    const guild = this.client.guilds.cache.get(guildId);
+    if (!guild) return;
+    const { restored } = await endLockdown(guild, { announce: true });
+    if (restored > 0) {
+      await this.postModLog(
+        guildId,
+        brandedEmbed({
+          kind: 'success',
+          title: '🔓 Server lockdown lifted',
+          description: `Triggered from the dashboard.\n**Channels restored:** ${restored}`,
+        }),
+      );
+    }
   }
 
   private async deletePanel(guildId: string, payload: DeletePanelPayload): Promise<void> {
