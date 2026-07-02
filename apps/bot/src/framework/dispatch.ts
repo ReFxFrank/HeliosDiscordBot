@@ -1,4 +1,5 @@
 import { MessageFlags, type ChatInputCommandInteraction, type Interaction } from 'discord.js';
+import { t } from '@solari/shared';
 import { brandedEmbed, errorEmbed } from '../lib/embeds';
 import { isBotOwner } from '../lib/permissions';
 import { commandCounter, commandLatency } from '../services/metrics';
@@ -59,7 +60,7 @@ export async function dispatchInteraction(
           interaction,
           brandedEmbed({
             kind: 'danger',
-            description: 'You or this server are blocked from using this bot.',
+            description: t(interaction.locale, 'blacklisted'),
           }),
         );
         return;
@@ -76,7 +77,7 @@ export async function dispatchInteraction(
           interaction,
           brandedEmbed({
             kind: 'warning',
-            description: 'This command is disabled on this server.',
+            description: t(interaction.locale, 'commandDisabled'),
           }),
         );
         return;
@@ -89,7 +90,7 @@ export async function dispatchInteraction(
       if (!enabled) {
         await respond(
           interaction,
-          brandedEmbed({ kind: 'warning', description: 'That module is disabled on this server.' }),
+          brandedEmbed({ kind: 'warning', description: t(interaction.locale, 'moduleDisabled') }),
         );
         return;
       }
@@ -104,7 +105,7 @@ export async function dispatchInteraction(
           interaction,
           brandedEmbed({
             kind: 'warning',
-            description: result.message ?? 'You cannot use this command.',
+            description: result.message ?? t(interaction.locale, 'cannotUseCommand'),
           }),
         );
         return;
@@ -118,10 +119,7 @@ export async function dispatchInteraction(
     } catch (err) {
       ctx.logger.error({ err, command: interaction.commandName }, 'Command execution failed');
       commandCounter.inc({ command: interaction.commandName, status: 'error' });
-      await respond(
-        interaction,
-        errorEmbed('An unexpected error occurred while running that command.'),
-      );
+      await respond(interaction, errorEmbed(t(interaction.locale, 'unexpectedError')));
     } finally {
       stopTimer();
     }
