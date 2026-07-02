@@ -1,4 +1,4 @@
-import { SHARD_STATUS_PREFIX, type ShardStatus } from '@solari/shared';
+import { SHARD_STATUS_PREFIX, statusMinutesKey, type ShardStatus } from '@solari/shared';
 import { getRedis } from './redis';
 
 /**
@@ -39,6 +39,61 @@ export async function fetchShardStatuses(): Promise<ShardStatus[] | null> {
 
   // The shared Redis client retries forever (maxRetriesPerRequest: null), so a
   // dead Redis would hang the page render without an explicit deadline.
+  try {
+    return await Promise.race([
+      read(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+    ]);
+  } catch {
+    return null;
+  }
+}
+
+export interface UptimeDay {
+  /** UTC calendar date, YYYY-MM-DD. */
+  date: string;
+  /** 0–100 uptime for that day, or null when no ledger data exists for it. */
+  pct: number | null;
+}
+
+/**
+ * Trailing per-day bot uptime from the heartbeat's minute-bitmap ledger
+ * (oldest first, ending today). A day with no key predates the ledger (or the
+ * bot was down the entire day) and reads as null — rendered "no data" rather
+ * than a false 0%. Today is measured against minutes elapsed so far.
+ */
+export async function fetchUptimeHistory(days = 90): Promise<UptimeDay[] | null> {
+  const read = async (): Promise<UptimeDay[]> => {
+    const redis = getRedis();
+    const now = new Date();
+    const dates: Date[] = [];
+    for (let i = days - 1; i >= 0; i -= 1) {
+      dates.push(new Date(now.getTime() - i * 86_400_000));
+    }
+
+    const pipeline = redis.pipeline();
+    for (const date of dates) {
+      const key = statusMinutesKey(date);
+      pipeline.exists(key);
+      pipeline.bitcount(key);
+    }
+    const replies = (await pipeline.exec()) ?? [];
+
+    const todayKey = statusMinutesKey(now);
+    const minutesElapsedToday = Math.max(1, now.getUTCHours() * 60 + now.getUTCMinutes() + 1);
+
+    return dates.map((date, index) => {
+      const exists = Number(replies[index * 2]?.[1] ?? 0) === 1;
+      const upMinutes = Number(replies[index * 2 + 1]?.[1] ?? 0);
+      if (!exists) return { date: date.toISOString().slice(0, 10), pct: null };
+      const expected = statusMinutesKey(date) === todayKey ? minutesElapsedToday : 1440;
+      return {
+        date: date.toISOString().slice(0, 10),
+        pct: Math.min(100, Math.round((upMinutes / expected) * 1000) / 10),
+      };
+    });
+  };
+
   try {
     return await Promise.race([
       read(),

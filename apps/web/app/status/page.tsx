@@ -5,7 +5,12 @@ import { GlassCard } from '../../components/ui/glass-card';
 import { SiteNav } from '../../components/marketing/site-nav';
 import { SiteFooter } from '../../components/marketing/site-footer';
 import { StatusRefresh } from '../../components/status-refresh';
-import { fetchShardStatuses, formatUptime } from '../../lib/bot-status';
+import {
+  fetchShardStatuses,
+  fetchUptimeHistory,
+  formatUptime,
+  type UptimeDay,
+} from '../../lib/bot-status';
 import { checkDatabase, checkRedis } from '../../lib/status-checks';
 import { isBillingConfigured } from '../../lib/stripe';
 import { cn } from '../../lib/utils';
@@ -41,10 +46,11 @@ const HEALTH_META: Record<Health, { label: string; dot: string; text: string }> 
 const DEGRADED_PING_MS = 400;
 
 export default async function StatusPage() {
-  const [shards, db, redis] = await Promise.all([
+  const [shards, db, redis, history] = await Promise.all([
     fetchShardStatuses(),
     checkDatabase(),
     checkRedis(),
+    fetchUptimeHistory(90),
   ]);
 
   const reporting = shards ?? [];
@@ -166,6 +172,12 @@ export default async function StatusPage() {
           <Stat label="Uptime" value={longestUptime ? formatUptime(longestUptime) : '—'} />
         </div>
 
+        {/* Uptime history (bot heartbeat ledger) */}
+        <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-white/40">
+          Bot uptime — last 90 days
+        </h2>
+        <UptimeHistory history={history} />
+
         {/* Components */}
         <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-white/40">
           Components
@@ -239,6 +251,68 @@ export default async function StatusPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+/** Average uptime over the trailing `days` window, ignoring no-data days. */
+function windowPct(history: UptimeDay[], days: number): string {
+  const window = history.slice(-days).filter((day) => day.pct !== null);
+  if (window.length === 0) return '—';
+  const avg = window.reduce((sum, day) => sum + (day.pct ?? 0), 0) / window.length;
+  return `${(Math.round(avg * 100) / 100).toFixed(2)}%`;
+}
+
+function barColor(pct: number | null): string {
+  if (pct === null) return 'bg-white/[0.08]';
+  if (pct >= 99) return 'bg-[var(--color-success)]/80';
+  if (pct >= 95) return 'bg-[var(--color-warning)]/80';
+  return 'bg-[var(--color-danger)]/80';
+}
+
+function UptimeHistory({ history }: { history: UptimeDay[] | null }) {
+  if (!history) {
+    return (
+      <GlassCard className="p-6 text-sm text-white/45">
+        Uptime history is unreadable right now (cache unreachable).
+      </GlassCard>
+    );
+  }
+  const hasData = history.some((day) => day.pct !== null);
+  return (
+    <GlassCard className="p-5">
+      <div className="flex h-9 items-end gap-[2px]">
+        {history.map((day) => (
+          <span
+            key={day.date}
+            title={`${day.date} — ${day.pct === null ? 'no data' : `${day.pct}% uptime`}`}
+            className={cn('h-full flex-1 rounded-[2px] transition-colors', barColor(day.pct))}
+          />
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-white/35">
+        <span>{history[0]?.date}</span>
+        <span>today</span>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/5 pt-4 text-center">
+        <div>
+          <p className="font-mono text-lg font-semibold text-white/90">{windowPct(history, 1)}</p>
+          <p className="text-[11px] uppercase tracking-wide text-white/40">today</p>
+        </div>
+        <div>
+          <p className="font-mono text-lg font-semibold text-white/90">{windowPct(history, 7)}</p>
+          <p className="text-[11px] uppercase tracking-wide text-white/40">7 days</p>
+        </div>
+        <div>
+          <p className="font-mono text-lg font-semibold text-white/90">{windowPct(history, 90)}</p>
+          <p className="text-[11px] uppercase tracking-wide text-white/40">90 days</p>
+        </div>
+      </div>
+      {!hasData && (
+        <p className="mt-3 text-xs text-white/35">
+          History starts recording from the bot&rsquo;s next boot — bars fill in day by day.
+        </p>
+      )}
+    </GlassCard>
   );
 }
 

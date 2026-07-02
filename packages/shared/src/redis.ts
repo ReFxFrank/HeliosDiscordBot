@@ -100,6 +100,22 @@ export function shardStatusKey(shardId: number): string {
   return `${SHARD_STATUS_PREFIX}${shardId}`;
 }
 
+/**
+ * Bot uptime ledger: one bitmap per UTC day, one bit per minute (1440). Every
+ * shard heartbeat sets the current minute's bit, so BITCOUNT/1440 is that day's
+ * uptime fraction — shard-count independent, ~180 bytes/day. /status renders
+ * the trailing 90 days from these.
+ */
+export const STATUS_MINUTES_PREFIX = 'helios:status:minutes:';
+
+/** Key for a UTC calendar day, e.g. statusMinutesKey(new Date()) → …:2026-07-02 */
+export function statusMinutesKey(date: Date): string {
+  return `${STATUS_MINUTES_PREFIX}${date.toISOString().slice(0, 10)}`;
+}
+
+/** Days the per-day uptime bitmaps are retained (90 shown + slack). */
+export const STATUS_MINUTES_TTL_DAYS = 95;
+
 export interface ShardStatus {
   shardId: number;
   /** Gateway websocket ping in ms (-1 until the first heartbeat ack). */
