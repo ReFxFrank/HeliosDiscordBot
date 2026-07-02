@@ -13,7 +13,7 @@ const command: Command = {
         .setName('deposit')
         .setDescription('Wallet → bank.')
         .addIntegerOption((o) =>
-          o.setName('amount').setDescription('How much').setRequired(true).setMinValue(1),
+          o.setName('amount').setDescription('How much (leave empty for all)').setMinValue(1),
         ),
     )
     .addSubcommand((s) =>
@@ -21,17 +21,29 @@ const command: Command = {
         .setName('withdraw')
         .setDescription('Bank → wallet.')
         .addIntegerOption((o) =>
-          o.setName('amount').setDescription('How much').setRequired(true).setMinValue(1),
+          o.setName('amount').setDescription('How much (leave empty for all)').setMinValue(1),
         ),
     ),
   module: 'ECONOMY',
   preconditions: [RequireGuild, RequirePremium('ECONOMY')],
   async execute(interaction, ctx) {
     if (!interaction.inCachedGuild()) return;
-    const amount = interaction.options.getInteger('amount', true);
     const deposit = interaction.options.getSubcommand() === 'deposit';
     const config = await ctx.config.getConfig(interaction.guildId, 'ECONOMY');
-    await getEconomyUser(interaction.guildId, interaction.user.id, config.startingBalance);
+    const eco = await getEconomyUser(interaction.guildId, interaction.user.id, config.startingBalance);
+
+    // No amount = move everything on that side. (If the balance changes between
+    // this read and the move, tryMoveMoney simply fails safely below.)
+    const amount = interaction.options.getInteger('amount') ?? (deposit ? eco.wallet : eco.bank);
+    if (amount <= 0) {
+      await interaction.reply({
+        embeds: [
+          errorEmbed(deposit ? 'Your wallet is empty.' : 'Your bank is empty.'),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     if (!(await tryMoveMoney(interaction.guildId, interaction.user.id, amount, deposit))) {
       await interaction.reply({

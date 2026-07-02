@@ -21,7 +21,7 @@ Dashboard → **Economy**:
 | `/balance`, `/rich` | Your balance · the wealth leaderboard |
 | `/daily`, `/work` | Earn currency (income roles boost `/daily`) |
 | `/vote` | Vote for the bot on top.gg and claim a reward (doubled on weekends) |
-| `/bank` | Deposit/withdraw — banked coins are safe from `/rob` |
+| `/bank` | Deposit/withdraw (leave the amount empty to move everything) — banked coins are safe from `/rob` |
 | `/pay user amount` | Send currency |
 | `/rob user` | Try to steal from a wallet — risky |
 | `/shop`, `/buy item` | Browse and buy shop items |
