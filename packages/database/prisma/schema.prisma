@@ -115,6 +115,10 @@ model Guild {
   ownerId      String?
   memberCount  Int         @default(0)
   joinedAt     DateTime    @default(now())
+  /// Set when the bot is kicked/leaves; cleared on rejoin. The row (config,
+  /// cases, levels) is retained so settings survive a re-invite, but the
+  /// dashboard treats a leftAt guild as "bot not installed".
+  leftAt       DateTime?
   premiumTier  PremiumTier @default(FREE)
   featureFlags Json        @default("{}")
   locale       String      @default("en-US")

@@ -22,7 +22,7 @@ export async function SiteNav() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
-            href="/pricing"
+            href="/features"
             className="hidden text-sm text-white/60 transition-colors hover:text-white/90 sm:inline"
           >
             Features

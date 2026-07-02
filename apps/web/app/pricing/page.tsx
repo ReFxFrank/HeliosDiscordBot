@@ -5,6 +5,8 @@ import { PREMIUM_FEATURES, PRICING_TIERS, tierEnabled } from '../../lib/pricing'
 import { UrgencyBanner } from '../../components/marketing/urgency-banner';
 import { SiteNav } from '../../components/marketing/site-nav';
 import { SiteFooter } from '../../components/marketing/site-footer';
+import { Reveal } from '../../components/marketing/reveal';
+import { SpotlightCard } from '../../components/marketing/spotlight-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,28 +38,50 @@ export default function PricingPage() {
       <SiteNav />
 
       {/* Hero */}
-      <section className="px-6 pt-16 text-center">
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-300">
-          <Crown className="h-4 w-4" /> {BRAND.name} Premium
-        </span>
-        <h1 className="mx-auto mt-4 max-w-2xl text-balance text-4xl font-bold tracking-tight text-white sm:text-5xl">
-          Take your server to the next level
-        </h1>
-        <p className="mx-auto mt-4 max-w-lg text-pretty text-white/60">
-          Unlock every premium module and higher limits. Simple per-server pricing, cancel anytime.
-        </p>
-        <p className="mt-4 text-xs font-medium uppercase tracking-widest text-amber-300/80">
-          Limited-time launch pricing
-        </p>
+      <section className="relative overflow-hidden px-6 pt-16 text-center">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="animate-aurora absolute left-1/2 top-[-40%] h-[360px] w-[720px] max-w-[95vw] rounded-full bg-amber-300/10 blur-[130px]" />
+          <div
+            className="animate-aurora absolute left-[30%] top-[-10%] h-[260px] w-[420px] rounded-full bg-[var(--color-brand)]/15 blur-[120px]"
+            style={{ animationDelay: '-6s' }}
+          />
+        </div>
+        <div className="relative">
+          <span
+            className="enter inline-flex items-center gap-1.5 text-sm font-semibold text-amber-300"
+            style={{ animationDelay: '0ms' }}
+          >
+            <Crown className="h-4 w-4" /> {BRAND.name} Premium
+          </span>
+          <h1
+            className="enter mx-auto mt-4 max-w-2xl text-balance text-4xl font-bold tracking-tight text-white sm:text-5xl"
+            style={{ animationDelay: '90ms' }}
+          >
+            Take your server to the <span className="text-gradient">next level</span>
+          </h1>
+          <p
+            className="enter mx-auto mt-4 max-w-lg text-pretty text-white/60"
+            style={{ animationDelay: '180ms' }}
+          >
+            Unlock every premium module and higher limits. Simple per-server pricing, cancel
+            anytime.
+          </p>
+          <p
+            className="enter mt-4 text-xs font-medium uppercase tracking-widest text-amber-300/80"
+            style={{ animationDelay: '270ms' }}
+          >
+            Limited-time launch pricing
+          </p>
+        </div>
       </section>
 
       {/* Pricing cards */}
       <section className="px-6 py-12">
         <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-3">
           {tiers.map((tier) => (
-            <div
+            <SpotlightCard
               key={tier.id}
-              className={`relative flex flex-col rounded-2xl border p-6 ${
+              className={`lift relative flex flex-col rounded-2xl border p-6 ${
                 tier.highlighted
                   ? 'border-amber-300/40 bg-amber-300/[0.04] shadow-[0_0_40px_-15px] shadow-amber-300/30 sm:-mt-3 sm:mb-3'
                   : 'border-white/10 bg-white/[0.02]'
@@ -88,8 +112,8 @@ export default function PricingPage() {
                   href="/servers"
                   className={`mt-6 rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition-colors ${
                     tier.highlighted
-                      ? 'bg-amber-300 text-black hover:bg-amber-200'
-                      : 'bg-white/[0.06] text-white/90 hover:bg-white/[0.1]'
+                      ? 'btn-shine bg-amber-300 text-black hover:bg-amber-200'
+                      : 'btn-shine bg-white/[0.06] text-white/90 hover:bg-white/[0.1]'
                   }`}
                 >
                   Get {tier.name}
@@ -99,12 +123,12 @@ export default function PricingPage() {
                   Coming soon
                 </span>
               )}
-            </div>
+            </SpotlightCard>
           ))}
         </div>
 
         {/* Feature checklist */}
-        <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+        <Reveal className="mx-auto mt-12 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.02] p-6">
           <p className="text-sm font-semibold text-white/80">Every plan includes:</p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {PREMIUM_FEATURES.map((perk) => (
@@ -114,7 +138,7 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
 
         {/* Risk reversal */}
         <div className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/45">

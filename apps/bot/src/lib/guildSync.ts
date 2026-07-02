@@ -8,6 +8,9 @@ export async function upsertGuildMeta(guild: Guild): Promise<void> {
     icon: guild.icon,
     ownerId: guild.ownerId,
     memberCount: guild.memberCount,
+    // We're in this guild right now — clear any stale "bot was kicked" marker
+    // (set by guildDelete) so the dashboard offers it again after a re-invite.
+    leftAt: null,
   };
   await prisma.guild.upsert({
     where: { id: guild.id },

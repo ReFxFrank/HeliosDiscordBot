@@ -29,11 +29,12 @@ export default async function GuildLayout({
     // Which of the user's manageable guilds actually have the bot — the
     // switcher must only offer those (a bot-less guild would just 404 here).
     prisma.guild.findMany({
-      where: { id: { in: guilds.map((g) => g.id) } },
+      where: { id: { in: guilds.map((g) => g.id) }, leftAt: null },
       select: { id: true },
     }),
   ]);
-  if (!guild) notFound();
+  // No row, or the bot was kicked (row retained for re-invite) → not installed.
+  if (!guild || guild.leftAt) notFound();
 
   const installed = new Set(installedRows.map((row) => row.id));
   const switchableGuilds = guilds.filter((g) => installed.has(g.id));

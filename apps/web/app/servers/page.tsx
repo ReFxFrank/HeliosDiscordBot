@@ -27,7 +27,9 @@ export default async function ServersPage() {
   const ids = guilds.map((g) => g.id);
   const present = ids.length
     ? await prisma.guild.findMany({
-        where: { id: { in: ids } },
+        // leftAt set = the bot was kicked; the row is retained for a re-invite
+        // but the server belongs under "Add Solari", not "Configure".
+        where: { id: { in: ids }, leftAt: null },
         select: { id: true, memberCount: true },
       })
     : [];

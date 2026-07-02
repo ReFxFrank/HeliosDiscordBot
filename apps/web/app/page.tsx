@@ -104,7 +104,7 @@ export default async function HomePage() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </a>
             <Link
-              href={session?.user ? '/servers' : '/pricing'}
+              href={session?.user ? '/servers' : '/features'}
               className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/90 transition-colors hover:bg-white/[0.06]"
             >
               {session?.user ? 'Open dashboard' : 'See features'}

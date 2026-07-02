@@ -12,6 +12,9 @@ export function SiteFooter() {
           <span className="text-white/30">— the all-in-one Discord bot</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Link href="/features" className="hover:text-white/80">
+            Features
+          </Link>
           <Link href="/pricing" className="hover:text-white/80">
             Pricing
           </Link>
