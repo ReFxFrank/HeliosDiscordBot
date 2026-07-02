@@ -13,7 +13,7 @@ import { logger } from './logger';
 import { captureError, initSentry } from './services/sentry';
 import { startHeartbeat } from './services/heartbeat';
 import { startInsightsFlush } from './lib/insights';
-import { syncAllStayVoice } from './modules/stayVoice';
+import { setMusicActiveCheck, syncAllStayVoice } from './modules/stayVoice';
 import { ConfigCache } from './services/configCache';
 import { JobService } from './services/jobs';
 import { closeRedis, redis } from './services/redis';
@@ -77,6 +77,10 @@ async function bootstrap(): Promise<void> {
   const config = new ConfigCache();
   const jobs = new JobService(client, logger);
   const music = env.MUSIC_ENABLED ? createMusicManager(client, logger, config) : null;
+  // Stay-voice must never fight an active music player (it was disconnecting
+  // the bot right after /play). Registered here because only client.ts owns
+  // the manager; without music the default check ("never active") stands.
+  if (music) setMusicActiveCheck((guildId) => Boolean(music.getPlayer(guildId)));
   const ctx: BotContext = { client, logger, prisma, config, jobs, redis, music };
 
   const [commands, events, componentHandlers] = await Promise.all([

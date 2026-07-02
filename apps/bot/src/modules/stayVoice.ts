@@ -23,11 +23,31 @@ function sendVoiceState(guild: Guild, channelId: string | null): void {
 }
 
 /**
- * Reconcile the bot's voice presence in one guild with its configured channel:
- * join it, move to it, or disconnect when unset/invalid. Safe to call
- * repeatedly — a no-op when already in the right place.
+ * Music must always win over stay-voice: while a Lavalink player exists for a
+ * guild, stay-voice never touches voice state (it was yanking the bot out of
+ * the music channel seconds after /play). client.ts registers the real check
+ * when the Music module is enabled; the default assumes no music.
  */
-export async function syncStayVoice(guild: Guild, logger: Logger): Promise<void> {
+let musicActive: (guildId: string) => boolean = () => false;
+export function setMusicActiveCheck(check: (guildId: string) => boolean): void {
+  musicActive = check;
+}
+
+/**
+ * Reconcile the bot's voice presence in one guild with its configured channel:
+ * join it or move to it. Safe to call repeatedly — a no-op when already in the
+ * right place, when music is playing, or when no channel is configured.
+ * Disconnecting on an unset config only happens with `allowDisconnect` (the
+ * explicit settings-change path) — never from the passive rejoin/startup paths,
+ * where "in voice with no stay config" usually means Music is at work.
+ */
+export async function syncStayVoice(
+  guild: Guild,
+  logger: Logger,
+  opts: { allowDisconnect?: boolean } = {},
+): Promise<void> {
+  if (musicActive(guild.id)) return;
+
   const row = await prisma.guild.findUnique({
     where: { id: guild.id },
     select: { stayVoiceChannelId: true },
@@ -36,7 +56,7 @@ export async function syncStayVoice(guild: Guild, logger: Logger): Promise<void>
   const currentId = guild.members.me?.voice.channelId ?? null;
 
   if (!targetId) {
-    if (currentId) sendVoiceState(guild, null);
+    if (opts.allowDisconnect && currentId) sendVoiceState(guild, null);
     return;
   }
   if (currentId === targetId) return;

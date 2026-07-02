@@ -142,8 +142,10 @@ export class LiveCommandService {
         await this.liftLockdown(message.guildId);
         return;
       case 'SYNC_STAY_VOICE': {
+        // Explicit settings change — the only path allowed to disconnect when
+        // the stay channel was cleared. (Still yields to an active music player.)
         const guild = this.client.guilds.cache.get(message.guildId);
-        if (guild) await syncStayVoice(guild, this.logger);
+        if (guild) await syncStayVoice(guild, this.logger, { allowDisconnect: true });
         return;
       }
       case 'REFRESH_STATS':
