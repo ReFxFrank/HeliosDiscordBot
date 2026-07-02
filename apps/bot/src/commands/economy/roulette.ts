@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
   ComponentType,
@@ -18,6 +19,7 @@ import {
   spinRoulette,
   type RouletteBet,
 } from '../../lib/casino';
+import { renderRouletteSpin, ROULETTE_SPIN_MS } from '../../lib/rouletteWheel';
 
 const BET_TIMEOUT_MS = 30_000;
 
@@ -87,69 +89,81 @@ const command: Command = {
     });
     const message = await interaction.fetchReply();
 
-    let choice: RouletteBet | null = null;
+    let btn;
     try {
-      const btn = await message.awaitMessageComponent({
+      btn = await message.awaitMessageComponent({
         componentType: ComponentType.Button,
         filter: (i) => i.user.id === userId,
         time: BET_TIMEOUT_MS,
       });
-      choice = btn.customId as RouletteBet;
+    } catch {
+      await interaction.editReply({
+        embeds: [
+          brandedEmbed({ kind: 'info', title: '🎡 Roulette', description: 'No bet placed — timed out.' }),
+        ],
+        components: [],
+      });
+      return;
+    }
+    const choice = btn.customId as RouletteBet;
+
+    {
+      const pocket = spinRoulette();
+      const payout = amount * roulettePayout(choice, pocket);
+      // Escrow + payout atomically BEFORE the animation (guards against a
+      // concurrent spend since the command started).
+      if (!(await settleBet(guildId, userId, amount, payout))) {
+        await btn.update({
+          embeds: [errorEmbed("You don't have that much in your wallet anymore.")],
+          components: [],
+        });
+        return;
+      }
+
+      // The reveal happens inside the GIF: the wheel decelerates and the ball
+      // lands on the real pocket, then the last frame holds. Rendered once per
+      // pocket and cached, so this is instant after the first spin.
+      const wheel = new AttachmentBuilder(renderRouletteSpin(pocket), { name: 'roulette.gif' });
       await btn.update({
         embeds: [
           brandedEmbed({
             kind: 'default',
             title: '🎡 Spinning…',
             description: `You bet ${formatMoney(amount, config)} on **${ROULETTE_BET_LABEL[choice]}**.`,
-          }),
+          }).setImage('attachment://roulette.gif'),
+        ],
+        files: [wheel],
+        components: [],
+      });
+
+      // Let the animation play out before revealing the numbers.
+      await new Promise((r) => setTimeout(r, ROULETTE_SPIN_MS + 300));
+
+      const won = payout > 0;
+      const net = payout - amount;
+      await interaction.editReply({
+        embeds: [
+          brandedEmbed({
+            kind: won ? 'success' : 'danger',
+            title: '🎡 Roulette',
+            description: won
+              ? `**You won ${formatMoney(net, config)}!** 🎉`
+              : `**You lost ${formatMoney(amount, config)}.**`,
+          })
+            .addFields(
+              { name: 'Your Bet', value: ROULETTE_BET_LABEL[choice], inline: true },
+              {
+                name: 'Landed On',
+                value: `${rouletteEmoji(pocket)} **${pocket}** (${rouletteColor(pocket)})`,
+                inline: true,
+              },
+            )
+            .setImage('attachment://roulette.gif')
+            .setFooter({ text: `Bet ${amount.toLocaleString('en-US')}` }),
         ],
         components: [],
       });
-    } catch {
-      await interaction.editReply({
-        embeds: [brandedEmbed({ kind: 'info', title: '🎡 Roulette', description: 'No bet placed — timed out.' })],
-        components: [],
-      });
-      return;
     }
-
-    const pocket = spinRoulette();
-    const payout = amount * roulettePayout(choice, pocket);
-    // Escrow + payout atomically (guards against a concurrent spend since the command started).
-    if (!(await settleBet(guildId, userId, amount, payout))) {
-      await interaction.editReply({
-        embeds: [errorEmbed("You don't have that much in your wallet anymore.")],
-        components: [],
-      });
-      return;
-    }
-
-    // Brief cosmetic pause so the wheel feels like it spins (not a durable effect).
-    await new Promise((r) => setTimeout(r, 1100));
-
-    const won = payout > 0;
-    const net = payout - amount;
-    await interaction.editReply({
-      embeds: [
-        brandedEmbed({
-          kind: won ? 'success' : 'danger',
-          title: '🎡 Roulette',
-          description: won
-            ? `**You won ${formatMoney(net, config)}!** 🎉`
-            : `**You lost ${formatMoney(amount, config)}.**`,
-        })
-          .addFields(
-            { name: 'Your Bet', value: ROULETTE_BET_LABEL[choice], inline: true },
-            {
-              name: 'Landed On',
-              value: `${rouletteEmoji(pocket)} **${pocket}** (${rouletteColor(pocket)})`,
-              inline: true,
-            },
-          )
-          .setFooter({ text: `Bet ${amount.toLocaleString('en-US')}` }),
-      ],
-      components: [],
-    });
   },
 };
 

@@ -19,6 +19,7 @@
     "bullmq": "^5.34.6",
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",
+    "gifenc": "^1.0.3",
     "ioredis": "^5.4.2",
     "lavalink-client": "^2.10.3",
     "pino": "^9.6.0",

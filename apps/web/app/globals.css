@@ -156,16 +156,9 @@ select optgroup {
 
 /* ── Landing accents (ReactBits/AnimateUI-inspired, dependency-free) ──────── */
 
-/* Infinite chip marquee: track holds two copies of the content and pans one
- * copy-width; edges fade out via mask. Pauses on hover. */
-@keyframes marquee-pan {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
+/* Infinite chip marquee: the Marquee component drives the pan with rAF (so
+ * hover can EASE the speed down instead of hard-pausing); this just supplies
+ * the clipping + edge fade. */
 .marquee {
   overflow: hidden;
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
@@ -173,10 +166,7 @@ select optgroup {
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee-pan 45s linear infinite;
-}
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
+  will-change: transform;
 }
 
 /* Periodic sheen sweep across primary CTAs. */
