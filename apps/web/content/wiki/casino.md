@@ -6,8 +6,8 @@ Classic casino games played with [Economy](/docs/economy) currency, each with a 
 
 | Command | Game |
 | --- | --- |
-| `/blackjack bet` | Hit / Stand / Double Down against the dealer — naturals pay 3:2 |
-| `/blackjack-table bet` | Multiplayer — up to 6 members join one table and play the same dealer |
+| `/blackjack bet` | Hit / Stand / Double Down / Split against the dealer — naturals pay 3:2 |
+| `/blackjack-table bet` | Multiplayer — up to 6 members join one table, splits included, one dealer |
 | `/roulette bet choice` | Red/black/green or ranges |
 | `/slots bet` | Three reels — triples and pairs pay out |
 | `/dice bet` | Roll two dice against the house, highest total wins |

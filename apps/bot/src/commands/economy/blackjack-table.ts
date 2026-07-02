@@ -33,25 +33,36 @@ const MAX_PLAYERS = 6;
 /** One table per channel — a second /blackjack-table there is refused. */
 const activeTables = new Set<string>();
 
-interface Seat {
-  userId: string;
-  name: string;
+type HandState = 'playing' | 'stand' | 'bust' | 'blackjack';
+
+interface SeatHand {
   cards: Card[];
-  /** 'playing' while it's (or will be) their turn. */
-  state: 'playing' | 'stand' | 'bust' | 'blackjack';
+  state: HandState;
 }
 
-function seatLine(seat: Seat, active: boolean): string {
-  const marker = active ? '▶ ' : '';
-  const status =
-    seat.state === 'bust'
-      ? ' · **BUST**'
-      : seat.state === 'blackjack'
-        ? ' · **BLACKJACK**'
-        : seat.state === 'stand'
-          ? ' · stands'
-          : '';
-  return `${marker}<@${seat.userId}> — ${renderHand(seat.cards)} (**${handValue(seat.cards)}**)${status}`;
+interface Seat {
+  userId: string;
+  /** Splitting adds a second hand (each carrying the table bet). */
+  hands: SeatHand[];
+}
+
+function handSuffix(hand: SeatHand): string {
+  return hand.state === 'bust'
+    ? ' · **BUST**'
+    : hand.state === 'blackjack'
+      ? ' · **BLACKJACK**'
+      : hand.state === 'stand'
+        ? ' · stands'
+        : '';
+}
+
+function seatLines(seat: Seat, active: { seat: Seat; hand: number } | null): string[] {
+  return seat.hands.map((hand, index) => {
+    const isActive = active !== null && active.seat === seat && active.hand === index;
+    const marker = isActive ? '▶ ' : '';
+    const label = seat.hands.length > 1 ? ` (hand ${index + 1})` : '';
+    return `${marker}<@${seat.userId}>${label} — ${renderHand(hand.cards)} (**${handValue(hand.cards)}**)${handSuffix(hand)}`;
+  });
 }
 
 function tableEmbed(
@@ -59,7 +70,7 @@ function tableEmbed(
   dealer: Card[],
   config: EconomyConfig,
   bet: number,
-  activeIndex: number | null,
+  active: { seat: Seat; hand: number } | null,
   revealDealer: boolean,
 ) {
   const dealerLine = revealDealer
@@ -68,15 +79,15 @@ function tableEmbed(
   return brandedEmbed({ kind: 'default', title: '🃏 Blackjack Table' })
     .setDescription(
       [
-        `Bet: ${formatMoney(bet, config)} per player`,
+        `Bet: ${formatMoney(bet, config)} per hand`,
         '',
         `**Dealer:** ${dealerLine}`,
         '',
-        ...seats.map((seat, index) => seatLine(seat, index === activeIndex)),
+        ...seats.flatMap((seat) => seatLines(seat, active)),
       ].join('\n'),
     )
     .setFooter({
-      text: activeIndex === null ? 'Dealer plays…' : 'Hit or Stand — 30s per turn',
+      text: active === null ? 'Dealer plays…' : 'Hit, Stand, or Split — 30s per turn',
     });
 }
 
@@ -119,23 +130,22 @@ const command: Command = {
     activeTables.add(channelId);
     try {
       // ── Lobby ───────────────────────────────────────────────────────────
-      const joined = new Map<string, string>([[hostId, interaction.user.displayName]]);
+      const joined = new Set<string>([hostId]);
       const lobbyRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId('bj-join').setLabel('Join table').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('bj-start').setLabel('Deal now').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('bj-cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger),
       );
       const lobbyEmbed = () =>
-        brandedEmbed({ kind: 'info', title: '🃏 Blackjack Table — taking seats' })
-          .setDescription(
-            [
-              `<@${hostId}> opened a table. Bet: **${formatMoney(bet, config)}** per player.`,
-              '',
-              `**Players (${joined.size}/${MAX_PLAYERS}):** ${[...joined.keys()].map((id) => `<@${id}>`).join(' ')}`,
-              '',
-              `Dealing in ${Math.round(JOIN_WINDOW_MS / 1000)}s — or when the host hits **Deal now**.`,
-            ].join('\n'),
-          );
+        brandedEmbed({ kind: 'info', title: '🃏 Blackjack Table — taking seats' }).setDescription(
+          [
+            `<@${hostId}> opened a table. Bet: **${formatMoney(bet, config)}** per player.`,
+            '',
+            `**Players (${joined.size}/${MAX_PLAYERS}):** ${[...joined].map((id) => `<@${id}>`).join(' ')}`,
+            '',
+            `Dealing in ${Math.round(JOIN_WINDOW_MS / 1000)}s — or when the host hits **Deal now**.`,
+          ].join('\n'),
+        );
       await interaction.reply({ embeds: [lobbyEmbed()], components: [lobbyRow] });
       const message: Message = await interaction.fetchReply();
 
@@ -163,7 +173,7 @@ const command: Command = {
                 });
                 return;
               }
-              joined.set(press.user.id, press.user.displayName);
+              joined.add(press.user.id);
               await press.update({ embeds: [lobbyEmbed()], components: [lobbyRow] });
               if (joined.size >= MAX_PLAYERS) collector.stop('start');
               return;
@@ -190,9 +200,9 @@ const command: Command = {
       // ── Escrow every seat (drop anyone whose wallet no longer covers it) ─
       const seats: Seat[] = [];
       const dropped: string[] = [];
-      for (const [userId, name] of joined) {
+      for (const userId of joined) {
         if (await trySpendWallet(guildId, userId, bet)) {
-          seats.push({ userId, name, cards: [], state: 'playing' });
+          seats.push({ userId, hands: [] });
         } else {
           dropped.push(userId);
         }
@@ -206,78 +216,105 @@ const command: Command = {
       }
 
       // ── Deal ─────────────────────────────────────────────────────────────
-      // One deck per two players keeps the shoe from running out.
+      // One deck per two players keeps the shoe from running out (splits included).
       const deck = shuffle(
-        Array.from({ length: Math.max(1, Math.ceil(seats.length / 2)) }, createDeck).flat(),
+        Array.from({ length: Math.max(1, Math.ceil(seats.length / 2) + 1) }, createDeck).flat(),
       );
       const dealer: Card[] = [deck.pop() as Card, deck.pop() as Card];
       for (const seat of seats) {
-        seat.cards = [deck.pop() as Card, deck.pop() as Card];
-        if (isBlackjack(seat.cards)) seat.state = 'blackjack';
+        const cards: Card[] = [deck.pop() as Card, deck.pop() as Card];
+        seat.hands = [{ cards, state: isBlackjack(cards) ? 'blackjack' : 'playing' }];
       }
 
-      // ── Turns, in join order ─────────────────────────────────────────────
-      const turnRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId('bj-hit').setLabel('Hit').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('bj-stand').setLabel('Stand').setStyle(ButtonStyle.Secondary),
-      );
-      for (let index = 0; index < seats.length; index++) {
-        const seat = seats[index]!;
-        if (seat.state !== 'playing') continue; // natural blackjack sits out
-
-        let turnOver = false;
-        while (!turnOver) {
-          await interaction.editReply({
-            embeds: [tableEmbed(seats, dealer, config, bet, index, false)],
-            components: [turnRow],
-          });
-          const press = await message
-            .awaitMessageComponent({
-              componentType: ComponentType.Button,
-              filter: (i) =>
-                i.user.id === seat.userId && (i.customId === 'bj-hit' || i.customId === 'bj-stand'),
-              time: TURN_TIMEOUT_MS,
-            })
-            .catch(() => null);
-          if (!press || press.customId === 'bj-stand') {
-            seat.state = 'stand'; // timeout auto-stands
-            turnOver = true;
-            if (press) await press.deferUpdate();
-            continue;
-          }
-          await press.deferUpdate();
-          seat.cards.push(deck.pop() as Card);
-          if (isBust(seat.cards)) {
-            seat.state = 'bust';
-            turnOver = true;
-          } else if (handValue(seat.cards) === 21) {
-            seat.state = 'stand';
-            turnOver = true;
+      // ── Turns, in join order (a split hand plays right after the first) ──
+      const baseRow = () =>
+        new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder().setCustomId('bj-hit').setLabel('Hit').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('bj-stand').setLabel('Stand').setStyle(ButtonStyle.Secondary),
+        );
+      for (const seat of seats) {
+        for (let handIndex = 0; handIndex < seat.hands.length; handIndex++) {
+          const hand = seat.hands[handIndex]!;
+          while (hand.state === 'playing') {
+            const canSplit =
+              seat.hands.length === 1 &&
+              hand.cards.length === 2 &&
+              hand.cards[0]!.rank === hand.cards[1]!.rank &&
+              (await getEconomyUser(guildId, seat.userId, config.startingBalance)).wallet >= bet;
+            const row = baseRow();
+            if (canSplit) {
+              row.addComponents(
+                new ButtonBuilder().setCustomId('bj-split').setLabel('Split').setStyle(ButtonStyle.Success),
+              );
+            }
+            await interaction.editReply({
+              embeds: [tableEmbed(seats, dealer, config, bet, { seat, hand: handIndex }, false)],
+              components: [row],
+            });
+            const press = await message
+              .awaitMessageComponent({
+                componentType: ComponentType.Button,
+                filter: (i) => i.user.id === seat.userId && i.customId.startsWith('bj-'),
+                time: TURN_TIMEOUT_MS,
+              })
+              .catch(() => null);
+            if (!press || press.customId === 'bj-stand') {
+              hand.state = 'stand'; // timeout auto-stands
+              if (press) await press.deferUpdate();
+              continue;
+            }
+            await press.deferUpdate();
+            if (press.customId === 'bj-split') {
+              // Second stake for the second hand; split aces take one card each.
+              if (!canSplit || !(await trySpendWallet(guildId, seat.userId, bet))) continue;
+              const [left, right] = hand.cards as [Card, Card];
+              const aces = left.rank === 'A';
+              hand.cards = [left, deck.pop() as Card];
+              if (aces) hand.state = 'stand';
+              seat.hands.push({
+                cards: [right, deck.pop() as Card],
+                state: aces ? 'stand' : 'playing',
+              });
+              continue;
+            }
+            // hit
+            hand.cards.push(deck.pop() as Card);
+            if (isBust(hand.cards)) hand.state = 'bust';
+            else if (handValue(hand.cards) === 21) hand.state = 'stand';
           }
         }
       }
 
-      // ── Dealer + settlement ──────────────────────────────────────────────
+      // ── Dealer + settlement (each hand carries the table bet) ────────────
       playDealer(dealer, deck);
       const lines: string[] = [];
       for (const seat of seats) {
-        let payout: number;
-        if (seat.state === 'bust') {
-          payout = 0;
-        } else if (seat.state === 'blackjack') {
-          payout = isBlackjack(dealer) ? bet : Math.floor(bet * config.casino.blackjackMultiplier);
-        } else {
-          const outcome = settleBlackjack(seat.cards, dealer);
-          payout = outcome === 'player_win' ? bet * 2 : outcome === 'push' ? bet : 0;
+        let stakeTotal = 0;
+        let payoutTotal = 0;
+        for (const hand of seat.hands) {
+          stakeTotal += bet;
+          if (hand.state === 'bust') continue;
+          if (hand.state === 'blackjack') {
+            payoutTotal += isBlackjack(dealer) ? bet : Math.floor(bet * config.casino.blackjackMultiplier);
+            continue;
+          }
+          const outcome = settleBlackjack(hand.cards, dealer);
+          // A 2-card 21 after a split is a normal win, not a natural.
+          payoutTotal +=
+            outcome === 'player_win' || outcome === 'player_blackjack'
+              ? bet * 2
+              : outcome === 'push'
+                ? bet
+                : 0;
         }
-        if (payout > 0) await addWallet(guildId, seat.userId, payout);
-        const net = payout - bet;
+        if (payoutTotal > 0) await addWallet(guildId, seat.userId, payoutTotal);
+        const net = payoutTotal - stakeTotal;
         lines.push(
           net > 0
             ? `🎉 <@${seat.userId}> **+${formatMoney(net, config)}**`
             : net === 0
               ? `↔️ <@${seat.userId}> push`
-              : `💥 <@${seat.userId}> −${formatMoney(bet, config)}`,
+              : `💥 <@${seat.userId}> −${formatMoney(-net, config)}`,
         );
       }
       if (dropped.length > 0) {

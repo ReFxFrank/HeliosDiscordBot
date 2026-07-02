@@ -27,7 +27,13 @@ import {
 
 const DECISION_TIMEOUT_MS = 60_000;
 
-function controls(canDouble: boolean): ActionRowBuilder<ButtonBuilder> {
+interface Hand {
+  cards: Card[];
+  stake: number;
+  done: boolean;
+}
+
+function controls(canDouble: boolean, canSplit: boolean): ActionRowBuilder<ButtonBuilder> {
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder().setCustomId('hit').setLabel('Hit').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('stand').setLabel('Stand').setStyle(ButtonStyle.Secondary),
@@ -37,7 +43,16 @@ function controls(canDouble: boolean): ActionRowBuilder<ButtonBuilder> {
       new ButtonBuilder().setCustomId('double').setLabel('Double Down').setStyle(ButtonStyle.Success),
     );
   }
+  if (canSplit) {
+    row.addComponents(
+      new ButtonBuilder().setCustomId('split').setLabel('Split').setStyle(ButtonStyle.Success),
+    );
+  }
   return row;
+}
+
+function handName(index: number, total: number): string {
+  return total > 1 ? `Hand ${index + 1}` : 'Your Hand';
 }
 
 function handField(name: string, cards: Card[], value: number | string) {
@@ -45,56 +60,62 @@ function handField(name: string, cards: Card[], value: number | string) {
 }
 
 function activeEmbed(
-  player: Card[],
+  hands: Hand[],
+  activeIndex: number,
   dealer: Card[],
   config: EconomyConfig,
-  stake: number,
-  remaining: number,
 ) {
+  const totalStake = hands.reduce((sum, hand) => sum + hand.stake, 0);
   return brandedEmbed({ kind: 'default', title: '🃏 Blackjack' })
-    .setDescription(`Bet: ${formatMoney(stake, config)} · your move.`)
+    .setDescription(
+      `Bet: ${formatMoney(totalStake, config)} · ${hands.length > 1 ? `playing **Hand ${activeIndex + 1}**` : 'your move'}.`,
+    )
     .addFields(
-      handField('Your Hand', player, handValue(player)),
+      ...hands.map((hand, index) =>
+        handField(
+          `${index === activeIndex ? '▶ ' : ''}${handName(index, hands.length)}`,
+          hand.cards,
+          handValue(hand.cards),
+        ),
+      ),
       {
         name: 'Dealer Hand',
         value: `${renderHand([dealer[0] as Card])} ${CARD_BACK}\n**Value:** ?`,
         inline: true,
       },
-    )
-    .setFooter({ text: `Cards remaining: ${remaining}` });
+    );
 }
 
-const OUTCOME_TEXT = {
-  player_blackjack: { kind: 'success' as const, title: '🃏 Blackjack! 🎉' },
-  player_win: { kind: 'success' as const, title: '🃏 You win! 🎉' },
-  push: { kind: 'info' as const, title: '🃏 Push' },
-  dealer_win: { kind: 'danger' as const, title: '🃏 Dealer wins' },
-};
-
 function finalEmbed(
-  player: Card[],
+  hands: { cards: Card[]; stake: number; payout: number }[],
   dealer: Card[],
-  outcome: keyof typeof OUTCOME_TEXT,
-  stake: number,
-  payout: number,
   config: EconomyConfig,
-  remaining: number,
+  titleOverride?: { kind: 'success' | 'info' | 'danger'; title: string },
 ) {
-  const net = payout - stake;
-  const meta = OUTCOME_TEXT[outcome];
+  const totalStake = hands.reduce((sum, hand) => sum + hand.stake, 0);
+  const totalPayout = hands.reduce((sum, hand) => sum + hand.payout, 0);
+  const net = totalPayout - totalStake;
+  const meta =
+    titleOverride ??
+    (net > 0
+      ? ({ kind: 'success', title: '🃏 You win! 🎉' } as const)
+      : net === 0
+        ? ({ kind: 'info', title: '🃏 Push' } as const)
+        : ({ kind: 'danger', title: '🃏 Dealer wins' } as const));
   const line =
     net > 0
       ? `**You won ${formatMoney(net, config)}!**`
       : net === 0
         ? 'Your bet was returned.'
-        : `**You lost ${formatMoney(stake, config)}.**`;
+        : `**You lost ${formatMoney(-net, config)}.**`;
   return brandedEmbed({ kind: meta.kind, title: meta.title })
     .setDescription(line)
     .addFields(
-      handField('Your Hand', player, handValue(player)),
+      ...hands.map((hand, index) =>
+        handField(handName(index, hands.length), hand.cards, handValue(hand.cards)),
+      ),
       handField('Dealer Hand', dealer, handValue(dealer)),
-    )
-    .setFooter({ text: `Cards remaining: ${remaining}` });
+    );
 }
 
 const command: Command = {
@@ -136,93 +157,130 @@ const command: Command = {
     }
 
     const deck = shuffle(createDeck());
-    const player: Card[] = [deck.pop() as Card, deck.pop() as Card];
+    const firstCards: Card[] = [deck.pop() as Card, deck.pop() as Card];
     const dealer: Card[] = [deck.pop() as Card, deck.pop() as Card];
-    let stake = amount;
 
     // Natural blackjack resolves immediately (pays 3:2, or pushes vs a dealer natural).
-    if (isBlackjack(player)) {
+    if (isBlackjack(firstCards)) {
       const dealerNatural = isBlackjack(dealer);
       const payout = dealerNatural ? amount : Math.floor(amount * config.casino.blackjackMultiplier);
       await addWallet(guildId, userId, payout);
       await interaction.reply({
         embeds: [
           finalEmbed(
-            player,
+            [{ cards: firstCards, stake: amount, payout }],
             dealer,
-            dealerNatural ? 'push' : 'player_blackjack',
-            amount,
-            payout,
             config,
-            deck.length,
+            dealerNatural
+              ? { kind: 'info', title: '🃏 Push' }
+              : { kind: 'success', title: '🃏 Blackjack! 🎉' },
           ),
         ],
       });
       return;
     }
 
-    // Resolve the round: dealer draws, we score, and pay the total return atomically.
-    const resolve = async (btn: ButtonInteraction | null): Promise<void> => {
+    const hands: Hand[] = [{ cards: firstCards, stake: amount, done: false }];
+    let split = false;
+
+    await interaction.reply({
+      embeds: [activeEmbed(hands, 0, dealer, config)],
+      components: [controls(eco.wallet >= amount * 2, false)],
+    });
+    const message = await interaction.fetchReply();
+
+    // Resolve every hand against one dealer draw and pay the total return.
+    const resolveAll = async (btn: ButtonInteraction | null): Promise<void> => {
       playDealer(dealer, deck);
-      const outcome = settleBlackjack(player, dealer);
-      const payout = outcome === 'player_win' ? stake * 2 : outcome === 'push' ? stake : 0;
-      await addWallet(guildId, userId, payout);
-      const embed = finalEmbed(player, dealer, outcome, stake, payout, config, deck.length);
+      const settled = hands.map((hand) => {
+        if (isBust(hand.cards)) return { ...hand, payout: 0 };
+        const outcome = settleBlackjack(hand.cards, dealer);
+        // A 2-card 21 AFTER a split is a normal win (not a natural) — pays 1:1.
+        const payout =
+          outcome === 'player_win' || outcome === 'player_blackjack'
+            ? hand.stake * 2
+            : outcome === 'push'
+              ? hand.stake
+              : 0;
+        return { ...hand, payout };
+      });
+      const totalPayout = settled.reduce((sum, hand) => sum + hand.payout, 0);
+      if (totalPayout > 0) await addWallet(guildId, userId, totalPayout);
+      const embed = finalEmbed(settled, dealer, config);
       if (btn) await btn.update({ embeds: [embed], components: [] });
       else await interaction.editReply({ embeds: [embed], components: [] });
     };
 
-    const canAffordDouble = eco.wallet >= amount * 2;
-    await interaction.reply({
-      embeds: [activeEmbed(player, dealer, config, stake, deck.length)],
-      components: [controls(canAffordDouble)],
-    });
-    const message = await interaction.fetchReply();
-
-    let finished = false;
-    while (!finished) {
-      let btn: ButtonInteraction;
-      try {
-        btn = await message.awaitMessageComponent({
-          componentType: ComponentType.Button,
-          filter: (i) => i.user.id === userId,
-          time: DECISION_TIMEOUT_MS,
+    let timedOut = false;
+    for (let index = 0; index < hands.length && !timedOut; index++) {
+      const hand = hands[index]!;
+      let firstDecision = index === 0 && !split;
+      while (!hand.done && !timedOut) {
+        const pair =
+          hand.cards.length === 2 && hand.cards[0]!.rank === hand.cards[1]!.rank && !split;
+        const fresh = await getEconomyUser(guildId, userId, config.startingBalance);
+        await interaction.editReply({
+          embeds: [activeEmbed(hands, index, dealer, config)],
+          components: [
+            controls(firstDecision && fresh.wallet >= amount, pair && fresh.wallet >= amount),
+          ],
         });
-      } catch {
-        break; // timed out → auto-stand below
-      }
 
-      if (btn.customId === 'hit') {
-        player.push(deck.pop() as Card);
-        if (isBust(player)) {
-          await resolve(btn);
-          finished = true;
+        let btn: ButtonInteraction;
+        try {
+          btn = await message.awaitMessageComponent({
+            componentType: ComponentType.Button,
+            filter: (i) => i.user.id === userId,
+            time: DECISION_TIMEOUT_MS,
+          });
+        } catch {
+          timedOut = true; // stand on everything left
+          break;
+        }
+        firstDecision = false;
+
+        if (btn.customId === 'hit') {
+          hand.cards.push(deck.pop() as Card);
+          if (isBust(hand.cards) || handValue(hand.cards) === 21) hand.done = true;
+          await btn.deferUpdate();
+        } else if (btn.customId === 'double') {
+          // Match the original bet, take exactly one card, then stand.
+          if (!(await trySpendWallet(guildId, userId, amount))) {
+            await btn.reply({
+              embeds: [errorEmbed('Not enough in your wallet to double.')],
+              flags: MessageFlags.Ephemeral,
+            });
+            continue;
+          }
+          hand.stake += amount;
+          hand.cards.push(deck.pop() as Card);
+          hand.done = true;
+          await btn.deferUpdate();
+        } else if (btn.customId === 'split') {
+          // Second stake, one pair card per hand, fresh card each. Split aces
+          // get exactly one card and stand (classic rule); no re-splitting.
+          if (!(await trySpendWallet(guildId, userId, amount))) {
+            await btn.reply({
+              embeds: [errorEmbed('Not enough in your wallet to split.')],
+              flags: MessageFlags.Ephemeral,
+            });
+            continue;
+          }
+          split = true;
+          const [left, right] = hand.cards as [Card, Card];
+          const aces = left.rank === 'A';
+          hand.cards = [left, deck.pop() as Card];
+          hand.done = aces;
+          hands.push({ cards: [right, deck.pop() as Card], stake: amount, done: aces });
+          await btn.deferUpdate();
         } else {
-          await btn.update({
-            embeds: [activeEmbed(player, dealer, config, stake, deck.length)],
-            components: [controls(false)],
-          });
+          hand.done = true; // stand
+          await btn.deferUpdate();
         }
-      } else if (btn.customId === 'double') {
-        // Match the original bet, take exactly one card, then stand.
-        if (!(await trySpendWallet(guildId, userId, amount))) {
-          await btn.reply({
-            embeds: [errorEmbed('Not enough in your wallet to double.')],
-            flags: MessageFlags.Ephemeral,
-          });
-          continue;
-        }
-        stake += amount;
-        player.push(deck.pop() as Card);
-        await resolve(btn);
-        finished = true;
-      } else {
-        // stand
-        await resolve(btn);
-        finished = true;
       }
     }
-    if (!finished) await resolve(null); // timeout → stand with the current hand
+
+    await resolveAll(null);
   },
 };
 
