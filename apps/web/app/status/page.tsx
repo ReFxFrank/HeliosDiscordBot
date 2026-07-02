@@ -381,7 +381,9 @@ function windowPct(history: UptimeDay[], days: number): string {
 }
 
 function barColor(pct: number | null): string {
-  if (pct === null) return 'bg-white/[0.08]';
+  // Days before the ledger existed have no downtime recorded → shown as up
+  // (the tooltip says "no downtime recorded" rather than claiming a measurement).
+  if (pct === null) return 'bg-[var(--color-success)]/60';
   if (pct >= 99) return 'bg-[var(--color-success)]/80';
   if (pct >= 95) return 'bg-[var(--color-warning)]/80';
   return 'bg-[var(--color-danger)]/80';
@@ -402,7 +404,7 @@ function UptimeHistory({ history }: { history: UptimeDay[] | null }) {
         {history.map((day) => (
           <span
             key={day.date}
-            title={`${day.date} — ${day.pct === null ? 'no data' : `${day.pct}% uptime`}`}
+            title={`${day.date} — ${day.pct === null ? 'no downtime recorded' : `${day.pct}% uptime`}`}
             className={cn('h-full flex-1 rounded-[2px] transition-colors', barColor(day.pct))}
           />
         ))}
@@ -427,7 +429,7 @@ function UptimeHistory({ history }: { history: UptimeDay[] | null }) {
       </div>
       {!hasData && (
         <p className="mt-3 text-xs text-white/35">
-          History starts recording from the bot&rsquo;s next boot — bars fill in day by day.
+          Minute-level recording is new — older days show as up with no downtime recorded.
         </p>
       )}
     </GlassCard>
