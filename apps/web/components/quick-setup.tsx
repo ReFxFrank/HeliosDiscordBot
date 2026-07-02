@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
+  ArrowRight,
   Gamepad2,
   LifeBuoy,
   Loader2,
@@ -22,6 +24,16 @@ const PRESET_ICONS: Record<SetupPreset['icon'], LucideIcon> = {
   Sparkles,
 };
 
+// Discord names can embed Unicode directional-override characters (e.g. U+202E),
+// which visually reverse the surrounding text — strip them so the name reads
+// correctly and can't flip the rest of the heading. Covers the bidi embeddings/
+// overrides (U+202A–U+202E), isolates (U+2066–U+2069), marks (U+200E/200F) and
+// the Arabic letter mark (U+061C).
+const BIDI_CONTROLS = /[\u202A-\u202E\u2066-\u2069\u200E\u200F\u061C]/g;
+function cleanName(name: string): string {
+  return name.replace(BIDI_CONTROLS, '').trim() || 'your server';
+}
+
 /**
  * First-run quick-setup wizard shown on the server overview until the owner
  * picks a preset or skips (both persist `setupCompletedAt`, so it never nags
@@ -29,6 +41,7 @@ const PRESET_ICONS: Record<SetupPreset['icon'], LucideIcon> = {
  * defaults; the grid below then reflects the result after revalidation.
  */
 export function QuickSetup({ guildId, guildName }: { guildId: string; guildName: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   // Which action is in flight, so we can spin only that card / the skip link.
   const [active, setActive] = useState<string | null>(null);
@@ -39,6 +52,9 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
     startTransition(async () => {
       await applySetupPreset(guildId, key).catch(() => undefined);
       setActive(null);
+      // Re-fetch the overview so the wizard closes and the grid reflects the
+      // newly-enabled modules without a manual refresh.
+      router.refresh();
     });
   }
 
@@ -48,6 +64,7 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
     startTransition(async () => {
       await dismissSetup(guildId).catch(() => undefined);
       setActive(null);
+      router.refresh();
     });
   }
 
@@ -78,10 +95,11 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-brand-strong)]/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
           <Sparkles className="h-3.5 w-3.5" /> Quick setup
         </span>
-        <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl">
-          Welcome to Solari — let&rsquo;s set up {guildName}
+        <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-[1.75rem]">
+          Welcome to Solari — let&rsquo;s set up{' '}
+          <bdi className="text-[var(--color-brand-bright)]">{cleanName(guildName)}</bdi>
         </h2>
-        <p className="mt-2 max-w-2xl text-pretty text-sm text-white/65 sm:text-base">
+        <p className="mt-2.5 max-w-2xl text-pretty text-sm leading-relaxed text-white/75 sm:text-[15px]">
           Pick a starting point and we&rsquo;ll turn on a sensible bundle of modules with smart
           defaults. You can fine-tune everything below afterward — nothing here is permanent.
         </p>
@@ -91,18 +109,21 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
             const Icon = PRESET_ICONS[preset.icon];
             const isActive = active === preset.key;
             return (
-              <SpotlightCard key={preset.key} className="glass rounded-2xl">
+              <SpotlightCard
+                key={preset.key}
+                className={cn(
+                  'glass rounded-2xl border border-white/10 transition-all duration-200',
+                  'hover:-translate-y-0.5 hover:border-[var(--color-brand)]/40',
+                  pending && !isActive && 'opacity-50',
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => apply(preset.key)}
                   disabled={pending}
-                  className={cn(
-                    'flex h-full w-full flex-col gap-3 rounded-2xl p-4 text-left transition-colors',
-                    'hover:bg-white/[0.04] disabled:cursor-not-allowed',
-                    pending && !isActive && 'opacity-50',
-                  )}
+                  className="group flex h-full w-full flex-col gap-3 rounded-2xl p-4 text-left disabled:cursor-not-allowed"
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-brand-strong)]/25 text-[var(--color-brand)] ring-1 ring-[var(--color-brand)]/25">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-brand-strong)]/25 text-[var(--color-brand-bright)] ring-1 ring-[var(--color-brand)]/30">
                     {isActive ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
@@ -110,8 +131,11 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
                     )}
                   </span>
                   <div>
-                    <p className="text-base font-semibold text-white">{preset.name}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-white/55">{preset.tagline}</p>
+                    <p className="flex items-center gap-1.5 text-base font-semibold text-white">
+                      {preset.name}
+                      <ArrowRight className="h-3.5 w-3.5 -translate-x-1 text-white/50 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/70">{preset.tagline}</p>
                   </div>
                 </button>
               </SpotlightCard>
@@ -123,7 +147,7 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
           type="button"
           onClick={skip}
           disabled={pending}
-          className="mt-4 text-sm font-medium text-white/50 transition-colors hover:text-white/80 disabled:opacity-50"
+          className="mt-4 text-sm font-medium text-white/55 transition-colors hover:text-white/85 disabled:opacity-50"
         >
           Skip for now — I&rsquo;ll configure modules myself
         </button>

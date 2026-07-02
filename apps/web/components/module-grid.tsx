@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Crown, ToggleLeft, ToggleRight } from 'lucide-react';
 import { MODULE_META, groupedModuleMeta, type ModuleCategory } from '../lib/modules';
 import { setAllModulesEnabled } from '../lib/config-actions';
@@ -35,6 +36,7 @@ export function ModuleGrid({
 }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [bulkPending, startBulk] = useTransition();
+  const router = useRouter();
 
   function bulkToggle(nextEnabled: boolean): void {
     if (
@@ -47,6 +49,7 @@ export function ModuleGrid({
       // Idempotent server-side: already-matching modules are skipped, premium
       // stays locked on free servers, globally-disabled modules are untouched.
       await setAllModulesEnabled(guildId, nextEnabled).catch(() => undefined);
+      router.refresh(); // reflect every card's new state without a manual refresh
     });
   }
 
