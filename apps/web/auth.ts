@@ -53,16 +53,59 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
   }
 }
 
-/** Fetch manageable guilds, falling back to the last known list on a blip. */
+/**
+ * Manageable guilds with a server-side Redis cache (per user, 60s TTL).
+ *
+ * Why: JWT updates made during an RSC render can't be persisted to the cookie,
+ * so the cookie's guild list stays frozen at sign-in time while EVERY request
+ * refetched from Discord. Under Discord's rate limit some refetches failed and
+ * fell back to that frozen snapshot — servers added after sign-in flickered
+ * out of the dashboard and their Configure clicks silently bounced. The Redis
+ * copy gives every request the same fresh list with one Discord call per
+ * minute, and an in-flight map dedupes the parallel renders of one navigation.
+ */
+const guildsCacheKey = (userId: string): string => `web:guilds:${userId}`;
+const inFlightGuilds = new Map<string, Promise<ManageableGuild[]>>();
+
 async function safeManageableGuilds(
   accessToken: string,
   fallback: ManageableGuild[],
+  userId?: string,
 ): Promise<ManageableGuild[]> {
-  try {
-    return await fetchManageableGuilds(accessToken);
-  } catch {
-    return fallback;
+  if (!userId) {
+    try {
+      return await fetchManageableGuilds(accessToken);
+    } catch {
+      return fallback;
+    }
   }
+
+  const { getRedis } = await import('./lib/redis');
+  try {
+    const cached = await getRedis().get(guildsCacheKey(userId));
+    if (cached) return JSON.parse(cached) as ManageableGuild[];
+  } catch {
+    // Redis down — fall through to a live fetch.
+  }
+
+  const existing = inFlightGuilds.get(userId);
+  if (existing) return existing;
+
+  const fetching = (async () => {
+    try {
+      const fresh = await fetchManageableGuilds(accessToken);
+      await getRedis()
+        .set(guildsCacheKey(userId), JSON.stringify(fresh), 'EX', 60)
+        .catch(() => undefined);
+      return fresh;
+    } catch {
+      return fallback;
+    } finally {
+      inFlightGuilds.delete(userId);
+    }
+  })();
+  inFlightGuilds.set(userId, fetching);
+  return fetching;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -90,7 +133,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
         token.discordId = account.providerAccountId;
-        token.guilds = await safeManageableGuilds(account.access_token ?? '', []);
+        token.guilds = await safeManageableGuilds(
+          account.access_token ?? '',
+          [],
+          account.providerAccountId,
+        );
         token.guildsFetchedAt = Date.now();
         return token;
       }
@@ -109,7 +156,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         next.error !== 'RefreshAccessTokenError' &&
         (!next.guildsFetchedAt || Date.now() - next.guildsFetchedAt > GUILD_REFRESH_MS)
       ) {
-        next.guilds = await safeManageableGuilds(next.accessToken, next.guilds ?? []);
+        next.guilds = await safeManageableGuilds(
+          next.accessToken,
+          next.guilds ?? [],
+          next.discordId,
+        );
         next.guildsFetchedAt = Date.now();
       } else if (next.error === 'RefreshAccessTokenError') {
         // Discord DEFINITIVELY rejected the grant → we can no longer trust the

@@ -85,6 +85,11 @@ export async function guardGuildAccess(
     // servers right now" (token refresh hiccup / empty list): the latter gets a
     // banner on /servers instead of a silent bounce that looks like a dead click.
     const unverifiable = session.error !== undefined || guilds.length === 0;
+    console.warn(
+      `[guard] bounced guild=${guildId} user=${session.user?.id} ` +
+        `listSize=${guilds.length} error=${session.error ?? 'none'} ` +
+        `listed=[${guilds.map((g) => g.id).join(',')}]`,
+    );
     redirect(unverifiable ? '/servers?stale=1' : '/servers');
   }
   return { session, guilds };
