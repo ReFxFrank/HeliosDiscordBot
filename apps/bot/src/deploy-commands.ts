@@ -46,7 +46,13 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
-  logger.error({ err }, 'Failed to deploy commands');
-  process.exit(1);
-});
+// Exit explicitly: loading the command modules transitively opens the bot's
+// eager Redis connections (services/redis.ts), whose reconnect retries keep
+// the event loop alive so the process would otherwise hang after registering —
+// and spam connection errors while it does. Registration is already done here.
+main()
+  .then(() => process.exit(0))
+  .catch((err: unknown) => {
+    logger.error({ err }, 'Failed to deploy commands');
+    process.exit(1);
+  });
