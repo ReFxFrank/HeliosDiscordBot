@@ -28,13 +28,14 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: 'https://solari.gg',
-    images: [{ url: '/solari-logo.png', width: 512, height: 512, alt: 'Solari' }],
+    // Wide banner → Discord/Twitter render the large preview card.
+    images: [{ url: '/solari-banner.png', width: 1200, height: 630, alt: TITLE }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: TITLE,
     description: DESCRIPTION,
-    images: ['/solari-logo.png'],
+    images: ['/solari-banner.png'],
   },
 };
 
