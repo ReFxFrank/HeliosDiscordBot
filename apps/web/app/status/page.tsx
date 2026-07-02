@@ -1,68 +1,252 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
+import { Activity, Bot, CreditCard, Database, Gauge, Server } from 'lucide-react';
+import { BRAND } from '@solari/shared';
 import { GlassCard } from '../../components/ui/glass-card';
+import { SiteNav } from '../../components/marketing/site-nav';
+import { SiteFooter } from '../../components/marketing/site-footer';
+import { StatusRefresh } from '../../components/status-refresh';
 import { fetchShardStatuses, formatUptime } from '../../lib/bot-status';
+import { checkDatabase, checkRedis } from '../../lib/status-checks';
+import { isBillingConfigured } from '../../lib/stripe';
+import { cn } from '../../lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata: Metadata = {
+  title: `Status — ${BRAND.name}`,
+  description: `Live operational status of the ${BRAND.name} bot, dashboard, and services.`,
+};
+
+type Health = 'operational' | 'degraded' | 'outage';
+
+const HEALTH_META: Record<Health, { label: string; dot: string; text: string }> = {
+  operational: {
+    label: 'Operational',
+    dot: 'bg-[var(--color-success)] shadow-[0_0_10px_var(--color-success)]',
+    text: 'text-[var(--color-success)]',
+  },
+  degraded: {
+    label: 'Degraded',
+    dot: 'bg-[var(--color-warning)] shadow-[0_0_10px_var(--color-warning)]',
+    text: 'text-[var(--color-warning)]',
+  },
+  outage: {
+    label: 'Outage',
+    dot: 'bg-[var(--color-danger)] shadow-[0_0_10px_var(--color-danger)]',
+    text: 'text-[var(--color-danger)]',
+  },
+};
+
+/** Gateway ping past this reads as degraded rather than healthy. */
+const DEGRADED_PING_MS = 400;
+
 export default async function StatusPage() {
-  const shards = await fetchShardStatuses();
-  const totalGuilds = shards?.reduce((sum, shard) => sum + shard.guilds, 0) ?? 0;
-  const updatedAt = shards?.length
-    ? shards.reduce(
-        (latest, shard) => (shard.updatedAt > latest ? shard.updatedAt : latest),
-        shards[0]!.updatedAt,
-      )
-    : null;
+  const [shards, db, redis] = await Promise.all([
+    fetchShardStatuses(),
+    checkDatabase(),
+    checkRedis(),
+  ]);
+
+  const reporting = shards ?? [];
+  const totalGuilds = reporting.reduce((sum, shard) => sum + shard.guilds, 0);
+  const pings = reporting.filter((s) => s.ping >= 0).map((s) => s.ping);
+  const avgPing = pings.length ? Math.round(pings.reduce((a, b) => a + b, 0) / pings.length) : null;
+  const longestUptime = reporting.reduce((max, s) => Math.max(max, s.uptimeMs), 0);
+
+  // Bot health: no heartbeat = outage (unless Redis itself is down, in which
+  // case we can't tell — call it degraded rather than crying wolf).
+  const botHealth: Health =
+    reporting.length > 0
+      ? avgPing !== null && avgPing > DEGRADED_PING_MS
+        ? 'degraded'
+        : 'operational'
+      : shards === null
+        ? 'degraded'
+        : 'outage';
+
+  const dbHealth: Health = db.ok ? 'operational' : 'outage';
+  const redisHealth: Health = redis.ok ? 'operational' : 'outage';
+  const billingConfigured = isBillingConfigured();
+
+  const components: {
+    name: string;
+    description: string;
+    icon: typeof Bot;
+    health: Health;
+    detail: string;
+  }[] = [
+    {
+      name: 'Discord bot',
+      description: 'Gateway connection, commands & events',
+      icon: Bot,
+      health: botHealth,
+      detail:
+        reporting.length > 0
+          ? `${reporting.length} shard${reporting.length === 1 ? '' : 's'} · ${avgPing !== null ? `${avgPing}ms gateway` : 'ping pending'}`
+          : shards === null
+            ? 'heartbeat unreadable'
+            : 'no heartbeat in 90s',
+    },
+    {
+      name: 'Dashboard & API',
+      description: 'This site, OAuth login & server actions',
+      icon: Gauge,
+      health: 'operational', // it rendered this page
+      detail: 'serving',
+    },
+    {
+      name: 'Database',
+      description: 'PostgreSQL — configs, levels, economy, cases',
+      icon: Database,
+      health: dbHealth,
+      detail: db.latencyMs !== null ? `${db.latencyMs}ms query` : 'unreachable',
+    },
+    {
+      name: 'Cache & jobs',
+      description: 'Redis — config cache, live updates, schedulers',
+      icon: Activity,
+      health: redisHealth,
+      detail: redis.latencyMs !== null ? `${redis.latencyMs}ms ping` : 'unreachable',
+    },
+    ...(billingConfigured
+      ? [
+          {
+            name: 'Billing',
+            description: 'Stripe checkout & webhooks',
+            icon: CreditCard,
+            health: 'operational' as Health,
+            detail: 'checkout enabled',
+          },
+        ]
+      : []),
+  ];
+
+  const overall: Health = components.some((c) => c.health === 'outage')
+    ? 'outage'
+    : components.some((c) => c.health === 'degraded')
+      ? 'degraded'
+      : 'operational';
+  const overallMeta = HEALTH_META[overall];
+
+  const overallCopy: Record<Health, string> = {
+    operational: 'All systems operational',
+    degraded: 'Partial degradation',
+    outage: 'Service disruption',
+  };
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Status</h1>
-        <Link href="/" className="text-sm text-white/50 hover:text-white/80">
-          ← Home
-        </Link>
-      </div>
+    <div className="min-h-screen">
+      <SiteNav />
+      <StatusRefresh seconds={30} />
 
-      {shards === null ? (
-        <GlassCard className="p-10 text-center text-sm text-white/50">
-          ⚪ Bot status is unavailable right now.
-        </GlassCard>
-      ) : shards.length === 0 ? (
-        <GlassCard className="p-5">
-          <p className="text-lg">
-            🔴 <span className="font-semibold">Offline</span>
-          </p>
-          <p className="mt-1 text-xs text-white/40">No shard has reported in the last 90s.</p>
-        </GlassCard>
-      ) : (
-        <GlassCard className="p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-lg">
-              🟢 <span className="font-semibold">Operational</span>
-            </p>
-            <p className="font-mono text-xs text-white/40">
-              {totalGuilds.toLocaleString()} servers ·{' '}
-              {shards.length === 1 ? '1 shard' : `${shards.length} shards`}
-            </p>
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        {/* Overall banner */}
+        <GlassCard
+          className={cn(
+            'flex flex-wrap items-center justify-between gap-3 border p-6',
+            overall === 'operational' && 'border-[var(--color-success)]/25',
+            overall === 'degraded' && 'border-[var(--color-warning)]/30',
+            overall === 'outage' && 'border-[var(--color-danger)]/30',
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <span className={cn('h-3.5 w-3.5 rounded-full', overallMeta.dot)} />
+            <h1 className="text-xl font-semibold text-white">{overallCopy[overall]}</h1>
           </div>
-          <div className="mt-3 divide-y divide-white/5 border-t border-white/5">
-            {shards.map((shard) => (
-              <div key={shard.shardId} className="flex items-center justify-between py-2 text-sm">
-                <span className="font-mono text-white/70">Shard {shard.shardId}</span>
-                <span className="font-mono text-xs text-white/40">
-                  {shard.ping >= 0 ? `${shard.ping}ms` : '—'} ·{' '}
-                  {shard.guilds.toLocaleString()} servers · up {formatUptime(shard.uptimeMs)}
+          <p className="font-mono text-xs text-white/40">
+            live · refreshes every 30s
+          </p>
+        </GlassCard>
+
+        {/* Stats strip */}
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Servers" value={reporting.length ? totalGuilds.toLocaleString() : '—'} />
+          <Stat label="Shards" value={reporting.length ? String(reporting.length) : '—'} />
+          <Stat label="Gateway ping" value={avgPing !== null ? `${avgPing}ms` : '—'} />
+          <Stat label="Uptime" value={longestUptime ? formatUptime(longestUptime) : '—'} />
+        </div>
+
+        {/* Components */}
+        <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-white/40">
+          Components
+        </h2>
+        <GlassCard className="divide-y divide-white/5 p-0">
+          {components.map((component) => {
+            const meta = HEALTH_META[component.health];
+            const Icon = component.icon;
+            return (
+              <div key={component.name} className="flex items-center gap-4 px-5 py-4">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/[0.04] text-white/60">
+                  <Icon className="h-4.5 w-4.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white/90">{component.name}</p>
+                  <p className="truncate text-xs text-white/45">{component.description}</p>
+                </div>
+                <span className="hidden font-mono text-xs text-white/35 sm:block">
+                  {component.detail}
+                </span>
+                <span className={cn('flex items-center gap-1.5 text-sm font-medium', meta.text)}>
+                  <span className={cn('h-2 w-2 rounded-full', meta.dot)} />
+                  {meta.label}
                 </span>
               </div>
-            ))}
-          </div>
-          {updatedAt && (
-            <p className="mt-3 font-mono text-xs text-white/30">
-              Updated {new Date(updatedAt).toLocaleString()}
-            </p>
-          )}
+            );
+          })}
         </GlassCard>
-      )}
-    </main>
+
+        {/* Per-shard detail */}
+        <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-white/40">
+          Shards
+        </h2>
+        {reporting.length === 0 ? (
+          <GlassCard className="p-6 text-sm text-white/45">
+            {shards === null
+              ? 'Shard heartbeats are unreadable right now (cache unreachable).'
+              : 'No shard has reported in the last 90 seconds.'}
+          </GlassCard>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {reporting.map((shard) => {
+              const shardHealth: Health =
+                shard.ping >= 0 && shard.ping > DEGRADED_PING_MS ? 'degraded' : 'operational';
+              const meta = HEALTH_META[shardHealth];
+              return (
+                <GlassCard key={shard.shardId} className="flex items-center gap-3 p-4">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/[0.04] text-white/60">
+                    <Server className="h-4.5 w-4.5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-sm font-medium text-white/90">
+                      Shard {shard.shardId}
+                    </p>
+                    <p className="font-mono text-xs text-white/40">
+                      {shard.ping >= 0 ? `${shard.ping}ms` : '—'} ·{' '}
+                      {shard.guilds.toLocaleString()} servers · up {formatUptime(shard.uptimeMs)}
+                    </p>
+                  </div>
+                  <span className={cn('h-2 w-2 shrink-0 rounded-full', meta.dot)} />
+                </GlassCard>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="mt-8 text-center font-mono text-xs text-white/25">
+          Checks run live from this page render — database and cache latencies are real round trips.
+        </p>
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <GlassCard className="p-4">
+      <p className="text-[11px] uppercase tracking-wide text-white/40">{label}</p>
+      <p className="mt-1 font-mono text-xl font-semibold text-white/90">{value}</p>
+    </GlassCard>
   );
 }
