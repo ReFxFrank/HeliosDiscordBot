@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { env } from '../env';
+import { logger } from '../logger';
 
 /**
  * Error tracking, dormant unless SENTRY_DSN is set in .env. Sentry's default
@@ -16,6 +17,8 @@ export function initSentry(): void {
     // Errors only — no performance tracing volume on a busy bot.
     tracesSampleRate: 0,
   });
+  // A boot line so operators can confirm error reporting is live in the logs.
+  logger.info({ environment: env.NODE_ENV }, 'Sentry error tracking enabled');
 }
 
 /** Report an already-logged error; no-op when Sentry is disabled. */

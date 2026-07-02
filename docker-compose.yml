@@ -118,6 +118,20 @@ services:
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
     ports:
       - '${WEB_PORT:-3000}:3000'
+    healthcheck:
+      # Node 20 has global fetch; a 2xx from the public landing page means the
+      # app is actually serving (a hung-but-running process shows "unhealthy").
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
     depends_on:
       postgres:
         condition: service_healthy
