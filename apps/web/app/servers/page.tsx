@@ -11,7 +11,12 @@ import { GlassCard } from '../../components/ui/glass-card';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ServersPage() {
+export default async function ServersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stale?: string }>;
+}) {
+  const { stale } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) {
     return (
@@ -50,6 +55,15 @@ export default async function ServersPage() {
           {session.user.name ?? 'Account'}
         </Link>
       </div>
+
+      {stale && (
+        <GlassCard className="mb-6 border-[var(--color-warning)]/30 p-4">
+          <p className="text-sm text-[var(--color-warning)]">
+            We couldn&rsquo;t verify your servers with Discord just now — that click didn&rsquo;t go
+            through. Try again in a few seconds; if it keeps happening, sign out and back in.
+          </p>
+        </GlassCard>
+      )}
 
       {guilds.length === 0 ? (
         <GlassCard className="p-10 text-center">

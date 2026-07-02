@@ -80,6 +80,12 @@ export async function guardGuildAccess(
   const session = await auth();
   if (!session?.user?.id) redirect('/');
   const guilds = getManageableGuilds(session);
-  if (!guilds.some((guild) => guild.id === guildId)) redirect('/servers');
+  if (!guilds.some((guild) => guild.id === guildId)) {
+    // Distinguish "you don't manage this server" from "we couldn't verify your
+    // servers right now" (token refresh hiccup / empty list): the latter gets a
+    // banner on /servers instead of a silent bounce that looks like a dead click.
+    const unverifiable = session.error !== undefined || guilds.length === 0;
+    redirect(unverifiable ? '/servers?stale=1' : '/servers');
+  }
   return { session, guilds };
 }
