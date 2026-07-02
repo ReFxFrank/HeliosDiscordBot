@@ -3,7 +3,7 @@ import { LavalinkManager, type Player, type Track, type VoicePacket } from 'lava
 import { env } from '../env';
 import type { Logger } from '../logger';
 import type { ConfigCache } from './configCache';
-import { clearSkipVotes, nowPlayingEmbed } from '../lib/music';
+import { clearSkipVotes, findFallbackTrack, nowPlayingEmbed, SOURCE_NAMES } from '../lib/music';
 
 /** Per-guild pending auto-leave timers (ephemeral; tied to the live player). */
 const leaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -80,21 +80,39 @@ export function createMusicManager(
       cancelLeaveTimer(player.guildId);
       clearSkipVotes(player.guildId);
     })
-    // A failing source (e.g. YouTube refusing datacenter IPs) otherwise looks
-    // like "the bot joined but plays nothing" — surface it in the player's text
-    // channel and the logs so it's diagnosable instead of silent.
+    // A failing source (e.g. YouTube refusing datacenter IPs) first tries the
+    // same song on the other sources; only when nowhere has it do we surface
+    // the error. Never silent either way.
     .on('trackError', (player, track, payload) => {
       const reason =
         (payload as { exception?: { message?: string } }).exception?.message ?? 'unknown error';
       logger.warn(
         { guildId: player.guildId, track: track?.info?.title, reason },
-        'Music track errored',
+        'Music track errored — attempting source fallback',
       );
-      void sendToPlayerChannel(
-        client,
-        player,
-        `⚠️ Couldn't play **${track?.info?.title ?? 'that track'}**: ${reason}`,
-      );
+      void (async () => {
+        const replacement = track ? await findFallbackTrack(player, track).catch(() => null) : null;
+        if (replacement) {
+          // If autoSkip already advanced to the next queued song, slot the
+          // replacement in right after it instead of hijacking playback.
+          if (player.playing && player.queue.current) {
+            await player.queue.add(replacement.track, 0);
+          } else {
+            await player.play({ clientTrack: replacement.track });
+          }
+          await sendToPlayerChannel(
+            client,
+            player,
+            `↩️ **${track?.info?.title ?? 'Track'}** failed on its source — playing the ${SOURCE_NAMES[replacement.source]} match instead.`,
+          );
+          return;
+        }
+        await sendToPlayerChannel(
+          client,
+          player,
+          `⚠️ Couldn't play **${track?.info?.title ?? 'that track'}** on any source: ${reason}`,
+        );
+      })();
     })
     .on('trackStuck', (player, track) => {
       logger.warn({ guildId: player.guildId, track: track?.info?.title }, 'Music track stuck');

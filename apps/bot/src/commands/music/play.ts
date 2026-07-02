@@ -1,9 +1,14 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
-import type { SearchResult } from 'lavalink-client';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequirePremium } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
-import { canQueue, queuedEmbed, type TrackRequester } from '../../lib/music';
+import {
+  canQueue,
+  queuedEmbed,
+  searchWithFallback,
+  SOURCE_NAMES,
+  type TrackRequester,
+} from '../../lib/music';
 
 const command: Command = {
   data: new SlashCommandBuilder()
@@ -75,16 +80,18 @@ const command: Command = {
       id: interaction.user.id,
       username: interaction.user.username,
     };
-    // A URL resolves directly; a bare query uses the guild's configured source.
-    const result = (await player.search(
-      { query, source: config.searchSource },
-      requester,
-    )) as SearchResult;
-
-    if (result.loadType === 'error' || result.loadType === 'empty' || result.tracks.length === 0) {
-      await interaction.editReply({ embeds: [errorEmbed('No results found for that query.')] });
+    // A URL resolves directly; a bare query uses the guild's configured source
+    // and automatically falls through the other sources when it finds nothing.
+    const found = await searchWithFallback(player, query, config.searchSource, requester);
+    if (!found) {
+      await interaction.editReply({
+        embeds: [errorEmbed('No results found for that query on any source.')],
+      });
       return;
     }
+    const { result, source } = found;
+    const viaFallback = source !== config.searchSource;
+    const viaNote = viaFallback ? `\n_Found via ${SOURCE_NAMES[source]}._` : '';
 
     if (result.loadType === 'playlist') {
       await player.queue.add(result.tracks);
@@ -93,7 +100,7 @@ const command: Command = {
           brandedEmbed({
             kind: 'success',
             title: '➕ Playlist queued',
-            description: `Added **${result.tracks.length}** tracks from **${result.playlist?.title ?? 'playlist'}**.`,
+            description: `Added **${result.tracks.length}** tracks from **${result.playlist?.title ?? 'playlist'}**.${viaNote}`,
           }),
         ],
       });
@@ -105,7 +112,9 @@ const command: Command = {
       }
       await player.queue.add(track);
       const position = player.queue.tracks.length + (player.queue.current ? 1 : 0);
-      await interaction.editReply({ embeds: [queuedEmbed(track, position)] });
+      const embed = queuedEmbed(track, position);
+      if (viaFallback) embed.setFooter({ text: `Found via ${SOURCE_NAMES[source]}` });
+      await interaction.editReply({ embeds: [embed] });
     }
 
     if (!player.playing && !player.paused) await player.play();
