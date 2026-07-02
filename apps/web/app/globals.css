@@ -154,6 +154,92 @@ select optgroup {
   animation: gradient-pan 7s ease-in-out infinite;
 }
 
+/* ── Landing accents (ReactBits/AnimateUI-inspired, dependency-free) ──────── */
+
+/* Infinite chip marquee: track holds two copies of the content and pans one
+ * copy-width; edges fade out via mask. Pauses on hover. */
+@keyframes marquee-pan {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-pan 45s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Periodic sheen sweep across primary CTAs. */
+@keyframes shine-sweep {
+  0%,
+  55% {
+    transform: translateX(-150%) skewX(-18deg);
+  }
+  85%,
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  animation: shine-sweep 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Pointer-tracking radial glow (SpotlightCard sets --spot-x / --spot-y). */
+.spotlight {
+  position: relative;
+}
+.spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    240px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(139, 92, 246, 0.16),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Soft pulse for the hero badge's live dot. */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+}
+.dot-pulse {
+  animation: dot-pulse 2.4s ease-out infinite;
+}
+
 /* Card hover lift used across the module/feature grids. */
 .lift {
   transition:
