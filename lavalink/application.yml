@@ -41,9 +41,14 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
+    # Order matters: IOS and MWEB sidestep the signature-cipher step that broke
+    # in the 2026-06 YouTube player script (TV/WEB parse it and currently fail),
+    # so they sit right after the login-free ANDROID_VR.
     clients:
       - MUSIC
       - ANDROID_VR
+      - IOS
+      - MWEB
       - TV
       - WEB
       - WEBEMBEDDED
