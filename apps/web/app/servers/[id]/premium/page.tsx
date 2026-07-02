@@ -172,6 +172,14 @@ export default async function PremiumPage({
                 variables to enable upgrades.
               </p>
             )}
+            {configured && (
+              <p className="text-xs text-white/40">
+                Secure checkout by Stripe · cancel anytime ·{' '}
+                <a href="/refund" className="underline-offset-2 hover:text-white/70 hover:underline">
+                  Refund policy
+                </a>
+              </p>
+            )}
           </div>
         )}
       </GlassCard>

@@ -149,6 +149,12 @@ export default function PricingPage() {
           </span>
           <span>· Cancel anytime</span>
           <span>· No hidden fees</span>
+          <span>
+            ·{' '}
+            <Link href="/refund" className="underline-offset-2 hover:text-white/80 hover:underline">
+              Refund policy
+            </Link>
+          </span>
         </div>
       </section>
 

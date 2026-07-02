@@ -36,6 +36,9 @@ export function SiteFooter() {
           <Link href="/privacy" className="hover:text-white/80">
             Privacy
           </Link>
+          <Link href="/refund" className="hover:text-white/80">
+            Refunds
+          </Link>
         </div>
       </div>
     </footer>
