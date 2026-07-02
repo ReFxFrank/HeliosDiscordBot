@@ -4,6 +4,7 @@ import type { Client } from 'discord.js';
 import { prisma, type PrismaClient } from '@solari/database';
 import type { Logger } from '../logger';
 import { bullConnection } from './redis';
+import { captureError } from './sentry';
 
 /** Dependencies handed to job handlers. */
 export interface JobContext {
@@ -267,9 +268,10 @@ export class JobService {
         connection: bullConnection,
         prefix: QUEUE_PREFIX,
       });
-      worker.on('failed', (job, err) =>
-        this.ctx.logger.error({ err, jobId: job?.id, queue: name }, 'Job failed'),
-      );
+      worker.on('failed', (job, err) => {
+        this.ctx.logger.error({ err, jobId: job?.id, queue: name }, 'Job failed');
+        captureError(err, { queue: name, jobId: job?.id });
+      });
       this.workers.push(worker);
     }
     this.ctx.logger.info({ workers: this.workers.length }, 'Job workers started');

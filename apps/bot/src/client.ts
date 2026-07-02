@@ -10,6 +10,7 @@ import {
 import { prisma } from '@solari/database';
 import { env } from './env';
 import { logger } from './logger';
+import { captureError, initSentry } from './services/sentry';
 import { ConfigCache } from './services/configCache';
 import { JobService } from './services/jobs';
 import { closeRedis, redis } from './services/redis';
@@ -49,6 +50,7 @@ import type { BotContext } from './framework/context';
  * them (§1.6).
  */
 async function bootstrap(): Promise<void> {
+  initSentry();
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -108,17 +110,24 @@ async function bootstrap(): Promise<void> {
 
   for (const event of events) {
     const run = (...args: ClientEvents[typeof event.name]): void => {
-      void Promise.resolve(event.execute(ctx, ...args)).catch((err: unknown) =>
-        logger.error({ err, event: event.name }, 'Event handler error'),
-      );
+      void Promise.resolve(event.execute(ctx, ...args)).catch((err: unknown) => {
+        logger.error({ err, event: event.name }, 'Event handler error');
+        captureError(err, { event: event.name });
+      });
     };
     if (event.once) client.once(event.name, run);
     else client.on(event.name, run);
   }
 
   client.on(Events.InteractionCreate, (interaction) => {
-    void dispatchInteraction(interaction, ctx, commands, componentHandlers).catch((err: unknown) =>
-      logger.error({ err }, 'Interaction dispatch error'),
+    void dispatchInteraction(interaction, ctx, commands, componentHandlers).catch(
+      (err: unknown) => {
+        logger.error({ err }, 'Interaction dispatch error');
+        captureError(err, {
+          interaction: interaction.type,
+          guildId: interaction.guildId ?? undefined,
+        });
+      },
     );
   });
 
@@ -193,5 +202,6 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((err: unknown) => {
   logger.error({ err }, 'Fatal error during client bootstrap');
+  captureError(err, { phase: 'bootstrap' });
   process.exit(1);
 });

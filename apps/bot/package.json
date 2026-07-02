@@ -11,10 +11,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.2",
+    "@sentry/node": "^10.63.0",
     "@solari/database": "workspace:*",
     "@solari/jobs": "workspace:*",
     "@solari/shared": "workspace:*",
-    "@napi-rs/canvas": "^1.0.2",
     "bullmq": "^5.34.6",
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",

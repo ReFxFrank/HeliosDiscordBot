@@ -21,6 +21,8 @@ export const baseEnvSchema = z.object({
 
 export const botEnvSchema = baseEnvSchema.extend({
   DISCORD_TOKEN: z.string().min(1),
+  /** Sentry error tracking — leave unset to disable entirely. */
+  SENTRY_DSN: z.string().url().optional(),
   DISCORD_CLIENT_ID: z.string().min(1),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
   /** Comma-separated list of bot-owner Discord user IDs. */
