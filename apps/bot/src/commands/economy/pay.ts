@@ -1,4 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
+import { t } from '@solari/shared';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequirePremium } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
@@ -44,7 +45,10 @@ const command: Command = {
       embeds: [
         brandedEmbed({
           kind: 'success',
-          description: `💸 You paid <@${target.id}> ${formatMoney(amount, config)}.`,
+          description: t(interaction.locale, 'paidUser', {
+            user: `<@${target.id}>`,
+            amount: formatMoney(amount, config),
+          }),
         }),
       ],
     });

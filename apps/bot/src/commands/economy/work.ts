@@ -1,4 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
+import { t } from '@solari/shared';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequirePremium } from '../../lib/permissions';
 import { brandedEmbed } from '../../lib/embeds';
@@ -36,7 +37,9 @@ const command: Command = {
         embeds: [
           brandedEmbed({
             kind: 'warning',
-            description: `You're worn out. Try again in **${formatDuration(cooldownRemaining(eco.lastWork, config.workCooldownSeconds))}**.`,
+            description: t(interaction.locale, 'workCooldown', {
+              time: formatDuration(cooldownRemaining(eco.lastWork, config.workCooldownSeconds)),
+            }),
           }),
         ],
         flags: MessageFlags.Ephemeral,

@@ -1,4 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
+import { t } from '@solari/shared';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequirePremium } from '../../lib/permissions';
 import { brandedEmbed } from '../../lib/embeds';
@@ -31,7 +32,9 @@ const command: Command = {
         embeds: [
           brandedEmbed({
             kind: 'warning',
-            description: `You've already claimed today. Come back in **${formatDuration(cooldownRemaining(eco.lastDaily, DAY_SECONDS))}**.`,
+            description: t(interaction.locale, 'dailyAlreadyClaimed', {
+              time: formatDuration(cooldownRemaining(eco.lastDaily, DAY_SECONDS)),
+            }),
           }),
         ],
         flags: MessageFlags.Ephemeral,
@@ -44,8 +47,10 @@ const command: Command = {
         brandedEmbed({
           kind: 'success',
           description:
-            `🎁 You claimed your daily ${formatMoney(payout, config)}!` +
-            (bonus > 0 ? `\n_(includes a ${formatMoney(bonus, config)} income-role bonus)_` : ''),
+            t(interaction.locale, 'dailyClaimed', { amount: formatMoney(payout, config) }) +
+            (bonus > 0
+              ? `\n${t(interaction.locale, 'dailyBonusNote', { amount: formatMoney(bonus, config) })}`
+              : ''),
         }),
       ],
     });

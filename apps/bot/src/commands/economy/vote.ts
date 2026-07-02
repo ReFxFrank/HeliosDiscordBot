@@ -5,6 +5,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
+import { t } from '@solari/shared';
 import type { Command } from '../../framework/command';
 import { env } from '../../env';
 import { RequireGuild, RequirePremium } from '../../lib/permissions';
@@ -80,7 +81,9 @@ const command: Command = {
         embeds: [
           brandedEmbed({
             kind: 'warning',
-            description: `You already claimed this vote here. You can vote again in **${formatDuration(nextAt - Date.now())}**.`,
+            description: t(interaction.locale, 'voteAlreadyClaimed', {
+              time: formatDuration(nextAt - Date.now()),
+            }),
           }),
         ],
         components: [linkRow],
@@ -98,7 +101,7 @@ const command: Command = {
         brandedEmbed({
           kind: 'success',
           description:
-            `🗳️ Thanks for voting! You claimed ${formatMoney(payout, config)}.` +
+            t(interaction.locale, 'voteThanks', { amount: formatMoney(payout, config) }) +
             (vote.isWeekend ? '\n_(weekend vote — doubled!)_' : ''),
         }),
       ],

@@ -7,6 +7,13 @@ const KEYS: MessageKey[] = [
   'moduleDisabled',
   'cannotUseCommand',
   'unexpectedError',
+  'dailyClaimed',
+  'dailyBonusNote',
+  'dailyAlreadyClaimed',
+  'workCooldown',
+  'paidUser',
+  'voteAlreadyClaimed',
+  'voteThanks',
 ];
 
 describe('resolveLocale', () => {
@@ -40,5 +47,16 @@ describe('t', () => {
   it('translates via the Discord locale tag', () => {
     expect(t('es-ES', 'commandDisabled')).toBe('Este comando está desactivado en este servidor.');
     expect(t('ja', 'commandDisabled')).toBe('This command is disabled on this server.');
+  });
+
+  it('substitutes every {placeholder} in every locale', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const message = t(locale, 'paidUser', { user: '<@1>', amount: '100 🪙' });
+      expect(message).toContain('<@1>');
+      expect(message).toContain('100 🪙');
+      expect(message).not.toMatch(/\{\w+\}/);
+    }
+    // Repeated placeholders and missing vars degrade visibly, not silently.
+    expect(t('en', 'dailyClaimed', {})).toContain('{amount}');
   });
 });
