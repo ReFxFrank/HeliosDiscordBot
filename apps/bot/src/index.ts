@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { ShardingManager } from 'discord.js';
 import { env } from './env';
 import { logger } from './logger';
+import { captureError, flushSentry, initSentry } from './services/sentry';
 import { startTopggAutopost } from './services/topggPoster';
 
 /**
@@ -13,6 +14,10 @@ import { startTopggAutopost } from './services/topggPoster';
  * separate build step.
  */
 async function main(): Promise<void> {
+  // The shard children re-init Sentry in their own processes; this covers the
+  // supervisor itself (spawn failures, respawn loops, the fatal path below).
+  initSentry();
+
   const shardFile = fileURLToPath(new URL('./client.ts', import.meta.url));
 
   const manager = new ShardingManager(shardFile, {
@@ -41,7 +46,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
+main().catch(async (err: unknown) => {
   logger.error({ err }, 'Fatal error in sharding manager');
+  captureError(err, { phase: 'sharding-manager' });
+  await flushSentry();
   process.exit(1);
 });

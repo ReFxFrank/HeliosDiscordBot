@@ -26,3 +26,13 @@ export function captureError(err: unknown, context?: Record<string, unknown>): v
   if (!sentryEnabled) return;
   Sentry.captureException(err, context ? { extra: context } : undefined);
 }
+
+/**
+ * Flush pending events before the process exits (no-op when disabled). A bare
+ * `process.exit()` kills the send in flight, so a fatal-error path must await
+ * this or the crash never reaches the dashboard.
+ */
+export async function flushSentry(timeoutMs = 2000): Promise<void> {
+  if (!sentryEnabled) return;
+  await Sentry.flush(timeoutMs).catch(() => undefined);
+}
