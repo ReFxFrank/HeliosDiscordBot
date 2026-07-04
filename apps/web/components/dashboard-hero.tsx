@@ -40,7 +40,7 @@ export function DashboardHero({
             <h2 className="mt-1 text-xl font-semibold text-white sm:text-2xl">
               {guildName} has everything unlocked
             </h2>
-            <p className="mt-1 text-sm text-white/60">
+            <p className="mt-1 text-sm text-white/75">
               Every premium module is available. Manage your plan anytime from billing.
             </p>
           </div>
@@ -82,7 +82,7 @@ export function DashboardHero({
           <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl">
             Give your community the full experience
           </h2>
-          <p className="mt-2 text-pretty text-sm text-white/65 sm:text-base">
+          <p className="mt-2 text-pretty text-sm text-white/80 sm:text-base">
             Unlock Music, Economy, Social Alerts, Temp Voice and higher limits — one
             subscription, every premium module, on your own server.
           </p>
@@ -95,7 +95,7 @@ export function DashboardHero({
             </Link>
             <Link
               href={`/servers/${guildId}/premium`}
-              className="text-sm font-medium text-white/60 transition-colors hover:text-white/90"
+              className="text-sm font-medium text-white/75 transition-colors hover:text-white"
             >
               See everything included →
             </Link>
