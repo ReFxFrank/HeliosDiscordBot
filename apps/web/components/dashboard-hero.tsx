@@ -82,7 +82,10 @@ export function DashboardHero({
           <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl">
             Give your community the full experience
           </h2>
-          <p className="mt-2 max-w-lg text-pretty text-base font-medium text-white/90 sm:text-lg">
+          <p
+            className="mt-2 max-w-lg text-pretty text-sm sm:text-base"
+            style={{ color: '#d7d4e4' }}
+          >
             Unlock Music, Economy, Social Alerts, Temp Voice and higher limits — one
             subscription, every premium module, on your own server.
           </p>
