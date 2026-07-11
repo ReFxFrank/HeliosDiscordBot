@@ -7,6 +7,7 @@ import type { EmbedSpec } from '@solari/shared';
 import type { ChannelOption } from '../lib/discord-guild';
 import { deleteEmbed, deploySavedEmbed, saveEmbed } from '../lib/embed-actions';
 import {
+  draftHasContent,
   draftToSpec,
   EmbedBuilder,
   EMPTY_EMBED_DRAFT,
@@ -43,6 +44,19 @@ export function EmbedsManager({
   channels: ChannelOption[];
 }) {
   const router = useRouter();
+  // The list renders from local state so mutations show instantly — waiting on
+  // the RSC round-trip left saves invisible until a manual refresh. The
+  // router.refresh() calls stay as reconciliation (e.g. they pull in the
+  // messageId the bot writes after a deploy).
+  const [items, setItems] = useState<SavedEmbedDTO[]>(embeds);
+  // Adopt fresh server data whenever a refresh delivers new props (its DB read
+  // happens after our writes, so it's authoritative — e.g. it carries the
+  // messageId the bot stored after a deploy).
+  const [serverItems, setServerItems] = useState<SavedEmbedDTO[]>(embeds);
+  if (embeds !== serverItems) {
+    setServerItems(embeds);
+    setItems(embeds);
+  }
   const [editing, setEditing] = useState<EditorState | null>(null);
   const [deployTarget, setDeployTarget] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
@@ -63,13 +77,27 @@ export function EmbedsManager({
     if (!editing) return;
     setMsg(null);
     startTransition(async () => {
+      const spec = draftToSpec(editing.draft) ?? {};
       const result = await saveEmbed(guildId, {
         id: editing.id,
         name: editing.name,
         content: editing.content,
-        spec: draftToSpec(editing.draft) ?? {},
+        spec,
       });
-      if (result.ok) {
+      if (result.ok && result.id) {
+        const saved: SavedEmbedDTO = {
+          id: result.id,
+          name: editing.name.trim(),
+          content: editing.content.trim(),
+          spec,
+          channelId: items.find((e) => e.id === result.id)?.channelId ?? null,
+          messageId: items.find((e) => e.id === result.id)?.messageId ?? null,
+        };
+        setItems(
+          editing.id
+            ? items.map((e) => (e.id === result.id ? saved : e))
+            : [saved, ...items],
+        );
         setEditing(null);
         report(true, 'Embed saved.');
         router.refresh();
@@ -87,7 +115,10 @@ export function EmbedsManager({
     startTransition(async () => {
       const result = await deleteEmbed(guildId, embed.id);
       report(result.ok, result.ok ? 'Embed deleted.' : (result.error ?? 'Could not delete.'));
-      if (result.ok) router.refresh();
+      if (result.ok) {
+        setItems(items.filter((e) => e.id !== embed.id));
+        router.refresh();
+      }
     });
   }
 
@@ -97,9 +128,14 @@ export function EmbedsManager({
     startTransition(async () => {
       const result = await deploySavedEmbed(guildId, embed.id, channelId);
       if (result.ok) {
-        const inPlace =
-          Boolean(embed.messageId) &&
-          (deployTarget[embed.id] ?? embed.channelId) === embed.channelId;
+        const inPlace = Boolean(embed.messageId) && channelId === embed.channelId;
+        setItems(
+          items.map((e) =>
+            e.id === embed.id
+              ? { ...e, channelId, messageId: inPlace ? e.messageId : null }
+              : e,
+          ),
+        );
         report(
           true,
           inPlace
@@ -134,6 +170,13 @@ export function EmbedsManager({
             onContentChange={(content) => setEditing({ ...editing, content })}
             contentPlaceholder="Optional message shown above the embed"
           />
+          {editing.content.trim() && !draftHasContent(editing.draft) && (
+            <p className="text-sm font-medium text-[var(--color-warning)]">
+              Heads up: the Message box posts as plain text. For the embed card (colored bar,
+              title, fields), put your text in the embed&apos;s <b>Description</b> below — the
+              Message box is only for an optional line above it.
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -172,12 +215,12 @@ export function EmbedsManager({
       )}
 
       {/* Saved embeds */}
-      {embeds.length === 0 && !editing ? (
+      {items.length === 0 && !editing ? (
         <div className="glass rounded-2xl p-8 text-center text-sm text-white/50">
           No embeds yet. Build one and deploy it to any channel — rules, read-me, FAQs, announcements.
         </div>
       ) : (
-        embeds.map((embed) => {
+        items.map((embed) => {
           const target = deployTarget[embed.id] ?? embed.channelId ?? '';
           const willEditInPlace = Boolean(embed.messageId) && target === embed.channelId;
           return (
