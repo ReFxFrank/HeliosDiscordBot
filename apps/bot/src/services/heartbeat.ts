@@ -4,7 +4,7 @@ import {
   statusMinutesKey,
   STATUS_MINUTES_TTL_DAYS,
   type ShardStatus,
-} from '@solari/shared';
+} from '@refx/shared';
 import { redis } from './redis';
 
 const INTERVAL_MS = 30_000;

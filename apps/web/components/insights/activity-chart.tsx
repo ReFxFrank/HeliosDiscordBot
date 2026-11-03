@@ -9,7 +9,7 @@ export interface ChartSeries {
   values: number[];
 }
 
-const SURFACE = '#161221';
+const SURFACE = '#0b1322';
 const W = 720;
 const PAD = { top: 14, right: 56, bottom: 26, left: 44 };
 

@@ -8,10 +8,10 @@
     "moduleDetection": "force",
     "baseUrl": ".",
     "paths": {
-      "@solari/shared": ["./packages/shared/src/index.ts"],
-      "@solari/shared/*": ["./packages/shared/src/*"],
-      "@solari/database": ["./packages/database/src/index.ts"],
-      "@solari/jobs": ["./packages/jobs/src/index.ts"]
+      "@refx/shared": ["./packages/shared/src/index.ts"],
+      "@refx/shared/*": ["./packages/shared/src/*"],
+      "@refx/database": ["./packages/database/src/index.ts"],
+      "@refx/jobs": ["./packages/jobs/src/index.ts"]
     },
     "strict": true,
     "noUncheckedIndexedAccess": true,

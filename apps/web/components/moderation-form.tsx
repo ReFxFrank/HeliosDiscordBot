@@ -6,7 +6,7 @@ import {
   ESCALATION_ACTIONS,
   type EscalationAction,
   type ModerationConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveModerationConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
@@ -93,10 +93,10 @@ export function ModerationForm({
     <div className="flex flex-col gap-4">
       <SettingsSection
         title="Moderator Roles"
-        description="Roles that can use Solari's moderation commands. Roles with Administrator are always bot masters."
+        description="Roles that can use ReFx Assistant's moderation commands. Roles with Administrator are always bot masters."
       >
         <div className="flex max-w-xl flex-col gap-5">
-          <Field label="Admin roles" hint="Full access to Solari's configuration and moderation.">
+          <Field label="Admin roles" hint="Full access to ReFx Assistant's configuration and moderation.">
             <RoleSelect
               roles={roles}
               multiple
@@ -117,7 +117,7 @@ export function ModerationForm({
 
       <SettingsSection
         title="Immune Roles"
-        description="Members with these roles can never be warned, muted, kicked, or banned by Solari."
+        description="Members with these roles can never be warned, muted, kicked, or banned by ReFx Assistant."
       >
         <div className="max-w-xl">
           <Field label="Immune roles" hint="Moderation commands refuse to target these members.">
@@ -182,7 +182,7 @@ export function ModerationForm({
 
       <SettingsSection
         title="Member Notifications"
-        description="Whether Solari DMs a member when a moderation action is taken against them."
+        description="Whether ReFx Assistant DMs a member when a moderation action is taken against them."
       >
         <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
           <div>

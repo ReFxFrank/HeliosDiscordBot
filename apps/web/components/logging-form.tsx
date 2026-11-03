@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { LoggingConfig } from '@solari/shared';
+import type { LoggingConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveLoggingConfig } from '../lib/config-actions';
 import { ChannelSelect, RoleSelect } from './ui/entity-select';

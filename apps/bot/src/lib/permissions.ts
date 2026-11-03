@@ -3,7 +3,6 @@ import {
   type ChatInputCommandInteraction,
   type PermissionResolvable,
 } from 'discord.js';
-import { isModuleLocked, type Module } from '@solari/shared';
 import { env } from '../env';
 import type { BotContext } from '../framework/context';
 import type { Precondition, PreconditionResult } from '../framework/command';
@@ -18,7 +17,7 @@ export function isBotOwner(userId: string): boolean {
 }
 
 /**
- * Resolve a member's effective Solari permission level (§5.2):
+ * Resolve a member's effective bot permission level (§5.2):
  * bot owner -> Discord Administrator / configured admin role -> ModerateMembers
  * / configured mod role -> plain member.
  */
@@ -85,23 +84,6 @@ export function RequireLevel(required: MemberLevel): Precondition {
 
 /** Mod-or-above gate backed by the configurable mod/admin roles. */
 export const RequireModRole: Precondition = RequireLevel('mod');
-
-/**
- * Premium paywall for premium-only modules. Reads the guild's tier (kept in sync
- * by the Stripe webhook) and denies non-premium servers.
- */
-export function RequirePremium(module: Module): Precondition {
-  return async (interaction, ctx) => {
-    if (!interaction.inGuild()) return deny('This command can only be used in a server.');
-    const guild = await ctx.prisma.guild.findUnique({
-      where: { id: interaction.guildId },
-      select: { premiumTier: true },
-    });
-    return isModuleLocked(module, guild?.premiumTier ?? 'FREE')
-      ? deny('This is a Premium feature. Upgrade your server to unlock it.')
-      : OK;
-  };
-}
 
 /** Per-user, per-command cooldown. Held in-memory (per shard). */
 export function Cooldown(seconds: number): Precondition {

@@ -1,5 +1,5 @@
 {
-  "name": "@solari/bot",
+  "name": "@refx/bot",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,15 +13,13 @@
   "dependencies": {
     "@napi-rs/canvas": "^1.0.2",
     "@sentry/node": "^10.63.0",
-    "@solari/database": "workspace:*",
-    "@solari/jobs": "workspace:*",
-    "@solari/shared": "workspace:*",
+    "@refx/database": "workspace:*",
+    "@refx/jobs": "workspace:*",
+    "@refx/shared": "workspace:*",
     "bullmq": "^5.34.6",
     "discord.js": "^14.26.4",
     "dotenv": "^16.4.7",
-    "gifenc": "^1.0.3",
     "ioredis": "^5.4.2",
-    "lavalink-client": "^2.10.3",
     "pino": "^9.6.0",
     "prom-client": "^15.1.3"
   },

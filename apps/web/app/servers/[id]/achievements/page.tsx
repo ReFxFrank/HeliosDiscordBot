@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { achievementsConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { achievementsConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { AchievementsForm } from '../../../../components/achievements-form';
@@ -24,7 +24,7 @@ export default async function AchievementsPage({ params }: { params: Promise<{ i
       <div>
         <h2 className="text-lg font-semibold text-white/90">Achievements</h2>
         <p className="text-sm text-white/50">
-          Milestone rewards for level, messages, coins, and voice time.
+          Milestone rewards for level, messages, and voice time.
         </p>
       </div>
       <AchievementsForm guildId={id} initial={initial} roles={roles} channels={channels} />

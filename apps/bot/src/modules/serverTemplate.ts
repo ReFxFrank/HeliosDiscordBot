@@ -1,14 +1,13 @@
 import { ChannelType, PermissionFlagsBits, type Guild } from 'discord.js';
 import {
   getServerTemplate,
-  isModuleLocked,
   REDIS_CHANNELS,
   templateChannelCount,
   type Module,
   type ServerTemplate,
   type TemplatePermission,
-} from '@solari/shared';
-import { prisma } from '@solari/database';
+} from '@refx/shared';
+import { prisma } from '@refx/database';
 import type { Logger } from '../logger';
 import { redis } from '../services/redis';
 import { brandedEmbed } from '../lib/embeds';
@@ -36,20 +35,17 @@ export interface TemplateApplyResult {
   createdChannels: number;
   skippedChannels: number;
   enabledModules: Module[];
-  premiumSkippedModules: Module[];
   hitChannelLimit: boolean;
 }
 
-type ApplyOutcome =
-  | { ok: true; result: TemplateApplyResult }
-  | { ok: false; error: string };
+type ApplyOutcome = { ok: true; result: TemplateApplyResult } | { ok: false; error: string };
 
 const norm = (name: string): string => name.trim().toLowerCase();
 
 /**
  * Apply a server template additively: create any missing roles, then the
- * categories/channels, then enable the template's modules (premium ones only on
- * premium guilds, owner-disabled ones never). Nothing is ever deleted — an
+ * categories/channels, then enable the template's modules (owner-disabled ones
+ * never). Nothing is ever deleted — an
  * existing role/channel with the same name is left untouched — so re-running is
  * safe. Posts a summary embed and returns a machine-readable result.
  */
@@ -81,7 +77,6 @@ export async function applyServerTemplate(
     createdChannels: 0,
     skippedChannels: 0,
     enabledModules: [],
-    premiumSkippedModules: [],
     hitChannelLimit: false,
   };
 
@@ -147,7 +142,8 @@ async function createChannels(
       return;
     }
     let category = guild.channels.cache.find(
-      (channel) => channel.type === ChannelType.GuildCategory && norm(channel.name) === norm(cat.name),
+      (channel) =>
+        channel.type === ChannelType.GuildCategory && norm(channel.name) === norm(cat.name),
     );
     if (!category) {
       try {
@@ -159,7 +155,10 @@ async function createChannels(
         result.createdCategories.push(cat.name);
         result.createdChannels += 1;
       } catch (err) {
-        logger.warn({ err, guildId: guild.id, category: cat.name }, 'Template category create failed');
+        logger.warn(
+          { err, guildId: guild.id, category: cat.name },
+          'Template category create failed',
+        );
         continue;
       }
     }
@@ -191,7 +190,10 @@ async function createChannels(
         });
         result.createdChannels += 1;
       } catch (err) {
-        logger.warn({ err, guildId: guild.id, channel: spec.name }, 'Template channel create failed');
+        logger.warn(
+          { err, guildId: guild.id, channel: spec.name },
+          'Template channel create failed',
+        );
         result.skippedChannels += 1;
       }
     }
@@ -205,19 +207,14 @@ async function enableModules(
   result: TemplateApplyResult,
   logger: Logger,
 ): Promise<void> {
-  const [guildRow, offFlags] = await Promise.all([
-    prisma.guild.findUnique({ where: { id: guild.id }, select: { premiumTier: true } }),
-    prisma.globalModuleFlag.findMany({ where: { enabled: false }, select: { module: true } }),
-  ]);
-  const tier = guildRow?.premiumTier ?? 'FREE';
+  const offFlags = await prisma.globalModuleFlag.findMany({
+    where: { enabled: false },
+    select: { module: true },
+  });
   const globallyOff = new Set(offFlags.map((flag) => flag.module));
 
   for (const module of template.modules) {
     if (globallyOff.has(module)) continue; // owner turned it off globally
-    if (isModuleLocked(module, tier)) {
-      result.premiumSkippedModules.push(module);
-      continue;
-    }
     try {
       await prisma.guildModuleConfig.upsert({
         where: { guildId_module: { guildId: guild.id, module } },
@@ -225,7 +222,10 @@ async function enableModules(
         create: { guildId: guild.id, module, enabled: true, updatedBy: actorId },
       });
       // Invalidate every shard's + the dashboard's config cache for this module.
-      await redis.publish(REDIS_CHANNELS.configUpdate, JSON.stringify({ guildId: guild.id, module }));
+      await redis.publish(
+        REDIS_CHANNELS.configUpdate,
+        JSON.stringify({ guildId: guild.id, module }),
+      );
       result.enabledModules.push(module);
     } catch (err) {
       logger.warn({ err, guildId: guild.id, module }, 'Template module enable failed');
@@ -250,13 +250,10 @@ async function postSummary(guild: Guild, result: TemplateApplyResult): Promise<v
   if (result.enabledModules.length) {
     lines.push(`Modules enabled: ${result.enabledModules.join(', ')}`);
   }
-  if (result.premiumSkippedModules.length) {
-    lines.push(
-      `⭐ Premium-only, skipped: ${result.premiumSkippedModules.join(', ')} — upgrade to enable.`,
-    );
-  }
   if (result.hitChannelLimit) {
-    lines.push(`⚠️ Stopped early — this server is near Discord's ${MAX_GUILD_CHANNELS}-channel limit.`);
+    lines.push(
+      `⚠️ Stopped early — this server is near Discord's ${MAX_GUILD_CHANNELS}-channel limit.`,
+    );
   }
 
   await target.send({

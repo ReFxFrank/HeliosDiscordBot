@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { type Prisma, prisma } from '@solari/database';
-import { rolePanelInputSchema, type RolePanelInput } from '@solari/shared';
+import { type Prisma, prisma } from '@refx/database';
+import { rolePanelInputSchema, type RolePanelInput } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { writeAuditLog } from './audit';
 import { publishLiveCommand } from './redis';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { BirthdaysConfig } from '@solari/shared';
+import type { BirthdaysConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveBirthdaysConfig } from '../lib/config-actions';
 import { ChannelSelect, RoleSelect } from './ui/entity-select';

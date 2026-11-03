@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { ModerationConfig } from '@solari/shared';
+import type { ModerationConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import {
   saveGuildSettings,
@@ -103,10 +103,10 @@ export function SettingsForm({
     <div className="flex flex-col gap-4">
       <SettingsSection
         title="Bot Masters"
-        description="Roles that can administer Solari on this server. Roles with the Administrator permission are automatically bot masters."
+        description="Roles that can administer ReFx Assistant on this server. Roles with the Administrator permission are automatically bot masters."
       >
         <div className="flex max-w-xl flex-col gap-5">
-          <Field label="Bot master roles" hint="Full access to Solari's configuration.">
+          <Field label="Bot master roles" hint="Full access to ReFx Assistant's configuration.">
             <RoleSelect
               roles={roles}
               multiple
@@ -114,7 +114,7 @@ export function SettingsForm({
               onChange={(ids) => updateModeration('adminRoleIds', ids)}
             />
           </Field>
-          <Field label="Moderator roles" hint="Can use Solari's moderation commands.">
+          <Field label="Moderator roles" hint="Can use ReFx Assistant's moderation commands.">
             <RoleSelect
               roles={roles}
               multiple
@@ -127,7 +127,7 @@ export function SettingsForm({
 
       <SettingsSection
         title="Voice Presence"
-        description="Park Solari in a voice channel 24/7 — it joins self-deafened and rejoins automatically if disconnected."
+        description="Park ReFx Assistant in a voice channel 24/7 — it joins self-deafened and rejoins automatically if disconnected."
       >
         <div className="max-w-md">
           <Field label="Stay in this voice channel" hint="None = the bot doesn't sit in voice. Needs View Channel + Connect.">
@@ -147,7 +147,7 @@ export function SettingsForm({
 
       <SettingsSection
         title="Language"
-        description="The language Solari uses for its responses on this server."
+        description="The language ReFx Assistant uses for its responses on this server."
       >
         <div className="max-w-xs">
           <Field label="Language">
@@ -195,10 +195,10 @@ export function SettingsForm({
 
       <SettingsSection
         title="Commands"
-        description="The prefix for Solari's legacy text commands."
+        description="The prefix for ReFx Assistant's legacy text commands."
       >
         <div className="max-w-xs">
-          <Field label="Prefix" hint="Used for legacy text commands (Solari is primarily slash-based).">
+          <Field label="Prefix" hint="Used for legacy text commands (ReFx Assistant is primarily slash-based).">
             <input
               className={monoInputClass}
               value={settings.prefix}

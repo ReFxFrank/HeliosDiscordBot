@@ -1,7 +1,7 @@
-name: helios
+name: refx-bot
 
 # Default `docker compose up` brings up Postgres + Redis (Phase 0 acceptance
-# target). Lavalink sits behind the `music` profile; the bot and dashboard sit
+# target). The bot and dashboard sit
 # behind the `apps` profile and are built/run with:
 #   docker compose --profile apps up --build
 # Run migrations against the running Postgres with `pnpm db:deploy`.
@@ -11,15 +11,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-helios}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helios}
-      POSTGRES_DB: ${POSTGRES_DB:-helios}
+      POSTGRES_USER: ${POSTGRES_USER:-refx}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-refx}
+      POSTGRES_DB: ${POSTGRES_DB:-refx}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-helios} -d ${POSTGRES_DB:-helios}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-refx} -d ${POSTGRES_DB:-refx}']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -38,30 +38,6 @@ services:
       timeout: 5s
       retries: 10
 
-  lavalink:
-    image: ghcr.io/lavalink-devs/lavalink:4
-    restart: unless-stopped
-    profiles: ['music']
-    environment:
-      SERVER_PORT: 2333
-      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD:-youshallnotpass}
-      # YouTube auth for datacenter IPs (see the Music section in .env.example).
-      YOUTUBE_OAUTH_ENABLED: ${YOUTUBE_OAUTH_ENABLED:-false}
-      YOUTUBE_OAUTH_REFRESH_TOKEN: ${YOUTUBE_OAUTH_REFRESH_TOKEN:-}
-      YOUTUBE_POT_TOKEN: ${YOUTUBE_POT_TOKEN:-}
-      YOUTUBE_POT_VISITOR_DATA: ${YOUTUBE_POT_VISITOR_DATA:-}
-      # Spotify via LavaSrc (see the Music section in .env.example).
-      SPOTIFY_ENABLED: ${SPOTIFY_ENABLED:-false}
-      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
-      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
-    volumes:
-      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
-    ports:
-      - '${LAVALINK_PORT:-2333}:2333'
-    # NOTE: the official Lavalink image ships no nc/curl/wget, so a shell-based
-    # healthcheck can't run. Nothing depends on Lavalink health in Phase 0; a
-    # proper REST-based check is added alongside the music module in Phase 4.
-
   bot:
     build:
       context: .
@@ -69,13 +45,12 @@ services:
     restart: unless-stopped
     profiles: ['apps']
     env_file: .env
-    # In-container the DB/Redis/Lavalink hosts are the compose service names,
+    # In-container the DB/Redis hosts are the compose service names,
     # not the `localhost` values inherited from .env. Explicit `environment`
     # entries take precedence over `env_file`.
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:-helios}@postgres:5432/${POSTGRES_DB:-helios}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-refx}:${POSTGRES_PASSWORD:-refx}@postgres:5432/${POSTGRES_DB:-refx}?schema=public
       REDIS_URL: redis://redis:6379
-      LAVALINK_HOST: lavalink
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,14 +67,14 @@ services:
     restart: unless-stopped
     profiles: ['apps']
     environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD:-helios}
-      POSTGRES_USER: ${POSTGRES_USER:-helios}
-      POSTGRES_DB: ${POSTGRES_DB:-helios}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-refx}
+      POSTGRES_USER: ${POSTGRES_USER:-refx}
+      POSTGRES_DB: ${POSTGRES_DB:-refx}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
       # Offsite push (scripts/backup-loop.sh) — inactive while the bucket is
       # empty. rclone reads the RCLONE_S3_* names directly.
       BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
-      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-solari}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-refx-bot}
       BACKUP_S3_RETENTION_DAYS: ${BACKUP_S3_RETENTION_DAYS:-30}
       RCLONE_S3_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
       RCLONE_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
@@ -122,20 +97,20 @@ services:
     profiles: ['apps']
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:-helios}@postgres:5432/${POSTGRES_DB:-helios}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-refx}:${POSTGRES_PASSWORD:-refx}@postgres:5432/${POSTGRES_DB:-refx}?schema=public
       REDIS_URL: redis://redis:6379
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
     ports:
       - '${WEB_PORT:-3000}:3000'
     healthcheck:
-      # Node 20 has global fetch; a 2xx from the public landing page means the
+      # Node 20 has global fetch; a 2xx from the health route means the
       # app is actually serving (a hung-but-running process shows "unhealthy").
       test:
         [
           'CMD',
           'node',
           '-e',
-          "fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://localhost:3000/api/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 5s

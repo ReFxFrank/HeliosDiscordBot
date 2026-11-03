@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { createModerationCase } from './cases';
 
 const RUN = process.env.VITEST_SKIP_INTEGRATION !== '1';

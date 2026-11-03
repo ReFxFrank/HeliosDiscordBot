@@ -1,7 +1,7 @@
 import type { Client } from 'discord.js';
-import { prisma } from '@solari/database';
-import { QUEUE_NAMES } from '@solari/jobs';
-import { computeNextRun, type ScheduleRepeat } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { QUEUE_NAMES } from '@refx/jobs';
+import { computeNextRun, type ScheduleRepeat } from '@refx/shared';
 import type { Logger } from '../logger';
 import { scheduledMessageJobId, type JobService } from '../services/jobs';
 

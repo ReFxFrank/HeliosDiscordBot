@@ -1,7 +1,7 @@
 'use server';
 
-import { prisma } from '@solari/database';
-import { verificationConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { verificationConfigSchema } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { publishLiveCommand } from './redis';
 

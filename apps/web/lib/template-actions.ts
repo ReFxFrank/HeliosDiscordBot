@@ -1,6 +1,6 @@
 'use server';
 
-import { getServerTemplate } from '@solari/shared';
+import { getServerTemplate } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { publishLiveCommand } from './redis';
 

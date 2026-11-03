@@ -1,6 +1,6 @@
 import { type Client } from 'discord.js';
-import { prisma } from '@solari/database';
-import { QUEUE_NAMES } from '@solari/jobs';
+import { prisma } from '@refx/database';
+import { QUEUE_NAMES } from '@refx/jobs';
 import { env } from '../env';
 import { brandedEmbed } from '../lib/embeds';
 import { fetchLatest, type SocialItem, type SocialPlatform } from '../lib/social';
@@ -50,7 +50,10 @@ export async function baselineSubscription(subscriptionId: string): Promise<void
   const items = await fetchLatest(sub.platform as SocialPlatform, sub.target, env);
   const newest = items[0];
   if (newest) {
-    await prisma.socialSubscription.update({ where: { id: sub.id }, data: { lastItemId: newest.id } });
+    await prisma.socialSubscription.update({
+      where: { id: sub.id },
+      data: { lastItemId: newest.id },
+    });
   }
 }
 

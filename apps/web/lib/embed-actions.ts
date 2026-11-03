@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { Prisma, prisma } from '@solari/database';
-import { embedSpecHasContent, embedSpecSchema, type EmbedSpec } from '@solari/shared';
+import { Prisma, prisma } from '@refx/database';
+import { embedSpecHasContent, embedSpecSchema, type EmbedSpec } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { writeAuditLog } from './audit';
 import { publishLiveCommand } from './redis';

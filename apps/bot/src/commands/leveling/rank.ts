@@ -1,6 +1,6 @@
 import { AttachmentBuilder, MessageFlags, SlashCommandBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
-import { xpProgress } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { xpProgress } from '@refx/shared';
 import { brandedEmbed } from '../../lib/embeds';
 import { renderRankCard } from '../../lib/rankCard';
 import { RequireGuild } from '../../lib/permissions';

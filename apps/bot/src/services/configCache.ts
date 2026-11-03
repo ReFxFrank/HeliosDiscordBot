@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   REDIS_CHANNELS,
   configCacheKey,
@@ -8,7 +8,7 @@ import {
   type Module,
   type ModuleConfig,
   type ModuleWithSchema,
-} from '@solari/shared';
+} from '@refx/shared';
 import { logger } from '../logger';
 import { subscriber } from './redis';
 

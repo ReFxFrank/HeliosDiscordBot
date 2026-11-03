@@ -1,46 +1,56 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { BRAND } from '@refx/shared';
 import './globals.css';
 
-// Shown in link previews (Discord/Twitter embeds) and search results.
-const TITLE = 'Solari — The All-in-One Discord Bot';
-const DESCRIPTION =
-  'Moderation, leveling, economy, giveaways and more — set up in minutes from a clean web dashboard.';
+// Shown in link previews (Discord embeds) and the browser tab.
+const TITLE = `${BRAND.name} — ${BRAND.community} Dashboard`;
+const DESCRIPTION = `Configure ${BRAND.name}, the Discord bot for the ${BRAND.community} FiveM community.`;
+
+/** Absolute base for OG/Twitter image URLs; only set when the deploy URL is known. */
+function metadataBase(): URL | undefined {
+  const raw = process.env.AUTH_URL;
+  if (!raw) return undefined;
+  try {
+    return new URL(raw);
+  } catch {
+    return undefined;
+  }
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://solari.gg'),
+  metadataBase: metadataBase(),
   title: {
     default: TITLE,
-    template: '%s · Solari',
+    template: `%s · ${BRAND.name}`,
   },
   description: DESCRIPTION,
-  applicationName: 'Solari',
-  // Single source of truth for the favicon: drop the galaxy logo at
-  // apps/web/public/solari-logo.png and it serves every icon slot below.
+  applicationName: BRAND.name,
+  // Single source of truth for every icon slot: apps/web/public/refx-logo.png.
   icons: {
-    icon: '/solari-logo.png',
-    shortcut: '/solari-logo.png',
-    apple: '/solari-logo.png',
+    icon: '/refx-logo.png',
+    shortcut: '/refx-logo.png',
+    apple: '/refx-logo.png',
   },
+  // Dashboard pages sit behind Discord sign-in; keep them out of search results.
+  robots: { index: false, follow: false },
   openGraph: {
     type: 'website',
-    siteName: 'Solari',
+    siteName: BRAND.name,
     title: TITLE,
     description: DESCRIPTION,
-    url: 'https://solari.gg',
-    // Wide banner → Discord/Twitter render the large preview card.
-    images: [{ url: '/solari-banner.png', width: 1200, height: 630, alt: TITLE }],
+    images: [{ url: '/refx-logo.png', alt: BRAND.community }],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: TITLE,
     description: DESCRIPTION,
-    images: ['/solari-banner.png'],
+    images: ['/refx-logo.png'],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#8b5cf6',
+  themeColor: '#0072ff',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

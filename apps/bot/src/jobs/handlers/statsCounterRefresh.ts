@@ -1,4 +1,4 @@
-import type { StatsCounterRefreshJob } from '@solari/jobs';
+import type { StatsCounterRefreshJob } from '@refx/jobs';
 import { refreshStatsCounters } from '../../modules/statsCounters';
 import type { JobContext } from '../../services/jobs';
 

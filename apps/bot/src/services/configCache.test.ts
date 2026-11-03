@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { REDIS_CHANNELS } from '@solari/shared';
-import { prisma } from '@solari/database';
+import { REDIS_CHANNELS } from '@refx/shared';
+import { prisma } from '@refx/database';
 import { ConfigCache } from './configCache';
 import { closeRedis, redis } from './redis';
 

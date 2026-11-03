@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Send } from 'lucide-react';
-import type { TicketsConfig } from '@solari/shared';
+import type { TicketsConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveTicketsConfig } from '../lib/config-actions';
 import { deployTicketPanel } from '../lib/tickets-actions';

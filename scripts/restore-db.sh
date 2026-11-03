@@ -7,11 +7,11 @@
 #   docker compose --profile apps exec backup ls -lh /backups
 #
 #   # 2. Copy one out of the volume
-#   docker compose --profile apps cp backup:/backups/helios-YYYYMMDD-HHMMSS.sql.gz .
+#   docker compose --profile apps cp backup:/backups/refx-YYYYMMDD-HHMMSS.sql.gz .
 #
 #   # 3. Stop the apps so nothing writes mid-restore, then restore
 #   docker compose --profile apps stop bot web
-#   bash scripts/restore-db.sh helios-YYYYMMDD-HHMMSS.sql.gz
+#   bash scripts/restore-db.sh refx-YYYYMMDD-HHMMSS.sql.gz
 #   docker compose --profile apps start bot web
 set -euo pipefail
 
@@ -20,8 +20,8 @@ FILE="${1:?usage: scripts/restore-db.sh <backup.sql.gz>}"
 
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 
-DB_USER="${POSTGRES_USER:-helios}"
-DB_NAME="${POSTGRES_DB:-helios}"
+DB_USER="${POSTGRES_USER:-refx}"
+DB_NAME="${POSTGRES_DB:-refx}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 
 echo "About to WIPE database '$DB_NAME' and restore from: $FILE"

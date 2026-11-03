@@ -13,19 +13,16 @@ import { birthdaysConfigSchema } from './birthdays';
 import { statsCountersConfigSchema } from './statsCounters';
 import { inviteTrackingConfigSchema } from './inviteTracking';
 import { automodConfigSchema } from './automod';
-import { musicConfigSchema } from './music';
 import { tempVoiceConfigSchema } from './tempVoice';
-import { economyConfigSchema } from './economy';
 import { achievementsConfigSchema } from './achievements';
 import { pollsConfigSchema } from './polls';
 import { verificationConfigSchema } from './verification';
 import { applicationsConfigSchema } from './applications';
+import { fivemConfigSchema } from './fivem';
 
 export * from './moderation';
 export * from './automod';
-export * from './music';
 export * from './tempVoice';
-export * from './economy';
 export * from './leveling';
 export * from './welcome';
 export * from './autorole';
@@ -41,6 +38,7 @@ export * from './achievements';
 export * from './polls';
 export * from './verification';
 export * from './applications';
+export * from './fivem';
 export * from './serverTemplates';
 
 /**
@@ -64,13 +62,12 @@ export const MODULE_CONFIG_SCHEMAS = {
   STATS_COUNTERS: statsCountersConfigSchema,
   INVITE_TRACKING: inviteTrackingConfigSchema,
   AUTOMOD: automodConfigSchema,
-  MUSIC: musicConfigSchema,
   TEMP_VOICE: tempVoiceConfigSchema,
-  ECONOMY: economyConfigSchema,
   ACHIEVEMENTS: achievementsConfigSchema,
   POLLS: pollsConfigSchema,
   VERIFICATION: verificationConfigSchema,
   APPLICATIONS: applicationsConfigSchema,
+  FIVEM: fivemConfigSchema,
 } satisfies Partial<Record<Module, z.ZodTypeAny>>;
 
 export type ModuleWithSchema = keyof typeof MODULE_CONFIG_SCHEMAS;

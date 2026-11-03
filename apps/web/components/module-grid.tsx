@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Crown, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ToggleLeft, ToggleRight } from 'lucide-react';
 import { MODULE_META, groupedModuleMeta, type ModuleCategory } from '../lib/modules';
 import { setAllModulesEnabled } from '../lib/config-actions';
 import { cn } from '../lib/utils';
@@ -13,7 +13,6 @@ type Filter = 'all' | ModuleCategory;
 const TABS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'core', label: 'Core' },
-  { key: 'premium', label: 'Premium' },
   { key: 'utility', label: 'Utility' },
 ];
 
@@ -24,13 +23,11 @@ function countFor(key: Filter): number {
 export function ModuleGrid({
   guildId,
   enabled,
-  isPremium,
   disabledModules = [],
 }: {
   guildId: string;
   /** module key -> enabled. Plain object so it serializes across the server boundary. */
   enabled: Record<string, boolean>;
-  isPremium: boolean;
   /** Modules the owner has globally disabled — hidden from the grid entirely. */
   disabledModules?: string[];
 }) {
@@ -46,8 +43,8 @@ export function ModuleGrid({
       return;
     }
     startBulk(async () => {
-      // Idempotent server-side: already-matching modules are skipped, premium
-      // stays locked on free servers, globally-disabled modules are untouched.
+      // Idempotent server-side: already-matching modules are skipped and
+      // globally-disabled modules are untouched.
       await setAllModulesEnabled(guildId, nextEnabled).catch(() => undefined);
       router.refresh(); // reflect every card's new state without a manual refresh
     });
@@ -86,7 +83,6 @@ export function ModuleGrid({
                   : 'text-white/55 hover:bg-white/[0.05] hover:text-white/85',
               )}
             >
-              {t.key === 'premium' && <Crown className="h-3.5 w-3.5" />}
               {t.label}
               <span className={cn('text-xs tabular-nums', active ? 'text-white/70' : 'text-white/30')}>
                 {countFor(t.key)}
@@ -124,7 +120,6 @@ export function ModuleGrid({
                 guildId={guildId}
                 meta={meta}
                 enabled={enabled[meta.module] ?? false}
-                locked={meta.category === 'premium' && !isPremium}
               />
             ))}
           </div>

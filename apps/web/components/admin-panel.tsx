@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Crown, Trash2 } from 'lucide-react';
-import { addBlacklist, grantPremium, removeBlacklist, setGlobalModule } from '../lib/admin-actions';
+import { Trash2 } from 'lucide-react';
+import { addBlacklist, removeBlacklist, setGlobalModule } from '../lib/admin-actions';
 import { GlassCard } from './ui/glass-card';
 import { Switch } from './ui/switch';
 import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
-
-export interface PremiumGuild {
-  id: string;
-  name: string | null;
-}
 
 export interface FeatureItem {
   module: string;
@@ -26,12 +21,10 @@ export interface BlacklistEntry {
 }
 
 export function AdminPanel({
-  premiumGuilds,
   blacklist,
   features,
   disabledModules,
 }: {
-  premiumGuilds: PremiumGuild[];
   blacklist: BlacklistEntry[];
   features: FeatureItem[];
   disabledModules: string[];
@@ -58,28 +51,6 @@ export function AdminPanel({
           else next.delete(module);
           return next;
         });
-      }
-    });
-  }
-
-  // --- Grant premium ---
-  const [grantGuildId, setGrantGuildId] = useState('');
-  const [grantTier, setGrantTier] = useState<'FREE' | 'PREMIUM'>('PREMIUM');
-  const [grantStatus, setGrantStatus] = useState<SaveStatus>('idle');
-
-  function submitGrant(): void {
-    const guildId = grantGuildId.trim();
-    if (!guildId) {
-      setGrantStatus('error');
-      return;
-    }
-    startTransition(async () => {
-      const result = await grantPremium(guildId, grantTier);
-      if (result.ok) {
-        setGrantGuildId('');
-        setGrantStatus('saved');
-      } else {
-        setGrantStatus('error');
       }
     });
   }
@@ -144,84 +115,6 @@ export function AdminPanel({
             );
           })}
         </div>
-      </GlassCard>
-
-      <GlassCard className="flex flex-col gap-4 p-5">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-white/80">
-          <Crown className="h-4 w-4 text-amber-300" /> Grant premium
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <Field label="Guild ID" hint="The Discord server (guild) snowflake.">
-            <input
-              className={monoInputClass}
-              value={grantGuildId}
-              onChange={(e) => {
-                setGrantGuildId(e.target.value);
-                setGrantStatus('idle');
-              }}
-              placeholder="123456789012345678"
-            />
-          </Field>
-          <Field label="Tier">
-            <div className="inline-flex rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
-              {(['FREE', 'PREMIUM'] as const).map((tier) => (
-                <button
-                  key={tier}
-                  type="button"
-                  onClick={() => {
-                    setGrantTier(tier);
-                    setGrantStatus('idle');
-                  }}
-                  className={`rounded-md px-5 py-1.5 text-sm font-medium transition-colors ${
-                    grantTier === tier
-                      ? 'bg-[var(--color-brand-strong)] text-white'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  {tier}
-                </button>
-              ))}
-            </div>
-          </Field>
-        </div>
-        <SaveBar
-          pending={pending}
-          status={grantStatus}
-          onSave={submitGrant}
-          label="Apply tier"
-          savedMessage="Tier updated."
-        />
-
-        {premiumGuilds.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-white/50">Premium servers</span>
-            <div className="flex flex-col divide-y divide-white/5 rounded-lg border border-white/10">
-              {premiumGuilds.map((guild) => (
-                <div
-                  key={guild.id}
-                  className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-white/85">{guild.name ?? 'Unknown server'}</p>
-                    <p className="font-mono text-xs text-white/40">{guild.id}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      startTransition(async () => {
-                        await grantPremium(guild.id, 'FREE');
-                      });
-                    }}
-                    disabled={pending}
-                    className="shrink-0 rounded-md border border-white/10 px-2 py-1 text-xs text-white/60 hover:text-white disabled:opacity-40"
-                  >
-                    Revoke
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4 p-5">

@@ -5,28 +5,27 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
-import { BRAND } from '@solari/shared';
+import { BRAND } from '@refx/shared';
 import type { Command } from '../../framework/command';
 import { env } from '../../env';
 import { Cooldown } from '../../lib/permissions';
 import { brandedEmbed } from '../../lib/embeds';
 
-const SITE = 'https://solari.gg';
-
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('How to use the bot — dashboard, wiki, and popular commands.'),
+    .setDescription('How to use the bot — city status, levels, tickets and staff tools.'),
   preconditions: [Cooldown(5)],
   async execute(interaction) {
-    const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Dashboard').setURL(`${SITE}/servers`),
-      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Wiki').setURL('https://wiki.solari.gg'),
-      new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setLabel('All commands')
-        .setURL(`${SITE}/commands`),
-    );
+    const links = new ActionRowBuilder<ButtonBuilder>();
+    if (env.DASHBOARD_URL) {
+      links.addComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('Dashboard')
+          .setURL(`${env.DASHBOARD_URL.replace(/\/$/, '')}/servers`),
+      );
+    }
     if (env.SUPPORT_SERVER_INVITE) {
       links.addComponents(
         new ButtonBuilder()
@@ -40,28 +39,28 @@ const command: Command = {
       embeds: [
         brandedEmbed({
           kind: 'info',
-          title: `👋 ${BRAND.name} Help`,
-          description:
-            `${BRAND.name} is configured from the **web dashboard** — every module, ` +
-            'every setting, live in about a second. The wiki has a setup guide for each module.',
+          title: `👋 ${BRAND.name}`,
+          description: `I run the ${BRAND.community} Discord: city status, welcomes, levels, tickets, applications and moderation.`,
         }).addFields(
           {
             name: 'Popular commands',
             value: [
+              '`/status` · `/players` — is the city up, and who’s in it',
               '`/rank` · `/leaderboard` — levels and XP',
-              '`/daily` · `/balance` · `/blackjack` · `/roulette` — economy & casino',
-              '`/warn` · `/warnings` · `/ban` · `/timeout` — moderation',
+              '`/ticket` — get help from staff',
               '`/giveaway` · `/poll` · `/remind` — community tools',
               '`/userinfo` · `/serverinfo` · `/avatar` — quick lookups',
             ].join('\n'),
           },
           {
-            name: 'For admins',
-            value: `Open the dashboard, pick this server, and toggle modules on the Overview page. Turning a module on is all it takes — Tickets even sets itself up.`,
+            name: 'For staff',
+            value:
+              '`/warn` · `/warnings` · `/timeout` · `/ban` — moderation\n' +
+              'Everything else is configured from the dashboard; `/refx-setup` re-links the modules to the ReFx channels and roles.',
           },
         ),
       ],
-      components: [links],
+      components: links.components.length > 0 ? [links] : [],
       flags: MessageFlags.Ephemeral,
     });
   },

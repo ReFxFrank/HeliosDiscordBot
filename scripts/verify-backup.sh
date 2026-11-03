@@ -6,7 +6,7 @@
 # result, and tears everything down.
 #
 #   bash scripts/verify-backup.sh                     # newest dump in the volume
-#   bash scripts/verify-backup.sh helios-....sql.gz   # a specific local file
+#   bash scripts/verify-backup.sh refx-....sql.gz   # a specific local file
 #
 # Safe to run anytime — it never connects to the live database.
 set -euo pipefail
@@ -14,7 +14,7 @@ set -euo pipefail
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile apps)
-SCRATCH="solari-verify-backup-$$"
+SCRATCH="refx-verify-backup-$$"
 WORKDIR="$(mktemp -d)"
 
 cleanup() {
@@ -28,7 +28,7 @@ if [ "${1:-}" ]; then
   DUMP="$1"
   [ -f "$DUMP" ] || { echo "No such file: $DUMP" >&2; exit 1; }
 else
-  LATEST="$("${COMPOSE[@]}" exec -T backup sh -c "ls -t /backups/helios-*.sql.gz 2>/dev/null | head -1" | tr -d '\r')"
+  LATEST="$("${COMPOSE[@]}" exec -T backup sh -c "ls -t /backups/refx-*.sql.gz 2>/dev/null | head -1" | tr -d '\r')"
   [ -n "$LATEST" ] || { echo "FAIL: no dumps found in the backup volume" >&2; exit 1; }
   echo "▸ Newest dump: $LATEST"
   "${COMPOSE[@]}" cp "backup:$LATEST" "$WORKDIR/dump.sql.gz"
@@ -39,10 +39,10 @@ echo "▸ Verifying $(du -h "$DUMP" | cut -f1) dump"
 # ── 2. Throwaway Postgres (no ports published, no volumes) ──────────────────
 # The scratch superuser MUST be named like the live role: pg_dump embeds
 # `ALTER ... OWNER TO <role>` statements, and with ON_ERROR_STOP a missing
-# role aborts the replay. Read it from .env like compose does (default helios).
+# role aborts the replay. Read it from .env like compose does (default refx).
 PG_USER="$(sed -n 's/^POSTGRES_USER=//p' .env 2>/dev/null | tail -1)"
 PG_USER="${PG_USER%\"}"; PG_USER="${PG_USER#\"}"
-PG_USER="${PG_USER:-helios}"
+PG_USER="${PG_USER:-refx}"
 
 echo "▸ Starting scratch Postgres container (role: $PG_USER)"
 docker run -d --name "$SCRATCH" \

@@ -7,7 +7,8 @@ import {
   type AutomodAction,
   type AutomodConfig,
   type GateAction,
-} from '@solari/shared';
+  BRAND,
+} from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveAutomodConfig } from '../lib/config-actions';
 import { liftLockdown, lockdownNow } from '../lib/lockdown-actions';
@@ -506,7 +507,7 @@ export function AutomodForm({
         <p className="-mt-2 text-sm text-white/50">
           Stops a compromised or rogue mod account from mass-destroying the server: too many
           bans/kicks, channel deletions, or role deletions by one account in a short window and
-          that account gets sanctioned. The owner and {`Solari`} are always exempt. Requires the
+          that account gets sanctioned. The owner and {BRAND.name} are always exempt. Requires the
           bot to have <span className="text-white/70">View Audit Log</span>.
         </p>
         {antiNuke.enabled && (

@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 
 /** One zero-filled UTC day for the charts. */
 export interface InsightsDay {

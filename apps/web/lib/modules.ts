@@ -1,4 +1,4 @@
-import type { Module } from '@solari/shared';
+import type { Module } from '@refx/shared';
 import {
   ShieldAlert,
   ShieldBan,
@@ -19,8 +19,6 @@ import {
   Link2,
   Cake,
   Moon,
-  Coins,
-  Music,
   Bell,
   Mic,
   ShieldCheck,
@@ -28,21 +26,21 @@ import {
   Sparkles,
   Trophy,
   ClipboardList,
+  Gamepad2,
   type LucideIcon,
 } from 'lucide-react';
 
-export type ModuleCategory = 'core' | 'premium' | 'utility';
+export type ModuleCategory = 'core' | 'utility';
 
 /**
  * Decorative icon-tile gradients, keyed by name. These category-code the module
- * grid (like MEE6's colorful plugin tiles) and are intentionally separate from
- * the brand violet — the brand color stays reserved for interactive/premium UI.
+ * grid (like MEE6's colorful plugin tiles); `blue`/`ice` echo the ReFx palette.
  * `[from, to]` are applied as an inline `linear-gradient` so Tailwind's JIT never
  * needs to see the runtime hex values.
  */
 export const MODULE_ACCENTS = {
-  violet: ['#8b5cf6', '#6d28d9'],
-  fuchsia: ['#d946ef', '#a21caf'],
+  blue: ['#3d95ff', '#005ad1'],
+  ice: ['#7db7ff', '#2f7fe0'],
   pink: ['#ec4899', '#be185d'],
   indigo: ['#6366f1', '#4338ca'],
   sky: ['#0ea5e9', '#0369a1'],
@@ -71,7 +69,16 @@ export interface ModuleMeta {
   configSlug?: string;
 }
 
-export const MODULE_META: ModuleMeta[] = [
+const META_ENTRIES = [
+  {
+    module: 'FIVEM',
+    name: 'FiveM City',
+    description: 'Live server status panel, player count, restart alerts & whitelist.',
+    icon: Gamepad2,
+    category: 'core',
+    accent: 'blue',
+    configSlug: 'fivem',
+  },
   {
     module: 'MODERATION',
     name: 'Moderation',
@@ -141,7 +148,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Button & select-menu role panels.',
     icon: Tags,
     category: 'core',
-    accent: 'fuchsia',
+    accent: 'ice',
     configSlug: 'roles',
   },
   {
@@ -150,7 +157,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Tags, auto-responders, embed builder.',
     icon: MessageSquareCode,
     category: 'core',
-    accent: 'violet',
+    accent: 'blue',
     configSlug: 'commands',
   },
   {
@@ -212,7 +219,7 @@ export const MODULE_META: ModuleMeta[] = [
     description: 'Support panels, transcripts, auto-close.',
     icon: Ticket,
     category: 'core',
-    accent: 'violet',
+    accent: 'blue',
     configSlug: 'tickets',
   },
   {
@@ -262,36 +269,18 @@ export const MODULE_META: ModuleMeta[] = [
   {
     module: 'ACHIEVEMENTS',
     name: 'Achievements',
-    description: 'Milestone rewards for level, messages, coins, and voice time.',
+    description: 'Milestone rewards for level, messages, and voice time.',
     icon: Trophy,
     category: 'core',
     accent: 'gold',
     configSlug: 'achievements',
   },
   {
-    module: 'ECONOMY',
-    name: 'Economy',
-    description: 'Currency, games, shop & inventory.',
-    icon: Coins,
-    category: 'premium',
-    accent: 'amber',
-    configSlug: 'economy',
-  },
-  {
-    module: 'MUSIC',
-    name: 'Music',
-    description: 'Queue, filters, DJ roles, vote-skip.',
-    icon: Music,
-    category: 'premium',
-    accent: 'fuchsia',
-    configSlug: 'music',
-  },
-  {
     module: 'SOCIAL',
     name: 'Social Alerts',
     description: 'Twitch, YouTube, Reddit, Bluesky & RSS.',
     icon: Bell,
-    category: 'premium',
+    category: 'core',
     accent: 'sky',
   },
   {
@@ -299,7 +288,7 @@ export const MODULE_META: ModuleMeta[] = [
     name: 'Temp Voice',
     description: 'Join-to-create voice channels.',
     icon: Mic,
-    category: 'premium',
+    category: 'utility',
     accent: 'teal',
     configSlug: 'temp-voice',
   },
@@ -317,9 +306,17 @@ export const MODULE_META: ModuleMeta[] = [
     description: '8ball, trivia, memes, and more.',
     icon: Sparkles,
     category: 'utility',
-    accent: 'violet',
+    accent: 'blue',
   },
-];
+] satisfies ModuleMeta[];
+
+// Compile-time check: every `MODULES` value needs an entry (the Record cast in
+// MODULE_META_BY_KEY would otherwise hide a missing one).
+type MissingModuleMeta = Exclude<Module, (typeof META_ENTRIES)[number]['module']>;
+const metaCoversEveryModule: [MissingModuleMeta] extends [never] ? true : MissingModuleMeta = true;
+void metaCoversEveryModule;
+
+export const MODULE_META: ModuleMeta[] = META_ENTRIES;
 
 export const MODULE_META_BY_KEY: Record<Module, ModuleMeta> = Object.fromEntries(
   MODULE_META.map((meta) => [meta.module, meta]),
@@ -333,6 +330,7 @@ export function moduleBySlug(slug: string): Module | null {
 // ── MEE6-style grouping (sidebar sections + categorized plugin grid) ──────────
 
 export const MODULE_GROUPS = [
+  'ReFx City',
   'Essentials',
   'Server Management',
   'Utilities',
@@ -342,6 +340,7 @@ export const MODULE_GROUPS = [
 export type ModuleGroup = (typeof MODULE_GROUPS)[number];
 
 const GROUP_BY_MODULE: Partial<Record<Module, ModuleGroup>> = {
+  FIVEM: 'ReFx City',
   MODERATION: 'Essentials',
   AUTOMOD: 'Essentials',
   VERIFICATION: 'Essentials',
@@ -366,8 +365,6 @@ const GROUP_BY_MODULE: Partial<Record<Module, ModuleGroup>> = {
   SOCIAL: 'Social Alerts',
   GIVEAWAYS: 'Games & Fun',
   BIRTHDAYS: 'Games & Fun',
-  ECONOMY: 'Games & Fun',
-  MUSIC: 'Games & Fun',
 };
 
 export function moduleGroup(module: Module): ModuleGroup {

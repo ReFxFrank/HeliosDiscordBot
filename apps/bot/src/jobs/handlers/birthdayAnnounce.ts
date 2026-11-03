@@ -1,4 +1,4 @@
-import type { BirthdayAnnounceJob } from '@solari/jobs';
+import type { BirthdayAnnounceJob } from '@refx/jobs';
 import { runBirthdayAnnounce } from '../../modules/birthdays';
 import type { JobContext } from '../../services/jobs';
 

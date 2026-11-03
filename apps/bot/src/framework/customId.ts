@@ -1,4 +1,4 @@
-import { DISCORD_LIMITS } from '@solari/shared';
+import { DISCORD_LIMITS } from '@refx/shared';
 
 const SEPARATOR = ':';
 

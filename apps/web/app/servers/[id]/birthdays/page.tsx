@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { birthdaysConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { birthdaysConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { BirthdaysForm } from '../../../../components/birthdays-form';

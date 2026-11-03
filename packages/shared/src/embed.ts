@@ -11,7 +11,7 @@ import { z } from 'zod';
 /** Hex color, with or without a leading '#'. */
 const hexColor = z
   .string()
-  .regex(/^#?[0-9a-fA-F]{6}$/, 'Use a hex color like #8B5CF6');
+  .regex(/^#?[0-9a-fA-F]{6}$/, 'Use a hex color like #0072FF');
 
 /** A single embed field. Discord allows up to 25 per embed. */
 export const embedFieldSchema = z.object({

@@ -1,8 +1,7 @@
-import { prisma } from '@solari/database';
-import { isModuleLocked, MODULES, type Module } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { BRAND, MODULES } from '@refx/shared';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { MODULE_META } from '../../../lib/modules';
-import { DashboardHero } from '../../../components/dashboard-hero';
 import { ModuleGrid } from '../../../components/module-grid';
 import { QuickSetup } from '../../../components/quick-setup';
 import { GlassCard } from '../../../components/ui/glass-card';
@@ -35,31 +34,33 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
   });
 
   const disabledModules = (flagRows as { module: string }[]).map((f) => f.module);
-  const tier = guild?.premiumTier ?? 'FREE';
-  const isPremium = tier === 'PREMIUM';
   // Plain object so it serializes into the client <ModuleGrid />.
   const enabled: Record<string, boolean> = Object.fromEntries(
     configs.map((c) => [c.module, c.enabled]),
   );
-  // Count only modules the guild can actually use — a premium module left enabled
-  // after a downgrade renders as "Locked" in the grid, so it shouldn't inflate
-  // this. Rows for removed legacy modules (dead Prisma enum values) don't count.
+  // Rows for removed legacy modules (dead Prisma enum values) don't count.
   const enabledCount = configs.filter(
-    (c) =>
-      c.enabled &&
-      (MODULES as readonly string[]).includes(c.module) &&
-      !isModuleLocked(c.module as Module, tier),
+    (c) => c.enabled && (MODULES as readonly string[]).includes(c.module),
   ).length;
 
   return (
     <div className="flex flex-col gap-8">
-      <DashboardHero guildId={id} isPremium={isPremium} guildName={guild?.name ?? id} />
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-bright)]">
+          {BRAND.name}
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white/90">
+          {guild?.name ?? id}
+        </h1>
+        <p className="mt-1 text-sm text-white/50">
+          Everything the bot does for {BRAND.community}, in one place.
+        </p>
+      </header>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat label="Members" value={(guild?.memberCount ?? 0).toLocaleString()} />
         <Stat label="Modules on" value={`${enabledCount} / ${MODULE_META.length}`} />
         <Stat label="Mod cases" value={caseCount.toLocaleString()} />
-        <Stat label="Plan" value={isPremium ? 'Premium' : 'Free'} accent={isPremium} />
       </section>
 
       {guild?.setupCompletedAt == null && (
@@ -69,7 +70,6 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
       <ModuleGrid
         guildId={id}
         enabled={enabled}
-        isPremium={isPremium}
         disabledModules={disabledModules}
       />
 
@@ -99,17 +99,11 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
   );
 }
 
-function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <GlassCard className="p-4">
       <p className="text-xs uppercase tracking-wide text-white/40">{label}</p>
-      <p
-        className={
-          accent
-            ? 'mt-1 font-mono text-2xl font-semibold text-[var(--color-premium)]'
-            : 'mt-1 font-mono text-2xl font-semibold text-white/90'
-        }
-      >
+      <p className="mt-1 font-mono text-2xl font-semibold text-white/90">
         {value}
       </p>
     </GlassCard>

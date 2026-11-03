@@ -29,7 +29,7 @@ export function SignOutButton() {
       className="shrink-0"
       action={async () => {
         'use server';
-        await signOut({ redirectTo: '/' });
+        await signOut({ redirectTo: '/servers' });
       }}
     >
       <button

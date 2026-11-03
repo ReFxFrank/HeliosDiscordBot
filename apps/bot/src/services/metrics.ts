@@ -3,25 +3,25 @@ import { collectDefaultMetrics, Counter, Gauge, Histogram, Registry } from 'prom
 import { env } from '../env';
 import { logger } from '../logger';
 
-/** Prometheus registry + Solari metrics (§5.7). One registry per shard process. */
+/** Prometheus registry + bot metrics (§5.7). One registry per shard process. */
 export const registry = new Registry();
 collectDefaultMetrics({ register: registry });
 
 export const guildGauge = new Gauge({
-  name: 'solari_shard_guilds',
+  name: 'refx_shard_guilds',
   help: 'Number of guilds on this shard',
   registers: [registry],
 });
 
 export const commandCounter = new Counter({
-  name: 'solari_commands_total',
+  name: 'refx_commands_total',
   help: 'Slash commands processed',
   labelNames: ['command', 'status'] as const,
   registers: [registry],
 });
 
 export const commandLatency = new Histogram({
-  name: 'solari_command_latency_seconds',
+  name: 'refx_command_latency_seconds',
   help: 'Slash command execution latency',
   labelNames: ['command'] as const,
   registers: [registry],

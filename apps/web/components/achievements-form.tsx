@@ -15,7 +15,7 @@ import {
   type Achievement,
   type AchievementsConfig,
   type AchievementTierDef,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveAchievementsConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
@@ -29,7 +29,6 @@ const selectClass = `${inputClass} appearance-none pr-8`;
 const bareTier = (threshold: number): AchievementTierDef => ({
   threshold,
   rewardRoleId: null,
-  rewardCoins: 0,
   rewardXp: 0,
 });
 
@@ -419,7 +418,7 @@ function AchievementCard({
                     </button>
                   )}
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-3">
                   <Field label={`Threshold${unit ? ` (${unit})` : ''}`}>
                     <input
                       type="number"
@@ -437,17 +436,6 @@ function AchievementCard({
                       placeholder="None"
                       selected={tier.rewardRoleId ? [tier.rewardRoleId] : []}
                       onChange={(ids) => onPatchTier(i, { rewardRoleId: ids[0] ?? null })}
-                    />
-                  </Field>
-                  <Field label="Reward coins">
-                    <input
-                      type="number"
-                      min={0}
-                      className={inputClass}
-                      value={tier.rewardCoins}
-                      onChange={(e) =>
-                        onPatchTier(i, { rewardCoins: Math.max(0, Number(e.target.value) || 0) })
-                      }
                     />
                   </Field>
                   <Field label="Reward XP">

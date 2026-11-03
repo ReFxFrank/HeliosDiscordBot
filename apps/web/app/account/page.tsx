@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/');
+  if (!session?.user?.id) redirect('/servers');
 
   return (
     <main className="mx-auto max-w-md px-6 py-12">

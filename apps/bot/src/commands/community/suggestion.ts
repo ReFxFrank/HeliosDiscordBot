@@ -4,7 +4,7 @@ import {
   SlashCommandBuilder,
   type SlashCommandSubcommandBuilder,
 } from 'discord.js';
-import type { SuggestionStatus } from '@solari/database';
+import type { SuggestionStatus } from '@refx/database';
 import { successEmbed, errorEmbed } from '../../lib/embeds';
 import { RequireGuild } from '../../lib/permissions';
 import { getSuggestionsConfig, setSuggestionStatus } from '../../modules/suggestions';

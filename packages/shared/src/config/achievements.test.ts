@@ -34,17 +34,25 @@ describe('achievementSchema', () => {
     });
     expect(parsed.enabled).toBe(true);
     expect(parsed.tiers).toHaveLength(2);
-    expect(parsed.tiers[0]).toMatchObject({ threshold: 25, rewardCoins: 0, rewardXp: 0, rewardRoleId: null });
+    expect(parsed.tiers[0]).toMatchObject({ threshold: 25, rewardXp: 0, rewardRoleId: null });
   });
 
   it('rejects an achievement with no tiers or more than four', () => {
-    expect(() => achievementSchema.parse({ id: 'a', name: 'n', type: 'LEVEL', tiers: [] })).toThrow();
+    expect(() =>
+      achievementSchema.parse({ id: 'a', name: 'n', type: 'LEVEL', tiers: [] }),
+    ).toThrow();
     expect(() =>
       achievementSchema.parse({
         id: 'a',
         name: 'n',
         type: 'LEVEL',
-        tiers: [{ threshold: 1 }, { threshold: 2 }, { threshold: 3 }, { threshold: 4 }, { threshold: 5 }],
+        tiers: [
+          { threshold: 1 },
+          { threshold: 2 },
+          { threshold: 3 },
+          { threshold: 4 },
+          { threshold: 5 },
+        ],
       }),
     ).toThrow();
   });
@@ -61,13 +69,12 @@ describe('achievementsConfigSchema', () => {
           threshold: 10,
           tier: 'silver',
           rewardRoleId: 'r1',
-          rewardCoins: 50,
           rewardXp: 5,
         },
       ],
     });
     expect(parsed.achievements[0]?.tiers).toEqual([
-      { threshold: 10, rewardRoleId: 'r1', rewardCoins: 50, rewardXp: 5 },
+      { threshold: 10, rewardRoleId: 'r1', rewardXp: 5 },
     ]);
   });
 

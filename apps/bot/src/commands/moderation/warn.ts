@@ -6,7 +6,7 @@ import {
   type GuildMember,
   type User,
 } from 'discord.js';
-import type { EscalationRung } from '@solari/shared';
+import type { EscalationRung } from '@refx/shared';
 import type { Command } from '../../framework/command';
 import type { BotContext } from '../../framework/context';
 import { RequireGuild, RequireUserPermissions } from '../../lib/permissions';

@@ -2,10 +2,10 @@ import type { Module } from '../enums';
 
 /**
  * Server templates — one-click Discord structure. Each template describes the
- * roles, categories/channels, and Solari modules a server type wants. The bot
+ * roles, categories/channels, and modules a server type wants. The bot
  * (apps/bot/src/modules/serverTemplate.ts) applies them additively: existing
- * roles/channels with the same name are left alone, premium modules are skipped
- * on free guilds. Kept free of discord.js so both the bot and the dashboard
+ * roles/channels with the same name are left alone, and the listed modules are
+ * switched on. Kept free of discord.js so both the bot and the dashboard
  * (preview) can import it — permissions are string keys the bot maps to
  * PermissionFlagsBits, colours are 0xRRGGBB ints.
  */
@@ -50,7 +50,7 @@ export interface ServerTemplate {
   description: string;
   roles: TemplateRole[];
   categories: TemplateCategory[];
-  /** Solari modules auto-enabled (premium ones are skipped on free guilds). */
+  /** Modules auto-enabled by the template. */
   modules: Module[];
 }
 
@@ -161,7 +161,7 @@ export const SERVER_TEMPLATES: ServerTemplate[] = [
         ],
       },
     ],
-    modules: ['MODERATION', 'AUTOMOD', 'LEVELING', 'ECONOMY', 'TEMP_VOICE', 'ROLES'],
+    modules: ['MODERATION', 'AUTOMOD', 'LEVELING', 'TEMP_VOICE', 'ROLES'],
   },
   {
     id: 'creator',

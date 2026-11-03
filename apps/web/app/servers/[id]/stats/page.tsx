@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { statsCountersConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { statsCountersConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { StatsCountersForm } from '../../../../components/stats-counters-form';

@@ -1,5 +1,5 @@
 import { MessageFlags, type ChatInputCommandInteraction, type Interaction } from 'discord.js';
-import { t } from '@solari/shared';
+import { t } from '@refx/shared';
 import { brandedEmbed, errorEmbed } from '../lib/embeds';
 import { isBotOwner } from '../lib/permissions';
 import { commandCounter, commandLatency } from '../services/metrics';

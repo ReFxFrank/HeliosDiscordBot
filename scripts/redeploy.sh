@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# One-shot Solari redeploy: pull the latest code, install deps, apply DB
+# One-shot ReFx Assistant redeploy: pull the latest code, install deps, apply DB
 # migrations, rebuild + restart the bot and dashboard, and re-register slash
 # commands — the whole chain that used to be five separate commands.
 #
@@ -9,7 +9,7 @@
 # Notes:
 #   * The prod compose file is an OVERLAY, so BOTH -f files are required (this
 #     script always passes them, so the "web has no build context" error can't
-#     happen). The `edge` Caddy profile stays OFF — nginx fronts the dashboard.
+#     happen). The Cloudflare Tunnel on the host fronts the dashboard and API.
 #   * Re-run anytime; every step is idempotent.
 set -euo pipefail
 
@@ -37,4 +37,4 @@ step "4/5  Rebuilding + restarting bot and web"
 step "5/5  Registering slash commands"
 pnpm deploy:commands
 
-printf '\n\033[1;32m✅ Solari redeployed from %s.\033[0m\n' "$BRANCH"
+printf '\n\033[1;32m✅ ReFx Assistant redeployed from %s.\033[0m\n' "$BRANCH"

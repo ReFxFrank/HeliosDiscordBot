@@ -1,7 +1,7 @@
 import type { Client, Guild, GuildMember, GuildTextBasedChannel } from 'discord.js';
-import { prisma } from '@solari/database';
-import { parseModuleConfig, type BirthdaysConfig } from '@solari/shared';
-import { QUEUE_NAMES } from '@solari/jobs';
+import { prisma } from '@refx/database';
+import { parseModuleConfig, type BirthdaysConfig } from '@refx/shared';
+import { QUEUE_NAMES } from '@refx/jobs';
 import { applyPlaceholders, type PlaceholderMember } from '../lib/placeholders';
 import { birthdayJobId, type JobService } from '../services/jobs';
 import type { Logger } from '../logger';

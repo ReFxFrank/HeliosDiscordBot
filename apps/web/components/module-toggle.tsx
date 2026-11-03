@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Module } from '@solari/shared';
+import type { Module } from '@refx/shared';
 import { setModuleEnabled } from '../lib/config-actions';
 import { Switch } from './ui/switch';
 

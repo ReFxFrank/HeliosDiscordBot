@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import { prisma } from '@solari/database';
-import { moderationConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { moderationConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { SettingsForm } from '../../../../components/settings-form';

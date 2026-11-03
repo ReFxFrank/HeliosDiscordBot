@@ -1,5 +1,5 @@
 /**
- * Durable job queue contracts (§5.4). EVERY time-delayed effect in Solari —
+ * Durable job queue contracts (§5.4). EVERY time-delayed effect in the bot —
  * tempbans, reminders, scheduled messages, giveaway endings, social polling,
  * stat-counter refresh, ticket auto-close, birthdays, log cleanup — flows
  * through these BullMQ queues so it survives a process restart. Using

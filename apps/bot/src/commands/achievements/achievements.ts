@@ -5,7 +5,7 @@ import {
   ACHIEVEMENT_TYPE_LABELS,
   isTieredAchievement,
   tierAt,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { Command } from '../../framework/command';
 import { RequireGuild } from '../../lib/permissions';
 import { brandedEmbed } from '../../lib/embeds';
@@ -26,7 +26,9 @@ const command: Command = {
 
     if (achievements.length === 0) {
       await interaction.reply({
-        embeds: [brandedEmbed({ kind: 'info', description: 'No achievements have been set up yet.' })],
+        embeds: [
+          brandedEmbed({ kind: 'info', description: 'No achievements have been set up yet.' }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
       return;

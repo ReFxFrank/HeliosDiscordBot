@@ -1,4 +1,4 @@
-import { guildEntitiesKey, type GuildEntityKind } from '@solari/shared';
+import { guildEntitiesKey, type GuildEntityKind } from '@refx/shared';
 import { redis } from '../services/redis';
 
 /**

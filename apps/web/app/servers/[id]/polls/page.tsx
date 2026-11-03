@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { pollsConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { pollsConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { PollsForm } from '../../../../components/polls-form';
 

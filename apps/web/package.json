@@ -1,5 +1,5 @@
 {
-  "name": "@solari/web",
+  "name": "@refx/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.63.0",
-    "@solari/database": "workspace:*",
-    "@solari/shared": "workspace:*",
+    "@refx/database": "workspace:*",
+    "@refx/shared": "workspace:*",
     "clsx": "^2.1.1",
     "ioredis": "^5.4.2",
     "lucide-react": "^0.469.0",
@@ -20,9 +20,6 @@
     "next-auth": "5.0.0-beta.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "stripe": "^22.3.0",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.24.1"
   },

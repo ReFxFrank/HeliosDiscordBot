@@ -13,7 +13,7 @@ import {
   type GuildMember,
   type ModalSubmitInteraction,
 } from 'discord.js';
-import { verificationGateError, type VerificationConfig } from '@solari/shared';
+import { verificationGateError, type VerificationConfig } from '@refx/shared';
 import { brandedEmbed, errorEmbed } from '../lib/embeds';
 import { generateCaptchaCode, renderCaptcha } from '../lib/captcha';
 import { buildCustomId } from '../framework/customId';
@@ -50,7 +50,12 @@ async function writeCaptchaState(
   userId: string,
   state: CaptchaState,
 ): Promise<void> {
-  await ctx.redis.set(captchaKey(guildId, userId), JSON.stringify(state), 'EX', CAPTCHA_TTL_SECONDS);
+  await ctx.redis.set(
+    captchaKey(guildId, userId),
+    JSON.stringify(state),
+    'EX',
+    CAPTCHA_TTL_SECONDS,
+  );
 }
 
 async function clearCaptchaState(ctx: BotContext, guildId: string, userId: string): Promise<void> {
@@ -192,7 +197,10 @@ export async function startVerification(
 
   const member = interaction.member;
   if (member.roles.cache.has(config.verifiedRoleId)) {
-    await interaction.reply({ content: 'You’re already verified. ✅', flags: MessageFlags.Ephemeral });
+    await interaction.reply({
+      content: 'You’re already verified. ✅',
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
@@ -216,7 +224,13 @@ export async function startVerification(
       return;
     }
     await interaction.editReply({ content: config.successMessage });
-    await logVerification(ctx, interaction.guildId, config, 'success', `✅ <@${member.id}> verified.`);
+    await logVerification(
+      ctx,
+      interaction.guildId,
+      config,
+      'success',
+      `✅ <@${member.id}> verified.`,
+    );
     return;
   }
 
@@ -313,7 +327,9 @@ export async function handleCaptchaSubmit(
       });
       // DM before the kick — afterwards the bot can no longer reach the member.
       await member.user
-        .send(`You failed verification in **${interaction.guild.name}** and were removed. You can rejoin and try again.`)
+        .send(
+          `You failed verification in **${interaction.guild.name}** and were removed. You can rejoin and try again.`,
+        )
         .catch(() => undefined);
       const kicked = await member
         .kick('Failed verification captcha')

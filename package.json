@@ -1,9 +1,9 @@
 {
-  "name": "solari",
+  "name": "refx-bot",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Solari \u2014 a self-hosted, premium-grade Discord bot and dashboard.",
+  "description": "ReFx Assistant - the ReFx Roleplay (FiveM) Discord bot and dashboard.",
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
@@ -19,11 +19,11 @@
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}\"",
-    "db:generate": "pnpm --filter @solari/database generate",
-    "db:migrate": "pnpm --filter @solari/database migrate:dev",
-    "db:deploy": "pnpm --filter @solari/database migrate:deploy",
-    "db:studio": "pnpm --filter @solari/database studio",
-    "deploy:commands": "pnpm --filter @solari/bot deploy:commands",
+    "db:generate": "pnpm --filter @refx/database generate",
+    "db:migrate": "pnpm --filter @refx/database migrate:dev",
+    "db:deploy": "pnpm --filter @refx/database migrate:deploy",
+    "db:studio": "pnpm --filter @refx/database studio",
+    "deploy:commands": "pnpm --filter @refx/bot deploy:commands",
     "redeploy": "bash scripts/redeploy.sh"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 import { MessageFlags } from 'discord.js';
-import { prisma } from '@solari/database';
-import type { RolePanelMode, RolePanelOption } from '@solari/shared';
+import { prisma } from '@refx/database';
+import type { RolePanelMode, RolePanelOption } from '@refx/shared';
 import { defineComponent } from '../framework/component';
 import { buttonRoleChange, selectRoleChange, type RoleChange } from '../modules/roles';
 

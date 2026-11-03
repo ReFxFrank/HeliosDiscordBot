@@ -19,13 +19,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: helios
-          POSTGRES_PASSWORD: helios
-          POSTGRES_DB: helios
+          POSTGRES_USER: refx
+          POSTGRES_PASSWORD: refx
+          POSTGRES_DB: refx
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U helios"
+          --health-cmd "pg_isready -U refx"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -42,7 +42,7 @@ jobs:
     env:
       # Consumed by Prisma migrate + the integration tests (real services above,
       # so the DB/Redis-backed tests run for real instead of being skipped).
-      DATABASE_URL: postgresql://helios:helios@localhost:5432/helios?schema=public
+      DATABASE_URL: postgresql://refx:refx@localhost:5432/refx?schema=public
       REDIS_URL: redis://localhost:6379
 
     steps:
@@ -62,7 +62,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Apply database migrations
-        run: pnpm --filter @solari/database exec prisma migrate deploy
+        run: pnpm --filter @refx/database exec prisma migrate deploy
 
       - name: Lint
         run: pnpm lint

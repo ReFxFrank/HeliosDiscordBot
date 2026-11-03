@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { guardOwnerPage } from '../../lib/auth-guards';
 import { MODULE_META } from '../../lib/modules';
 import { GlassCard } from '../../components/ui/glass-card';
@@ -6,7 +6,6 @@ import {
   AdminPanel,
   StatCard,
   type BlacklistEntry,
-  type PremiumGuild,
 } from '../../components/admin-panel';
 
 interface GlobalAuditEntry {
@@ -22,25 +21,18 @@ interface GlobalAuditEntry {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  // Redirects non-owners (and signed-out users) to home before any query runs.
+  // Redirects non-owners (and signed-out users) to /servers before any query runs.
   await guardOwnerPage();
 
   const [
     totalServers,
-    premiumServers,
     blacklistedCount,
-    premiumGuilds,
     blacklistRows,
     flagRows,
     auditRows,
   ] = await Promise.all([
     prisma.guild.count(),
-    prisma.guild.count({ where: { premiumTier: 'PREMIUM' } }),
     prisma.blacklist.count(),
-    prisma.guild.findMany({
-      where: { premiumTier: 'PREMIUM' },
-      select: { id: true, name: true },
-    }),
     prisma.blacklist.findMany({ orderBy: { createdAt: 'desc' }, take: 100 }),
     prisma.globalModuleFlag.findMany({ select: { module: true, enabled: true } }),
     // Global audit trail across every guild — owner-only surface. Dashboard
@@ -57,9 +49,6 @@ export default async function AdminPage() {
     .filter((flag) => !flag.enabled)
     .map((flag) => flag.module);
 
-  const premium: PremiumGuild[] = (premiumGuilds as { id: string; name: string | null }[]).map(
-    (guild) => ({ id: guild.id, name: guild.name }),
-  );
   const blacklist: BlacklistEntry[] = (
     blacklistRows as {
       id: string;
@@ -101,24 +90,16 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white/90">Admin</h1>
-          <p className="text-sm text-white/50">Owner-only controls for premium and the blacklist.</p>
+          <p className="text-sm text-white/50">Owner-only controls for global modules and the blacklist.</p>
         </div>
-        <a
-          href="/admin/incidents"
-          className="rounded-lg border border-white/10 px-3.5 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
-        >
-          📣 Incidents
-        </a>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <StatCard label="Total servers" value={totalServers} />
-        <StatCard label="Premium servers" value={premiumServers} />
         <StatCard label="Blacklisted" value={blacklistedCount} />
       </div>
 
       <AdminPanel
-        premiumGuilds={premium}
         blacklist={blacklist}
         features={features}
         disabledModules={disabledModules}

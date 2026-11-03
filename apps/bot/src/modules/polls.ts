@@ -7,8 +7,8 @@ import {
   type ColorResolvable,
   type GuildTextBasedChannel,
 } from 'discord.js';
-import { prisma } from '@solari/database';
-import { pollBar, tallyPoll } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { pollBar, tallyPoll } from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
 import { buildCustomId } from '../framework/customId';
 import type { Logger } from '../logger';

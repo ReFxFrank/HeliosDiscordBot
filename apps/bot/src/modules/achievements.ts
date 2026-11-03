@@ -1,5 +1,5 @@
 import type { Client, GuildMember } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   ACHIEVEMENT_TIER_EMOJI,
   ACHIEVEMENT_TIER_LABELS,
@@ -10,9 +10,8 @@ import {
   type AchievementTierDef,
   type AchievementType,
   type AchievementsConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
-import { addWallet, getEconomyUser } from '../lib/economy';
 import type { Logger } from '../logger';
 
 export interface AchievementDeps {
@@ -23,14 +22,12 @@ export interface AchievementDeps {
 export interface UserStats {
   level: number;
   messages: number;
-  coins: number;
   voiceMinutes: number;
   reactionsAdded: number;
   threadsCreated: number;
   threadsJoined: number;
   invites: number;
   giveawaysJoined: number;
-  itemsPurchased: number;
   boosted: number;
   birthdaySet: number;
 }
@@ -42,8 +39,6 @@ export function statForType(type: AchievementType, stats: UserStats): number {
       return stats.level;
     case 'MESSAGES':
       return stats.messages;
-    case 'COINS':
-      return stats.coins;
     case 'VOICE_MINUTES':
       return stats.voiceMinutes;
     case 'REACTIONS':
@@ -56,8 +51,6 @@ export function statForType(type: AchievementType, stats: UserStats): number {
       return stats.invites;
     case 'GIVEAWAYS_JOINED':
       return stats.giveawaysJoined;
-    case 'ITEMS_PURCHASED':
-      return stats.itemsPurchased;
     case 'SERVER_BOOSTED':
       return stats.boosted;
     case 'BIRTHDAY_SET':
@@ -68,14 +61,10 @@ export function statForType(type: AchievementType, stats: UserStats): number {
 }
 
 async function loadStats(guildId: string, userId: string): Promise<UserStats> {
-  const [level, eco, ms, invites] = await Promise.all([
+  const [level, ms, invites] = await Promise.all([
     prisma.userLevel.findUnique({
       where: { guildId_userId: { guildId, userId } },
       select: { level: true, messages: true, voiceMinutes: true },
-    }),
-    prisma.economyUser.findUnique({
-      where: { guildId_userId: { guildId, userId } },
-      select: { wallet: true, bank: true },
     }),
     prisma.memberStat.findUnique({
       where: { guildId_userId: { guildId, userId } },
@@ -88,13 +77,11 @@ async function loadStats(guildId: string, userId: string): Promise<UserStats> {
     level: level?.level ?? 0,
     messages: level?.messages ?? 0,
     voiceMinutes: level?.voiceMinutes ?? 0,
-    coins: (eco?.wallet ?? 0) + (eco?.bank ?? 0),
     reactionsAdded: ms?.reactionsAdded ?? 0,
     threadsCreated: ms?.threadsCreated ?? 0,
     threadsJoined: ms?.threadsJoined ?? 0,
     invites,
     giveawaysJoined: ms?.giveawaysJoined ?? 0,
-    itemsPurchased: ms?.itemsPurchased ?? 0,
     boosted: ms?.boosted ?? 0,
     birthdaySet: ms?.birthdaySet ?? 0,
   };
@@ -106,10 +93,6 @@ async function grantRewards(
   member: GuildMember | null,
   tier: AchievementTierDef,
 ): Promise<void> {
-  if (tier.rewardCoins > 0) {
-    await getEconomyUser(guildId, userId, 0);
-    await addWallet(guildId, userId, tier.rewardCoins);
-  }
   if (tier.rewardXp > 0) {
     await prisma.userLevel.upsert({
       where: { guildId_userId: { guildId, userId } },
@@ -141,7 +124,6 @@ async function announce(
   const tierName = tierAt(tierIndex);
   const rewards = [
     tier.rewardRoleId ? `<@&${tier.rewardRoleId}>` : null,
-    tier.rewardCoins ? `${tier.rewardCoins.toLocaleString('en-US')} coins` : null,
     tier.rewardXp ? `${tier.rewardXp.toLocaleString('en-US')} XP` : null,
   ]
     .filter(Boolean)

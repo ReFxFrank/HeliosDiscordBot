@@ -25,27 +25,15 @@ export const MODULES = [
   'INVITE_TRACKING',
   'BIRTHDAYS',
   'AFK',
-  'ECONOMY',
-  'MUSIC',
   'SOCIAL',
   'TEMP_VOICE',
   'UTILITY',
   'FUN',
   'APPLICATIONS',
+  'FIVEM',
 ] as const;
 
 export type Module = (typeof MODULES)[number];
-
-export const PREMIUM_TIERS = ['FREE', 'PREMIUM'] as const;
-export type PremiumTier = (typeof PREMIUM_TIERS)[number];
-
-/** Which modules are gated behind the optional premium feature-flag layer. */
-export const PREMIUM_MODULES: readonly Module[] = [
-  'ECONOMY',
-  'MUSIC',
-  'SOCIAL',
-  'TEMP_VOICE',
-] as const;
 
 export const MODERATION_ACTION_TYPES = [
   'WARN',

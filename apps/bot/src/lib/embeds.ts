@@ -1,4 +1,4 @@
-import { BRAND, COLORS } from '@solari/shared';
+import { BRAND, COLORS } from '@refx/shared';
 import { EmbedBuilder, type ColorResolvable } from 'discord.js';
 
 type EmbedKind = 'default' | 'success' | 'warning' | 'danger' | 'info';

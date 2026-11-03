@@ -54,7 +54,7 @@ export async function requireOwner(): Promise<Session & { user: { id: string } }
  */
 export async function guardOwnerPage(): Promise<Session> {
   const session = await auth();
-  if (!session?.user?.id || !isOwner(session)) redirect('/');
+  if (!session?.user?.id || !isOwner(session)) redirect('/servers');
   return session;
 }
 
@@ -78,7 +78,7 @@ export async function guardGuildAccess(
   guildId: string,
 ): Promise<{ session: Session; guilds: ManageableGuild[] }> {
   const session = await auth();
-  if (!session?.user?.id) redirect('/');
+  if (!session?.user?.id) redirect('/servers');
   const guilds = getManageableGuilds(session);
   if (!guilds.some((guild) => guild.id === guildId)) {
     // Distinguish "you don't manage this server" from "we couldn't verify your

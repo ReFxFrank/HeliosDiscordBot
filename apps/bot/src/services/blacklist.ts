@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 
 /**
  * In-memory blacklist cache. The set of barred guilds/users is tiny and changes

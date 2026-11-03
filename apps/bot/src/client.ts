@@ -7,13 +7,13 @@ import {
   Partials,
   type ClientEvents,
 } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { env } from './env';
 import { logger } from './logger';
 import { captureError, initSentry } from './services/sentry';
 import { startHeartbeat } from './services/heartbeat';
 import { startInsightsFlush } from './lib/insights';
-import { setMusicActiveCheck, syncAllStayVoice } from './modules/stayVoice';
+import { syncAllStayVoice } from './modules/stayVoice';
 import { ConfigCache } from './services/configCache';
 import { JobService } from './services/jobs';
 import { closeRedis, redis } from './services/redis';
@@ -21,7 +21,7 @@ import { guildGauge, startMetricsServer } from './services/metrics';
 import { loadCommands, loadComponentHandlers, loadEvents } from './framework/loaders';
 import { dispatchInteraction } from './framework/dispatch';
 import { LiveCommandService } from './services/liveCommands';
-import { QUEUE_NAMES } from '@solari/jobs';
+import { QUEUE_NAMES } from '@refx/jobs';
 import { handleTempActionExpire } from './jobs/handlers/tempActionExpire';
 import { handleGiveawayEnd } from './jobs/handlers/giveawayEnd';
 import { handleReminder } from './jobs/handlers/reminder';
@@ -41,8 +41,8 @@ import { reconcileTempVoice } from './modules/tempVoice';
 import { reconcileSocial } from './modules/social';
 import { syncAllGuilds } from './lib/guildSync';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
-import { createMusicManager } from './services/music';
-import { CustomBotManager } from './services/customBots';
+import { FivemService } from './modules/fivem';
+import { startFivemApi } from './services/fivemApi';
 import type { BotContext } from './framework/context';
 
 /**
@@ -76,12 +76,9 @@ async function bootstrap(): Promise<void> {
 
   const config = new ConfigCache();
   const jobs = new JobService(client, logger);
-  const music = env.MUSIC_ENABLED ? createMusicManager(client, logger, config) : null;
-  // Stay-voice must never fight an active music player (it was disconnecting
-  // the bot right after /play). Registered here because only client.ts owns
-  // the manager; without music the default check ("never active") stands.
-  if (music) setMusicActiveCheck((guildId) => Boolean(music.getPlayer(guildId)));
-  const ctx: BotContext = { client, logger, prisma, config, jobs, redis, music };
+  const base = { client, logger, prisma, config, jobs, redis };
+  const fivem = new FivemService(base);
+  const ctx: BotContext = { ...base, fivem };
 
   const [commands, events, componentHandlers] = await Promise.all([
     loadCommands(),
@@ -104,16 +101,7 @@ async function bootstrap(): Promise<void> {
   jobs.registerHandler(QUEUE_NAMES.voiceXp, handleVoiceXp);
   jobs.registerHandler(QUEUE_NAMES.socialPoll, handleSocialPoll);
 
-  // Premium per-guild custom bots (Bot Personalizer). Reuses the loaded commands
-  // + handlers; each token runs an isolated client. Music stays on the main bot.
-  const customBots = new CustomBotManager(
-    { logger, prisma, config, jobs, redis, music },
-    commands,
-    componentHandlers,
-    logger,
-  );
-
-  const liveCommands = new LiveCommandService(client, logger, jobs, config, customBots);
+  const liveCommands = new LiveCommandService(client, logger, jobs, config, fivem);
 
   for (const event of events) {
     const run = (...args: ClientEvents[typeof event.name]): void => {
@@ -144,23 +132,18 @@ async function bootstrap(): Promise<void> {
   let stopMetrics: (() => Promise<void>) | null = null;
   let stopHeartbeat: (() => void) | null = null;
   let stopInsights: (() => void) | null = null;
+  let stopFivemApi: (() => Promise<void>) | null = null;
 
   client.once(Events.ClientReady, (ready) => {
     logger.info(
       { user: ready.user.tag, guilds: ready.guilds.cache.size, shards: ready.shard?.ids ?? [0] },
       'Shard ready',
     );
-    ready.user.setActivity({ name: '/help', type: ActivityType.Listening });
+    // The FiveM poller replaces this with the city's player count once it runs.
+    ready.user.setActivity({ name: 'ReFx Roleplay', type: ActivityType.Watching });
     guildGauge.set(ready.guilds.cache.size);
     // Workers use the authed REST client, so start them once logged in.
     jobs.startWorkers();
-    // Connect to Lavalink once we have the bot user id (Music module).
-    if (music) {
-      void music
-        .init({ id: ready.user.id, username: ready.user.username })
-        .then(() => logger.info('Lavalink manager initialised'))
-        .catch((err: unknown) => logger.error({ err }, 'Lavalink init failed'));
-    }
     // Re-arm any durable timers from the DB (source of truth) for guilds this
     // shard owns — self-heals after a restart or a lost enqueue.
     void Promise.allSettled([
@@ -175,7 +158,6 @@ async function bootstrap(): Promise<void> {
       reconcileVoiceXp(ready, jobs),
       reconcileTempVoice(ready, prisma, logger),
       reconcileSocial(ready, jobs, logger),
-      customBots.reconcile(),
       cacheAllGuildInvites(ready.guilds.cache.values()),
       syncAllStayVoice(ready, logger),
     ]).then((results) => {
@@ -187,6 +169,8 @@ async function bootstrap(): Promise<void> {
     stopMetrics = startMetricsServer(ready.shard?.ids[0] ?? 0);
     stopHeartbeat = startHeartbeat(ready, ready.shard?.ids[0] ?? 0);
     stopInsights = startInsightsFlush(ready, prisma, redis, logger);
+    stopFivemApi = startFivemApi(base, ready.shard?.ids[0] ?? 0);
+    fivem.start();
   });
 
   let shuttingDown = false;
@@ -197,7 +181,8 @@ async function bootstrap(): Promise<void> {
     try {
       if (stopHeartbeat) stopHeartbeat();
       if (stopInsights) stopInsights();
-      await customBots.closeAll();
+      fivem.stop();
+      if (stopFivemApi) await stopFivemApi();
       await jobs.close();
       if (stopMetrics) await stopMetrics();
       await closeRedis();

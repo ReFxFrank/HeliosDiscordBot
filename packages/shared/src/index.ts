@@ -3,7 +3,6 @@ export * from './constants';
 export * from './env';
 export * from './redis';
 export * from './i18n';
-export * from './premium';
 export * from './leveling';
 export * from './roles';
 export * from './schedule';

@@ -1,6 +1,6 @@
-import type { TicketAutoCloseJob } from '@solari/jobs';
-import { QUEUE_NAMES } from '@solari/jobs';
-import { prisma } from '@solari/database';
+import type { TicketAutoCloseJob } from '@refx/jobs';
+import { QUEUE_NAMES } from '@refx/jobs';
+import { prisma } from '@refx/database';
 import { closeTicket, getTicketsConfig } from '../../modules/tickets';
 import { ticketJobId, type JobContext } from '../../services/jobs';
 

@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { ticketsConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { ticketsConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { TicketsForm } from '../../../../components/tickets-form';

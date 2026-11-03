@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { REDIS_CHANNELS, type LiveCommandType, type Module } from '@solari/shared';
+import { REDIS_CHANNELS, type LiveCommandType, type Module } from '@refx/shared';
 
 /** Lazy Redis singleton (created on first use, never at module import). */
 let client: Redis | null = null;

@@ -1,4 +1,4 @@
-import type { ScheduledMessageJob } from '@solari/jobs';
+import type { ScheduledMessageJob } from '@refx/jobs';
 import { fireScheduledMessage } from '../../modules/scheduledMessages';
 import type { JobContext } from '../../services/jobs';
 

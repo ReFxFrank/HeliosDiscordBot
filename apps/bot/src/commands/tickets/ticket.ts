@@ -1,5 +1,5 @@
 import { ChannelType, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { brandedEmbed, errorEmbed, successEmbed } from '../../lib/embeds';
 import { RequireGuild } from '../../lib/permissions';
 import { buildTicketPanelMessage, closeTicket, getTicketsConfig } from '../../modules/tickets';

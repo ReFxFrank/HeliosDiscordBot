@@ -4,7 +4,7 @@ import {
   isAccountTooNew,
   type AutomodConfig,
   type GateAction,
-} from '@solari/shared';
+} from '@refx/shared';
 import { createModerationCase } from '../lib/cases';
 import { brandedEmbed } from '../lib/embeds';
 import { sendLog } from '../lib/logging';
@@ -157,10 +157,15 @@ export async function handleRaidJoin(member: GuildMember, ctx: BotContext): Prom
     // is off here to avoid posting in every channel during an active flood.
     if (raid.lockdownOnRaid && raidLockedFor.get(member.guild.id) !== until) {
       raidLockedFor.set(member.guild.id, until);
-      await lockdownServer(member.guild, ctx.client.user?.id ?? 'system', 'Automatic raid lockdown', {
-        announce: false,
-        exemptRoleIds: raid.lockdownExemptRoleIds,
-      }).catch((err: unknown) =>
+      await lockdownServer(
+        member.guild,
+        ctx.client.user?.id ?? 'system',
+        'Automatic raid lockdown',
+        {
+          announce: false,
+          exemptRoleIds: raid.lockdownExemptRoleIds,
+        },
+      ).catch((err: unknown) =>
         ctx.logger.warn({ err, guildId: member.guild.id }, 'Auto raid-lockdown failed'),
       );
     }

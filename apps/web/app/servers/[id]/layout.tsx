@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { BarChart3, Bot, Crown, Dices, Hash, LayoutDashboard, PanelTop, Settings2, SquareSlash, Wand2 } from 'lucide-react';
-import { prisma } from '@solari/database';
+import { BarChart3, Hash, LayoutDashboard, PanelTop, Settings2, SquareSlash, Wand2 } from 'lucide-react';
+import { prisma } from '@refx/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { groupedModuleMeta, moduleBySlug } from '../../../lib/modules';
 import { NavLink } from '../../../components/nav-link';
@@ -47,17 +46,15 @@ export default async function GuildLayout({
   const currentIcon = sessionGuild?.icon ?? guild.icon ?? null;
 
   const globallyOff = new Set((flagRows as { module: string }[]).map((f) => f.module));
-  const isPremium = guild.premiumTier === 'PREMIUM';
 
   // Hard-block direct navigation to a config page whose module the owner has
   // globally disabled — slug-based, so it covers every current and future
-  // module automatically. Casino is a sub-surface of ECONOMY.
+  // module automatically.
   const pathname = (await headers()).get('x-pathname') ?? '';
   const slug = pathname.split('/')[3];
   if (slug) {
     const slugModule = moduleBySlug(slug);
     if (slugModule && globallyOff.has(slugModule)) notFound();
-    if (slug === 'casino' && globallyOff.has('ECONOMY')) notFound();
   }
 
   // Icons are rendered to elements here (server-side). NavLink is a client
@@ -74,9 +71,33 @@ export default async function GuildLayout({
   ];
 
   // Modules are grouped MEE6-style: one sidebar section per group, each listing
-  // its config-page modules. Casino/Bot Personalizer are manual sub-surfaces
-  // appended to their owning group (Games & Fun / Server Management).
+  // its config-page modules.
   const moduleGroups = groupedModuleMeta();
+  const cityGroups = moduleGroups.filter((entry) => entry.group === 'ReFx City');
+  const otherGroups = moduleGroups.filter((entry) => entry.group !== 'ReFx City');
+
+  const renderGroup = ({ group, modules }: (typeof moduleGroups)[number]) => {
+    // Globally-disabled modules are hidden entirely (not just dimmed), so
+    // a user never sees or reaches a feature the owner turned off.
+    const visible = modules.filter((m) => !globallyOff.has(m.module));
+    if (visible.length === 0) return null;
+    return (
+      <div key={group} className="flex flex-col gap-0.5">
+        <SectionLabel>{group}</SectionLabel>
+        {visible.map((m) => {
+          const Icon = m.icon;
+          return (
+            <NavLink
+              key={m.module}
+              href={`/servers/${id}/${m.configSlug}`}
+              label={m.name}
+              icon={<Icon className="h-4 w-4 shrink-0" />}
+            />
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -88,18 +109,6 @@ export default async function GuildLayout({
             current={{ name: currentName, icon: currentIcon }}
             guilds={switchableGuilds}
           />
-          {isPremium ? (
-            <span className="ml-1 hidden items-center gap-1 rounded-full bg-[var(--color-premium)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--color-premium)] sm:inline-flex">
-              <Crown className="h-3.5 w-3.5" /> Premium
-            </span>
-          ) : (
-            <Link
-              href={`/servers/${id}/premium`}
-              className="ml-1 hidden items-center gap-1 rounded-full border border-[var(--color-premium)]/30 px-2.5 py-1 text-xs font-semibold text-[var(--color-premium)] transition-colors hover:bg-[var(--color-premium)]/10 sm:inline-flex"
-            >
-              <Crown className="h-3.5 w-3.5" /> Upgrade
-            </Link>
-          )}
         </div>
         <SignOutButton />
       </div>
@@ -108,58 +117,17 @@ export default async function GuildLayout({
         {/* Sidebar — collapses behind a Menu button on phones (MobileSidebar). */}
         <nav className="flex flex-col gap-2 md:sticky md:top-6 md:gap-4 md:self-start">
           <MobileSidebar>
+          {/* The city group (FiveM) sits above everything else. */}
+          {cityGroups.map(renderGroup)}
+
           <div className="flex flex-col gap-0.5">
             <SectionLabel>Server</SectionLabel>
             {serverNav.map((item) => (
               <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
             ))}
-            <NavLink href={`/servers/${id}/premium`} label="Premium" premium />
           </div>
 
-          {moduleGroups.map(({ group, modules }) => {
-            // Globally-disabled modules are hidden entirely (not just dimmed), so
-            // a user never sees or reaches a feature the owner turned off.
-            const visible = modules.filter((m) => !globallyOff.has(m.module));
-            const showCasino = group === 'Games & Fun' && !globallyOff.has('ECONOMY');
-            const showPersonalizer = group === 'Server Management';
-            if (visible.length === 0 && !showCasino && !showPersonalizer) return null;
-            return (
-            <div key={group} className="flex flex-col gap-0.5">
-              <SectionLabel>{group}</SectionLabel>
-              {visible.map((m) => {
-                const Icon = m.icon;
-                return (
-                  <NavLink
-                    key={m.module}
-                    href={`/servers/${id}/${m.configSlug}`}
-                    label={m.name}
-                    icon={<Icon className="h-4 w-4 shrink-0" />}
-                    locked={m.category === 'premium' && !isPremium}
-                  />
-                );
-              })}
-              {/* Casino is a sub-surface of the (premium) Economy module — its games
-                  spend the Economy currency — so it hides with Economy. */}
-              {showCasino && (
-                <NavLink
-                  href={`/servers/${id}/casino`}
-                  label="Casino"
-                  icon={<Dices className="h-4 w-4 shrink-0" />}
-                  locked={!isPremium}
-                />
-              )}
-              {/* Bot Personalizer is a premium-only surface with no global module flag. */}
-              {showPersonalizer && (
-                <NavLink
-                  href={`/servers/${id}/personalizer`}
-                  label="Bot Personalizer"
-                  icon={<Bot className="h-4 w-4 shrink-0" />}
-                  locked={!isPremium}
-                />
-              )}
-            </div>
-            );
-          })}
+          {otherGroups.map(renderGroup)}
           </MobileSidebar>
         </nav>
 

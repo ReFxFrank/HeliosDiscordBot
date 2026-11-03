@@ -1,9 +1,9 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   applicationsConfigSchema,
   parseApplicationAnswers,
   parseApplicationQuestions,
-} from '@solari/shared';
+} from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { ApplicationsManager } from '../../../../components/applications-manager';

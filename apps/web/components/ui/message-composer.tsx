@@ -15,7 +15,7 @@ export const WELCOME_PLACEHOLDERS: Placeholder[] = [
   { token: '{user}', label: 'Mention', sample: '@NewMember' },
   { token: '{user.name}', label: 'Username', sample: 'NewMember' },
   { token: '{user.tag}', label: 'Tag', sample: 'NewMember#0001' },
-  { token: '{server}', label: 'Server', sample: 'Your Server' },
+  { token: '{server}', label: 'Server', sample: 'ReFx Roleplay' },
   { token: '{memberCount}', label: 'Member #', sample: '1,234' },
   { token: '{accountAge}', label: 'Account age', sample: '42 days' },
 ];
@@ -23,7 +23,7 @@ export const WELCOME_PLACEHOLDERS: Placeholder[] = [
 export const LEVEL_PLACEHOLDERS: Placeholder[] = [
   { token: '{user}', label: 'Mention', sample: '@Member' },
   { token: '{level}', label: 'Level', sample: '5' },
-  { token: '{server}', label: 'Server', sample: 'Your Server' },
+  { token: '{server}', label: 'Server', sample: 'ReFx Roleplay' },
 ];
 
 /** Minimal Discord markdown: bold (**), italics (*), inline code (`). */
@@ -47,7 +47,7 @@ function substitute(template: string, placeholders: Placeholder[]): string {
 
 /**
  * A Discord-style message bubble showing how the message will render, with the
- * Solari bot identity. Mentions render as highlighted chips.
+ * ReFx Assistant bot identity. Mentions render as highlighted chips.
  */
 export function DiscordPreview({
   content,
@@ -73,14 +73,14 @@ export function DiscordPreview({
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/30">Preview</p>
       <div className="flex gap-3">
         <img
-          src="/solari-logo.png"
+          src="/refx-logo.png"
           alt=""
           aria-hidden
           className="h-10 w-10 shrink-0 rounded-full bg-[var(--color-brand-strong)] object-cover"
         />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-white">Solari</span>
+            <span className="font-medium text-white">ReFx Assistant</span>
             <span className="rounded bg-[var(--color-brand)] px-1 py-px text-[9px] font-bold uppercase text-white">
               App
             </span>

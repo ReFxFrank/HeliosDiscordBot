@@ -2,11 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { prisma } from '@solari/database';
-import { MODULES, MODULE_CONFIG_SCHEMAS, type Module, type ModuleWithSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { MODULES, MODULE_CONFIG_SCHEMAS, type Module, type ModuleWithSchema } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { applyModuleConfig, applyModuleEnabled } from './config-core';
-import { MODULE_META } from './modules';
 
 /**
  * Whole-server config backup + transfer. The export is a plain JSON snapshot
@@ -52,18 +51,14 @@ export async function importGuildConfig(guildId: string, raw: string): Promise<I
   } catch {
     return {
       ok: false,
-      error: 'That file is not a valid Solari config export.',
+      error: 'That file is not a valid ReFx Assistant config export.',
       applied: [],
       skipped: [],
     };
   }
 
-  const [flags, guild] = await Promise.all([
-    prisma.globalModuleFlag.findMany({ where: { enabled: false }, select: { module: true } }),
-    prisma.guild.findUnique({ where: { id: guildId }, select: { premiumTier: true } }),
-  ]);
+  const flags = await prisma.globalModuleFlag.findMany({ where: { enabled: false }, select: { module: true } });
   const globallyOff = new Set(flags.map((flag) => flag.module));
-  const isPremium = guild?.premiumTier === 'PREMIUM';
 
   const applied: string[] = [];
   const skipped: ImportSummary['skipped'] = [];
@@ -89,10 +84,7 @@ export async function importGuildConfig(guildId: string, raw: string): Promise<I
         continue;
       }
     }
-    // Premium modules import their config but only switch on when allowed.
-    const meta = MODULE_META.find((m) => m.module === module);
-    const enable = entry.enabled && (isPremium || meta?.category !== 'premium');
-    await applyModuleEnabled(guildId, module, enable, session.user.id);
+    await applyModuleEnabled(guildId, module, entry.enabled, session.user.id);
     applied.push(name);
   }
 

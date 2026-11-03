@@ -39,7 +39,7 @@ export type LiveCommandType =
   | 'SYNC_STAY_VOICE'
   | 'REFRESH_COMMAND_TOGGLES'
   | 'APPLY_SERVER_TEMPLATE'
-  | 'RESTART_CUSTOM_BOT';
+  | 'FIVEM_REFRESH';
 
 export interface LiveCommandMessage<TPayload = unknown> {
   type: LiveCommandType;
@@ -161,4 +161,9 @@ export interface ShardStatus {
  */
 export function shardIdForGuild(guildId: string, shardCount: number): number {
   return Number((BigInt(guildId) >> 22n) % BigInt(shardCount));
+}
+
+/** FIVEM_REFRESH: re-render the status panel now; `repost` posts a fresh message. */
+export interface FivemRefreshPayload {
+  repost?: boolean;
 }

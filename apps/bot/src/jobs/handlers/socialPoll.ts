@@ -1,4 +1,4 @@
-import type { SocialPollJob } from '@solari/jobs';
+import type { SocialPollJob } from '@refx/jobs';
 import { pollSubscription } from '../../modules/social';
 import type { JobContext } from '../../services/jobs';
 

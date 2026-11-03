@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { tempVoiceConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { tempVoiceConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildChannels } from '../../../../lib/discord-guild';
 import { TempVoiceForm } from '../../../../components/temp-voice-form';

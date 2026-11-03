@@ -7,7 +7,7 @@ import {
   type VerificationConfig,
   type VerificationFailAction,
   type VerificationMethod,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveVerificationConfig } from '../lib/config-actions';
 import { deployVerificationPanel } from '../lib/verification-actions';

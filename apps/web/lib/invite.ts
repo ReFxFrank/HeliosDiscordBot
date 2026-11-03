@@ -1,5 +1,5 @@
 /**
- * Bot invite URL with the scopes + permissions Solari needs. The permission
+ * Bot invite URL with the scopes + permissions ReFx Assistant needs. The permission
  * integer is the OR of a curated, least-surprise set for an all-features
  * moderation bot (no blanket Administrator).
  */

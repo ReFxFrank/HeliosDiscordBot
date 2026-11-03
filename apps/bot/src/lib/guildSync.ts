@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import type { Client, Guild } from 'discord.js';
 
 /** Upsert a guild's metadata mirror (§4.4) from a gateway Guild object. */

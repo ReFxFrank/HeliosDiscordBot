@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Trophy } from 'lucide-react';
-import { prisma } from '@solari/database';
-import { levelingConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { levelingConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { LeaderboardList, type LeaderboardRow } from '../../../../components/leaderboard-list';
 
@@ -33,7 +33,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-white/90">
-            <Trophy className="h-5 w-5 text-[var(--color-premium)]" /> {guildName} Leaderboard
+            <Trophy className="h-5 w-5 text-[var(--color-gold)]" /> {guildName} Leaderboard
           </h2>
           <p className="text-sm text-white/50">Ranked by total XP earned. Top 100 members.</p>
         </div>

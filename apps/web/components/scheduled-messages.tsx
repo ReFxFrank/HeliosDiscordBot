@@ -7,7 +7,7 @@ import {
   SCHEDULE_REPEATS,
   scheduledMessageInputSchema,
   type ScheduleRepeat,
-} from '@solari/shared';
+} from '@refx/shared';
 import {
   createScheduledMessage,
   deleteScheduledMessage,

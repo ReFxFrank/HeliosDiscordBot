@@ -7,7 +7,7 @@ import {
   type Role,
   type TextChannel,
 } from 'discord.js';
-import { prisma, type ChannelLock, type Prisma } from '@solari/database';
+import { prisma, type ChannelLock, type Prisma } from '@refx/database';
 import { brandedEmbed } from '../lib/embeds';
 
 /**
@@ -32,9 +32,7 @@ interface ExemptState {
 }
 
 function isLockable(channel: GuildBasedChannel): channel is LockableChannel {
-  return (
-    channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildAnnouncement
-  );
+  return channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildAnnouncement;
 }
 
 /** The bot needs Manage Roles (guild-wide) to edit @everyone overwrites at all. */
@@ -45,10 +43,9 @@ export function botCanLockdown(guild: Guild): boolean {
 function botCanManageChannel(guild: Guild, channel: LockableChannel): boolean {
   const me = guild.members.me;
   return (
-    me?.permissionsIn(channel).has([
-      PermissionFlagsBits.ViewChannel,
-      PermissionFlagsBits.ManageRoles,
-    ]) ?? false
+    me
+      ?.permissionsIn(channel)
+      .has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageRoles]) ?? false
   );
 }
 
@@ -168,7 +165,11 @@ async function lockOne(
 }
 
 /** Restore a channel from its lock row: @everyone and every exempt role. */
-async function restoreFromRow(channel: LockableChannel, everyone: Role, row: ChannelLock): Promise<void> {
+async function restoreFromRow(
+  channel: LockableChannel,
+  everyone: Role,
+  row: ChannelLock,
+): Promise<void> {
   await applySendState(channel, everyone, row.prevState as SendState, 'Unlock');
   for (const exempt of parseExemptStates(row.exemptStates)) {
     const role = channel.guild.roles.cache.get(exempt.roleId);
@@ -203,10 +204,7 @@ export async function lockChannel(
 export type UnlockChannelResult = 'unlocked' | 'notlocked';
 
 /** Unlock one channel via `/unlock`, restoring @everyone + exempt roles. */
-export async function unlockChannel(
-  guild: Guild,
-  channelId: string,
-): Promise<UnlockChannelResult> {
+export async function unlockChannel(guild: Guild, channelId: string): Promise<UnlockChannelResult> {
   const row = await prisma.channelLock.findUnique({
     where: { guildId_channelId: { guildId: guild.id, channelId } },
   });

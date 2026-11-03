@@ -1,142 +1,70 @@
-# Solari
+# ReFx Assistant
 
-A fully self-hosted, premium-grade Discord bot **and** web dashboard. Because
-it's self-hosted, every feature is unlocked — there's no paywall — while an
-optional per-guild feature-flag layer lets an operator gate features into a
-"premium" tier if they ever run it for others.
+The Discord bot and dashboard for **ReFx Roleplay**, a FiveM city on the ReFx
+framework. It replaces the patchwork of bots the server used (MEE6, Appy, The
+Manager, AuthGG and the txAdmin status embed) with one self-hosted bot, all of
+it configured from a web dashboard.
 
-> **Status: Phase 2 — Dashboard core.** Foundation, a sharded bot core
-> (moderation commands, durable jobs, live config cache), and the dashboard
-> (Discord login, server selector, live module toggles, audit log) are in place.
-> Feature modules land in later phases (see [Roadmap](#roadmap)).
+## What it does
 
-## Architecture at a glance
+| Area | Replaces | Where |
+| --- | --- | --- |
+| **FiveM City:** live status panel in #connect (online, players x/max, F8 connect, uptime, next restart, Connect + Players buttons), `/status`, `/players`, a "42/128 in the city" presence, up/down alerts and restart warnings in #server-status | txAdmin embed | Dashboard → FiveM City |
+| **Whitelist:** players need a whitelisted Discord role to connect, checked live by the `refx_whitelist` resource | — | FiveM City → Whitelist, `fivem/refx_whitelist` |
+| Welcome embed in #arrivals, boost thanks in #boosts | MEE6 | Welcome |
+| Join/leave and message logs, invite logs | MEE6 | Logging, Invite Tracking |
+| Notification role buttons in #roles | MEE6 | Reaction Roles |
+| Leveling, `/rank`, `/leaderboard` | The Manager | Leveling |
+| Staff / business / faction / dev / CC applications with approve/deny | Appy | Applications |
+| Tickets with transcripts to #ticket-logs | The Manager | Tickets |
+| Button or captcha verification in #verify | AuthGG | Verification |
 
-The bot and dashboard are **separate processes** that never call Discord on each
-other's behalf. They coordinate through **Postgres** (durable state) and
-**Redis** (cache invalidation + live commands):
+There's also moderation and automod, giveaways, polls, suggestions, reminders,
+scheduled messages, starboard, birthdays, stats counters, temp voice, social
+alerts (Twitch, YouTube, Reddit, Bluesky, RSS), custom commands and the embed
+builder.
 
-- The dashboard **writes** config to Postgres, then publishes
-  `helios:config:update` on Redis.
-- The bot **subscribes** and invalidates its in-memory config cache, lazily
-  reloading from Postgres — so dashboard edits go live in **&lt;1s** with no
-  restart.
-- Guild name/icon/member-count are mirrored into Postgres, so the dashboard
-  never hits the Discord API in the request path.
+`/refx-setup` points every module at the ReFx channels and roles (found by
+name) and creates the five application forms and the role panel. It only
+writes config and never posts anything, so it's safe to re-run.
 
-`packages/shared` is the contract layer: config zod schemas, Redis channel
-names, and enums live there once and are imported by both sides so they can
-never drift.
-
-## Tech stack
-
-| Layer         | Choice                                             |
-| ------------- | -------------------------------------------------- |
-| Runtime       | Node.js 20+ LTS, TypeScript 5 (`strict`)           |
-| Monorepo      | pnpm workspaces + Turborepo                        |
-| Bot           | discord.js v14                                     |
-| Dashboard     | Next.js 15 (App Router, React 19), Tailwind CSS v4 |
-| Database      | PostgreSQL 16 + Prisma                             |
-| Cache / queue | Redis 7 + ioredis + BullMQ                         |
-| Music         | Lavalink v4                                        |
-| Validation    | zod (shared bot ↔ web)                             |
-| Logging       | pino                                               |
-| Deploy        | Docker + docker-compose                            |
-
-## Repository layout
+## Layout
 
 ```
-helios/
-├── apps/
-│   ├── bot/        # discord.js bot (sharded)
-│   └── web/        # Next.js dashboard
-├── packages/
-│   ├── database/   # Prisma schema + generated client (single source of truth)
-│   ├── shared/     # zod config schemas, enums, Redis channel contracts, env loader
-│   └── jobs/       # BullMQ queue + job type definitions (imported by bot AND web)
-├── lavalink/       # application.yml for the Lavalink profile
-└── docker-compose.yml
+apps/bot        discord.js v14 bot (sharded; one shard for one server)
+apps/web        Next.js 15 dashboard (Discord login)
+packages/shared zod config schemas, enums, Redis contracts (bot ↔ dashboard)
+packages/database  Prisma schema + migrations (PostgreSQL 16)
+packages/jobs   BullMQ queue contracts (Redis 7)
+fivem/refx_whitelist  FiveM resource for the Discord-role whitelist
 ```
 
-## Prerequisites
+The dashboard writes config to Postgres and publishes on Redis. The bot reloads
+it in under a second, with no restart. The bot writes each FiveM poll to Redis,
+so `/status`, `/players` and the dashboard all show the same snapshot.
 
-- **Node.js 20+** and **pnpm 9+** (`corepack enable`)
-- **Docker** + Docker Compose
-- A **Discord application** ([developer portal](https://discord.com/developers/applications))
-  with the **Server Members** and **Message Content** privileged intents enabled.
-
-## Quick start (local development)
+## Run it locally
 
 ```bash
-# 1. Install dependencies
+corepack enable            # or: npx -y pnpm@10.33.0 <cmd>
 pnpm install
-
-# 2. Configure environment
-cp .env.example .env
-#    → fill in DISCORD_TOKEN, DISCORD_CLIENT_ID, AUTH_SECRET, etc.
-
-# 3. Start infrastructure (Postgres + Redis)
-docker compose up -d
-
-# 4. Apply database migrations
-pnpm db:deploy        # or `pnpm db:migrate` to create/apply in dev
-
-# 5. Run the bot and dashboard with hot reload
-pnpm dev
+cp .env.example .env       # fill in the Discord app + AUTH_SECRET
+docker compose up -d       # Postgres + Redis
+pnpm db:deploy
+pnpm deploy:commands
+pnpm dev                   # bot + dashboard on http://localhost:3000
 ```
 
-The dashboard serves on <http://localhost:3000>.
+## Deploy
 
-### Useful scripts
+See [SETUP.md](SETUP.md): Docker Compose on the VPS, the Cloudflare Tunnel
+(`bot.refx.gg` for the dashboard, `bot-api.refx.gg` for the whitelist API),
+the Discord application, and installing `refx_whitelist` on the game server.
 
-| Command                | Description                                   |
-| ---------------------- | --------------------------------------------- |
-| `pnpm dev`             | Run bot + dashboard concurrently (hot reload) |
-| `pnpm typecheck`       | Type-check every package/app                  |
-| `pnpm lint`            | Lint the whole repo                           |
-| `pnpm format`          | Prettier write                                |
-| `pnpm db:migrate`      | Create + apply a dev migration                |
-| `pnpm db:deploy`       | Apply pending migrations (prod-safe)          |
-| `pnpm db:studio`       | Open Prisma Studio                            |
-| `pnpm deploy:commands` | Register slash commands (Phase 1+)            |
-
-## Running with Docker
+## Checks
 
 ```bash
-# Infra only (default):
-docker compose up -d
-
-# Add Lavalink (music):
-docker compose --profile music up -d
-
-# Build + run the bot and dashboard too:
-docker compose --profile apps up -d --build
+pnpm typecheck   # or per package: (cd apps/bot && npx tsc --noEmit)
+pnpm lint
+pnpm test        # integration tests need the Postgres + Redis from docker compose
 ```
-
-## Roadmap
-
-- **Phase 0 — Foundation & infra** ✅ (this commit): monorepo, docker-compose,
-  baseline Prisma schema + migration, shared contract layer, env loader,
-  logging, lint/typecheck/format.
-- **Phase 1 — Bot core** ✅: sharded client, command/event loaders, config cache
-  - Redis invalidation, permissions, BullMQ wiring, moderation commands.
-- **Phase 2 — Dashboard core** ✅: Auth.js Discord login, server selector
-  (Manage-Server gated), glass design system, live module toggles, audit log.
-- **Phase 3 — Core modules**: moderation/automod, logging, welcome, leveling,
-  roles, custom commands, starboard, giveaways, tickets, and more.
-- **Phase 4 — Premium modules**: music, economy, social notifications, temp
-  voice, feature-flag gating.
-- **Phase 5 — Polish & ops**: hardening, backups, metrics, tests, docs.
-
-## Security & privacy
-
-- Secrets live in `.env` only — never committed. See `.env.example`.
-- Minimal OAuth scopes; `MANAGE_GUILD` is re-verified server-side on every
-  dashboard read/write.
-- Every input is zod-validated; Prisma only (no raw SQL string-building).
-- Message-content storage is opt-in and minimal; logs auto-purge on a schedule.
-- Every config change is recorded in the dashboard audit log.
-
-## License
-
-TBD.

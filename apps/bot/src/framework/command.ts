@@ -3,7 +3,7 @@ import type {
   ChatInputCommandInteraction,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord.js';
-import type { Module } from '@solari/shared';
+import type { Module } from '@refx/shared';
 import type { BotContext } from './context';
 
 /**

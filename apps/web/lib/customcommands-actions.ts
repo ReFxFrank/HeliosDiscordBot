@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { Prisma, prisma } from '@solari/database';
-import { customCommandInputSchema, type CustomCommandInput } from '@solari/shared';
+import { Prisma, prisma } from '@refx/database';
+import { customCommandInputSchema, type CustomCommandInput } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { writeAuditLog } from './audit';
 

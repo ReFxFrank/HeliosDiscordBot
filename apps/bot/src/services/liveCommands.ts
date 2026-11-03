@@ -1,6 +1,6 @@
 import type { Client, EmbedBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
-import { QUEUE_NAMES } from '@solari/jobs';
+import { prisma } from '@refx/database';
+import { QUEUE_NAMES } from '@refx/jobs';
 import {
   embedSpecSchema,
   REDIS_CHANNELS,
@@ -11,13 +11,14 @@ import {
   type DeployTicketPanelPayload,
   type DeployVerifyPanelPayload,
   type DeployApplicationPanelPayload,
+  type FivemRefreshPayload,
   type ApplicationSideEffectsPayload,
   type ApplyServerTemplatePayload,
   type LockdownStartPayload,
   type LiveCommandMessage,
   type RolePanelOption,
   type ScheduledMessagePayload,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { Logger } from '../logger';
 import { subscriber } from './redis';
 import { buildPanelMessage } from '../modules/roles';
@@ -38,7 +39,7 @@ import { buildEmbedFromSpec } from '../lib/embedSpec';
 import { refreshStatsCounters } from '../modules/statsCounters';
 import { scheduledMessageJobId, type JobService } from './jobs';
 import type { ConfigCache } from './configCache';
-import type { CustomBotManager } from './customBots';
+import type { FivemService } from '../modules/fivem';
 
 /**
  * Subscribes to `helios:command` (§4.3). Uses broadcast-and-filter: every shard
@@ -50,7 +51,7 @@ export class LiveCommandService {
     private readonly logger: Logger,
     private readonly jobs: JobService,
     private readonly config: ConfigCache,
-    private readonly customBots: CustomBotManager,
+    private readonly fivem: FivemService,
   ) {}
 
   async start(): Promise<void> {
@@ -69,9 +70,11 @@ export class LiveCommandService {
     if (!this.client.guilds.cache.has(message.guildId)) return; // not our shard's guild
 
     switch (message.type) {
-      case 'RESTART_CUSTOM_BOT':
-        // (Re)start or stop this guild's custom bot from its latest DB row.
-        await this.customBots.start(message.guildId);
+      case 'FIVEM_REFRESH':
+        await this.fivem.refresh(
+          message.guildId,
+          Boolean((message.payload as FivemRefreshPayload | undefined)?.repost),
+        );
         return;
       case 'DEPLOY_PANEL':
         await this.deployPanel(message.guildId, message.payload as DeployPanelPayload);
@@ -138,10 +141,13 @@ export class LiveCommandService {
         return;
       case 'APPLICATION_SIDE_EFFECTS':
         // Dashboard already wrote the decision; carry out role/DM/message edits.
-        await runDecisionSideEffects((message.payload as ApplicationSideEffectsPayload).submissionId, {
-          client: this.client,
-          logger: this.logger,
-        });
+        await runDecisionSideEffects(
+          (message.payload as ApplicationSideEffectsPayload).submissionId,
+          {
+            client: this.client,
+            logger: this.logger,
+          },
+        );
         return;
       case 'LOCKDOWN_START':
         await this.startLockdown(message.guildId, message.payload as LockdownStartPayload);

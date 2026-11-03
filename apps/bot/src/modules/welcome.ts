@@ -1,6 +1,7 @@
 import { AttachmentBuilder, type GuildMember, type PartialGuildMember } from 'discord.js';
 import { applyPlaceholders } from '../lib/placeholders';
 import { renderWelcomeCard } from '../lib/welcomeCard';
+import { buildEmbedFromSpec } from '../lib/embedSpec';
 import type { BotContext } from '../framework/context';
 
 async function fetchSendableChannel(member: GuildMember, channelId: string) {
@@ -37,11 +38,35 @@ async function sendWelcome(member: GuildMember, ctx: BotContext): Promise<void> 
           ctx.logger.warn({ err, guildId: member.guild.id }, 'Welcome card render failed');
         }
       }
-      await channel
-        .send({ content: applyPlaceholders(config.message, member), files })
-        .catch((err: unknown) =>
-          ctx.logger.warn({ err, guildId: member.guild.id }, 'Welcome send failed'),
-        );
+      const fill = (text: string) => applyPlaceholders(text, member);
+      const embed = config.embedEnabled ? buildEmbedFromSpec(config.embed, fill) : null;
+      if (embed) {
+        const thumbnail =
+          config.thumbnail === 'server'
+            ? member.guild.iconURL({ extension: 'png', size: 256 })
+            : config.thumbnail === 'user'
+              ? member.displayAvatarURL({ extension: 'png', size: 256 })
+              : config.thumbnail === 'custom'
+                ? (config.embed.thumbnailUrl ?? null)
+                : null;
+        embed.setThumbnail(thumbnail);
+        // The card renders inside the embed rather than as a loose attachment.
+        if (files.length > 0) embed.setImage('attachment://welcome.png');
+      }
+      const content = config.message.trim() ? fill(config.message) : undefined;
+      if (content || embed || files.length > 0) {
+        await channel
+          .send({
+            content,
+            embeds: embed ? [embed] : [],
+            files,
+            // Ping the newcomer, never roles/everyone pasted into a template.
+            allowedMentions: { users: [member.id] },
+          })
+          .catch((err: unknown) =>
+            ctx.logger.warn({ err, guildId: member.guild.id }, 'Welcome send failed'),
+          );
+      }
     }
   }
 
@@ -80,4 +105,21 @@ export async function handleMemberLeave(
         ctx.logger.warn({ err, guildId: member.guild.id }, 'Leave send failed'),
       );
   }
+}
+
+/** Thank a member who just started boosting (WELCOME module's boost channel). */
+export async function handleBoost(member: GuildMember, ctx: BotContext): Promise<void> {
+  if (!(await ctx.config.isEnabled(member.guild.id, 'WELCOME'))) return;
+  const config = await ctx.config.getConfig(member.guild.id, 'WELCOME');
+  if (!config.boostChannelId || !config.boostMessage.trim()) return;
+  const channel = await fetchSendableChannel(member, config.boostChannelId);
+  if (!channel) return;
+  await channel
+    .send({
+      content: applyPlaceholders(config.boostMessage, member),
+      allowedMentions: { users: [member.id] },
+    })
+    .catch((err: unknown) =>
+      ctx.logger.warn({ err, guildId: member.guild.id }, 'Boost thanks failed'),
+    );
 }

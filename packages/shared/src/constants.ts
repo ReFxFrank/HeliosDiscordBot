@@ -1,15 +1,18 @@
 /** Brand + design tokens shared between the bot (embeds) and the dashboard. */
 
 export const BRAND = {
-  name: 'Solari',
-  /** Primary accent — premium violet. */
-  color: 0x8b5cf6,
-  footer: 'Solari',
+  /** Persona shown as the embed author. */
+  name: 'ReFx Assistant',
+  /** Community name. */
+  community: 'ReFx Roleplay',
+  /** ReFx blue. */
+  color: 0x0072ff,
+  footer: 'ReFx Roleplay',
 } as const;
 
 /** Semantic colors as integers for discord.js embeds. */
 export const COLORS = {
-  brand: 0x8b5cf6,
+  brand: 0x0072ff,
   success: 0x10b981,
   warning: 0xf59e0b,
   danger: 0xf43f5e,

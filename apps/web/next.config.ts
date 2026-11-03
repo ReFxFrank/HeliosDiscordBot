@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // Workspace packages are shipped as TypeScript source, so Next must transpile them.
-  transpilePackages: ['@solari/shared', '@solari/database', '@solari/jobs'],
+  transpilePackages: ['@refx/shared', '@refx/database', '@refx/jobs'],
   // We lint the repo with our own flat ESLint config (`pnpm lint`), so skip
   // Next's separate build-time lint pass.
   eslint: { ignoreDuringBuilds: true },

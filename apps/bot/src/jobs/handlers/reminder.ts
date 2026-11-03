@@ -1,4 +1,4 @@
-import type { ReminderJob } from '@solari/jobs';
+import type { ReminderJob } from '@refx/jobs';
 import { fireReminder } from '../../modules/reminders';
 import type { JobContext } from '../../services/jobs';
 

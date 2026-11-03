@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Trophy } from 'lucide-react';
-import { BRAND, levelingConfigSchema } from '@solari/shared';
-import { prisma } from '@solari/database';
+import { BRAND, levelingConfigSchema } from '@refx/shared';
+import { prisma } from '@refx/database';
 import { guildIconUrl } from '../../../lib/discord';
 import { LeaderboardList, type LeaderboardRow } from '../../../components/leaderboard-list';
-import { BrandMark } from '../../../components/marketing/brand-mark';
+import { BrandMark } from '../../../components/ui/brand-mark';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,16 +70,11 @@ export default async function PublicLeaderboardPage({
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         {/* Header */}
         <header className="flex items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight text-white">
+          <span className="flex items-center gap-2 font-semibold tracking-tight text-white">
             <BrandMark size={26} />
             {BRAND.name}
-          </Link>
-          <Link
-            href="/"
-            className="rounded-full border border-white/15 px-4 py-1.5 text-sm font-medium text-white/90 transition-colors hover:bg-white/[0.06]"
-          >
-            Get {BRAND.name}
-          </Link>
+          </span>
+          <span className="text-sm font-medium text-white/50">{BRAND.community}</span>
         </header>
 
         {/* Guild banner */}
@@ -99,7 +93,7 @@ export default async function PublicLeaderboardPage({
           )}
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-xl font-bold text-white sm:text-2xl">
-              <Trophy className="h-5 w-5 text-[var(--color-premium)]" />
+              <Trophy className="h-5 w-5 text-[var(--color-gold)]" />
               {guild.name ?? 'Server'} Leaderboard
             </h1>
             <p className="text-sm text-white/50">Ranked by total XP · top 100 members</p>
@@ -115,10 +109,7 @@ export default async function PublicLeaderboardPage({
         )}
 
         <footer className="pt-2 text-center text-xs text-white/30">
-          Powered by{' '}
-          <Link href="/" className="text-white/50 hover:text-white/80">
-            {BRAND.name}
-          </Link>
+          Powered by <span className="text-white/50">{BRAND.name}</span>
         </footer>
       </div>
     </div>

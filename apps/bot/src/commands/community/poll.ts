@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
-import { QUEUE_NAMES } from '@solari/jobs';
-import { prisma, type Prisma } from '@solari/database';
+import { QUEUE_NAMES } from '@refx/jobs';
+import { prisma, type Prisma } from '@refx/database';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
 import { RequireGuild } from '../../lib/permissions';
 import { parseDuration, formatDuration } from '../../lib/parsing';

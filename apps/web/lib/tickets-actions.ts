@@ -1,7 +1,7 @@
 'use server';
 
-import { prisma } from '@solari/database';
-import { ticketsConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { ticketsConfigSchema } from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { publishLiveCommand } from './redis';
 

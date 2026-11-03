@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY . .
 RUN pnpm install --frozen-lockfile \
-  && pnpm --filter @solari/database generate
+  && pnpm --filter @refx/database generate
 
 ENV NODE_ENV=production
-CMD ["pnpm", "--filter", "@solari/bot", "start"]
+CMD ["pnpm", "--filter", "@refx/bot", "start"]

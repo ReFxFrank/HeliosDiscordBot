@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { automodConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { automodConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { AutomodForm } from '../../../../components/automod-form';

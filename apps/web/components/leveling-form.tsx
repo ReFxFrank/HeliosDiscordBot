@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { levelUpAnnounceModes, type LevelingConfig } from '@solari/shared';
+import { levelUpAnnounceModes, type LevelingConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveLevelingConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
@@ -121,7 +121,7 @@ export function LevelingForm({
 
       <SettingsSection
         title="Level-Up Announcements"
-        description="Where and how Solari celebrates a member reaching a new level."
+        description="Where and how ReFx Assistant celebrates a member reaching a new level."
       >
         <div className="flex flex-col gap-5">
           <div className="max-w-md">

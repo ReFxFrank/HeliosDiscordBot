@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { suggestionsConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { suggestionsConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { SuggestionsForm } from '../../../../components/suggestions-form';

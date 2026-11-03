@@ -1,5 +1,5 @@
 import { MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { prisma, type CaseType } from '@solari/database';
+import { prisma, type CaseType } from '@refx/database';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireUserPermissions } from '../../lib/permissions';
 import { brandedEmbed } from '../../lib/embeds';

@@ -1,11 +1,11 @@
 import type { Collection, Guild, GuildMember, Invite } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   diffInviteUse,
   parseModuleConfig,
   type InviteSnapshot,
   type InviteTrackingConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
 import type { Logger } from '../logger';
 
@@ -103,10 +103,7 @@ export async function handleInviteJoin(
 }
 
 /** Records the join and returns the resolved inviter id (for achievement eval). */
-async function resolveAndRecordJoin(
-  member: GuildMember,
-  logger: Logger,
-): Promise<string | null> {
+async function resolveAndRecordJoin(member: GuildMember, logger: Logger): Promise<string | null> {
   const { enabled, config } = await getState(member.guild.id);
   if (!enabled) return null;
 

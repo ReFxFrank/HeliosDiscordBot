@@ -12,7 +12,7 @@ import {
   type GuildTextBasedChannel,
   type ModalSubmitInteraction,
 } from 'discord.js';
-import { prisma, type ApplicationForm, type ApplicationStatus } from '@solari/database';
+import { prisma, type ApplicationForm, type ApplicationStatus } from '@refx/database';
 import {
   APPLICATION_MAX_QUESTIONS,
   parseApplicationAnswers,
@@ -20,7 +20,7 @@ import {
   parseModuleConfig,
   type ApplicationAnswer,
   type ApplicationsConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
 import { buildCustomId } from '../framework/customId';
 import type { Logger } from '../logger';
@@ -82,7 +82,8 @@ export function buildApplyPanelMessage(forms: ApplicationForm[]): BaseMessageOpt
   const shown = forms.slice(0, 5);
   const embed = brandedEmbed({
     title: '📋 Applications',
-    description: 'Click a button below to start an application. Your answers are sent to the staff team.',
+    description:
+      'Click a button below to start an application. Your answers are sent to the staff team.',
   });
   for (const form of shown) {
     embed.addFields({
@@ -163,7 +164,10 @@ function buildReviewMessage(opts: {
   if (opts.status !== 'PENDING' && opts.reviewerId) {
     embed.addFields({
       name: `${meta.label} by`,
-      value: `<@${opts.reviewerId}>${opts.reviewNote ? ` — ${opts.reviewNote}` : ''}`.slice(0, 1024),
+      value: `<@${opts.reviewerId}>${opts.reviewNote ? ` — ${opts.reviewNote}` : ''}`.slice(
+        0,
+        1024,
+      ),
     });
   }
 
@@ -208,7 +212,9 @@ export async function recordSubmission(
     select: { id: true },
   });
   if (pending) {
-    return { error: 'You already have a pending application for this form. Please wait for a decision.' };
+    return {
+      error: 'You already have a pending application for this form. Please wait for a decision.',
+    };
   }
 
   const submission = await prisma.applicationSubmission.create({
@@ -259,7 +265,10 @@ async function grantApproveRole(
   const role = guild.roles.cache.get(roleId) ?? (await guild.roles.fetch(roleId).catch(() => null));
   const me = guild.members.me;
   if (!role || !me) return;
-  if (!me.permissions.has(PermissionFlagsBits.ManageRoles) || role.position >= me.roles.highest.position) {
+  if (
+    !me.permissions.has(PermissionFlagsBits.ManageRoles) ||
+    role.position >= me.roles.highest.position
+  ) {
     return;
   }
   const member = await guild.members.fetch(userId).catch(() => null);
@@ -355,7 +364,12 @@ export async function runDecisionSideEffects(
  * untouched.
  */
 export async function decideApplication(
-  opts: { submissionId: string; reviewerId: string; status: ApplicationStatus; note: string | null },
+  opts: {
+    submissionId: string;
+    reviewerId: string;
+    status: ApplicationStatus;
+    note: string | null;
+  },
   deps: ApplicationDeps,
 ): Promise<{ ok: true; formName: string; applicantId: string } | { error: string }> {
   const submission = await prisma.applicationSubmission.findUnique({

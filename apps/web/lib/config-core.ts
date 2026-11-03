@@ -1,5 +1,5 @@
-import { type Prisma, prisma } from '@solari/database';
-import { parseModuleConfig, type Module, type ModuleWithSchema } from '@solari/shared';
+import { type Prisma, prisma } from '@refx/database';
+import { parseModuleConfig, type Module, type ModuleWithSchema } from '@refx/shared';
 import { writeAuditLog } from './audit';
 import { publishConfigUpdate, publishLiveCommand } from './redis';
 

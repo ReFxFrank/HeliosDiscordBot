@@ -1,4 +1,4 @@
-import { xpProgress } from '@solari/shared';
+import { xpProgress } from '@refx/shared';
 
 export interface LeaderboardRow {
   userId: string;
@@ -50,7 +50,7 @@ export function LeaderboardList({ rows }: { rows: LeaderboardRow[] }) {
           <div
             key={row.userId}
             className={`glass flex items-center gap-4 rounded-xl p-3 ${
-              rank <= 3 ? 'ring-1 ring-[var(--color-premium)]/25' : ''
+              rank <= 3 ? 'ring-1 ring-[var(--color-gold)]/25' : ''
             }`}
           >
             <div className="w-8 shrink-0 text-center text-lg font-bold">

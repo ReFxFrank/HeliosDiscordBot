@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { StarboardConfig } from '@solari/shared';
+import type { StarboardConfig } from '@refx/shared';
 import type { ChannelOption } from '../lib/discord-guild';
 import { saveStarboardConfig } from '../lib/config-actions';
 import { ChannelSelect } from './ui/entity-select';

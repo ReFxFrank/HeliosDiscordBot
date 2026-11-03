@@ -1,6 +1,6 @@
 import type { Message, MessageReaction, PartialMessageReaction } from 'discord.js';
-import { prisma } from '@solari/database';
-import { starboardAction, type StarboardConfig } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { starboardAction, type StarboardConfig } from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
 import type { BotContext } from '../framework/context';
 

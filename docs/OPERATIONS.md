@@ -1,6 +1,6 @@
 # Operations & uptime
 
-How to keep a production Solari deployment healthy. Assumes the Docker Compose
+How to keep a production ReFx Assistant deployment healthy. Assumes the Docker Compose
 setup (`docker-compose.yml` + `docker-compose.prod.yml`).
 
 ## Staying up
@@ -57,12 +57,11 @@ read at container start.
 ## Secrets
 
 - All secrets live in `.env` only — never commit it. Rotate a leaked key at its
-  source (Stripe, Discord, etc.).
+  source (Discord, Cloudflare, etc.).
 - In production the data stores bind to `127.0.0.1` (`docker-compose.prod.yml`),
   Redis requires `REDIS_PASSWORD`, and `ENCRYPTION_KEY` must stay stable (it
   decrypts stored third-party tokens — changing it orphans them).
 
 ## Related docs
 
-- `docs/STRIPE.md` — Premium billing setup.
 - `.env.example` — every configuration variable, annotated.

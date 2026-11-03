@@ -1,5 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
-import { parseApplicationQuestions } from '@solari/shared';
+import { parseApplicationQuestions } from '@refx/shared';
 import { errorEmbed } from '../../lib/embeds';
 import { RequireGuild, Cooldown } from '../../lib/permissions';
 import { buildApplicationModal, getEnabledForms } from '../../modules/applications';
@@ -50,7 +50,8 @@ const command: Command = {
     // ask the member to pick (a modal can only be opened for one form at a time).
     const input = interaction.options.getString('form');
     const form =
-      (input && forms.find((f) => f.id === input || f.name.toLowerCase() === input.toLowerCase())) ||
+      (input &&
+        forms.find((f) => f.id === input || f.name.toLowerCase() === input.toLowerCase())) ||
       (forms.length === 1 ? forms[0] : null);
 
     if (!form) {

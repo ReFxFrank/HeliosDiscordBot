@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Plus, Send, Trash2 } from 'lucide-react';
-import type { EmbedSpec } from '@solari/shared';
+import type { EmbedSpec } from '@refx/shared';
 import type { ChannelOption } from '../lib/discord-guild';
 import { deleteEmbed, deploySavedEmbed, saveEmbed } from '../lib/embed-actions';
 import {

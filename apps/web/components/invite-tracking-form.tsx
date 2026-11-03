@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { InviteTrackingConfig } from '@solari/shared';
+import type { InviteTrackingConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveInviteTrackingConfig } from '../lib/config-actions';
 import { ChannelSelect } from './ui/entity-select';

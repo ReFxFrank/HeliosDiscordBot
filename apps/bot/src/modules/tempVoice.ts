@@ -5,8 +5,8 @@ import {
   type VoiceBasedChannel,
   type VoiceState,
 } from 'discord.js';
-import type { PrismaClient } from '@solari/database';
-import type { TempVoiceConfig } from '@solari/shared';
+import type { PrismaClient } from '@refx/database';
+import type { TempVoiceConfig } from '@refx/shared';
 import type { BotContext } from '../framework/context';
 import type { Logger } from '../logger';
 
@@ -147,12 +147,16 @@ export async function reconcileTempVoice(
       null;
 
     if (!channel || !channel.isVoiceBased()) {
-      await prisma.tempVoiceChannel.delete({ where: { channelId: row.channelId } }).catch(() => undefined);
+      await prisma.tempVoiceChannel
+        .delete({ where: { channelId: row.channelId } })
+        .catch(() => undefined);
       continue;
     }
     if (channel.members.filter((m) => !m.user.bot).size === 0) {
       await channel.delete('Temp voice orphan cleanup').catch(() => undefined);
-      await prisma.tempVoiceChannel.delete({ where: { channelId: row.channelId } }).catch(() => undefined);
+      await prisma.tempVoiceChannel
+        .delete({ where: { channelId: row.channelId } })
+        .catch(() => undefined);
       cleaned += 1;
     } else {
       tempChannels.set(row.channelId, row.ownerId);

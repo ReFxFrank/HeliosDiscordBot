@@ -7,7 +7,7 @@ import {
   type AutoResponder,
   type AutoResponderMatch,
   type CustomCommandsConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import { saveCustomCommandsConfig } from '../lib/config-actions';
 import { Field, SaveBar, inputClass, monoInputClass, type SaveStatus } from './ui/form';
 

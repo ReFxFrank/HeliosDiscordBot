@@ -15,7 +15,7 @@ datasource db {
 }
 
 /// Every configurable feature area. Mirrors the `Module` union in
-/// `@solari/shared` — keep the two in sync.
+/// `@refx/shared` — keep the two in sync.
 enum Module {
   MODERATION
   AUTOMOD
@@ -38,6 +38,8 @@ enum Module {
   INVITE_TRACKING
   BIRTHDAYS
   AFK
+  /// Legacy — the economy and music modules were removed (ReFx rework). Postgres
+  /// cannot drop enum values, so these stay as dead values. Never reference them.
   ECONOMY
   MUSIC
   SOCIAL
@@ -48,17 +50,13 @@ enum Module {
   UTILITY
   FUN
   APPLICATIONS
+  FIVEM
 }
 
 enum ApplicationStatus {
   PENDING
   APPROVED
   DENIED
-}
-
-enum PremiumTier {
-  FREE
-  PREMIUM
 }
 
 enum BlacklistType {
@@ -89,32 +87,6 @@ model GlobalModuleFlag {
   updatedAt DateTime @updatedAt @default(now())
 }
 
-/// Per-guild custom bot (premium Bot Personalizer). A server supplies its OWN
-/// Discord application: the bot boots a dedicated client on this token so that
-/// server sees a bot with its own name/avatar/banner/presence. The token is
-/// stored AES-256-GCM encrypted; it is never returned to the dashboard.
-model CustomBot {
-  guildId       String   @id
-  /// AES-256-GCM encrypted bot token (iv:tag:ciphertext).
-  tokenEnc      String
-  applicationId String?
-  /// Desired identity — applied to the custom bot on (re)start.
-  botName       String?
-  avatarUrl     String?
-  bannerUrl     String?
-  /// Presence: online | idle | dnd | invisible.
-  status        String   @default("online")
-  /// PLAYING | LISTENING | WATCHING | COMPETING | STREAMING.
-  activityType  String?
-  activityText  String?
-  streamUrl     String?
-  enabled       Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
-}
-
 /// Guild metadata mirror (§4.4). The bot upserts these rows from gateway
 /// events so the dashboard never needs to hit the Discord API for basics.
 model Guild {
@@ -134,7 +106,6 @@ model Guild {
   /// Set when an admin applies or skips the dashboard quick-setup wizard, so it
   /// only shows for freshly-added servers.
   setupCompletedAt DateTime?
-  premiumTier  PremiumTier @default(FREE)
   featureFlags Json        @default("{}")
   locale       String      @default("en-US")
   timezone     String      @default("UTC")
@@ -170,11 +141,8 @@ model Guild {
   afkUsers          Afk[]
   birthdays         Birthday[]
   inviteUses        InviteUse[]
-  subscription      GuildSubscription?
   tempVoiceChannels TempVoiceChannel[]
-  economyUsers      EconomyUser[]
   socialSubscriptions SocialSubscription[]
-  customBot         CustomBot?
   userAchievements  UserAchievement[]
   memberStats       MemberStat[]
   insightsDays      GuildInsightsDay[]
@@ -324,7 +292,7 @@ model MemberStat {
   @@index([guildId])
 }
 
-/// A Social Alerts subscription (premium): watch a Twitch/YouTube/Reddit/RSS
+/// A Social Alerts subscription: watch a Twitch/YouTube/Reddit/RSS
 /// source and post new items to a channel. `lastItemId` dedups what's been
 /// posted; a per-subscription BullMQ job polls on an interval.
 model SocialSubscription {
@@ -347,42 +315,8 @@ model SocialSubscription {
   @@index([guildId])
 }
 
-/// Per-(guild, user) economy balance (premium). `wallet` is spendable/robbable;
-/// `bank` is safe. Cooldowns for /daily and /work are timestamp-based (no jobs).
-/// A top.gg vote, stored by the webhook receiver (/api/integrations/topgg).
-/// Votes are per-bot (global); `claimedGuilds` tracks the guilds where the
-/// voter has claimed the economy reward for this particular vote.
-model TopggVote {
-  id            String   @id @default(cuid())
-  userId        String
-  isWeekend     Boolean  @default(false)
-  votedAt       DateTime @default(now())
-  claimedGuilds String[] @default([])
-
-  @@index([userId, votedAt])
-}
-
-model EconomyUser {
-  id        String    @id @default(cuid())
-  guildId   String
-  userId    String
-  wallet    Int       @default(0)
-  bank      Int       @default(0)
-  lastDaily DateTime?
-  lastWork  DateTime?
-  lastRob   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
-
-  @@unique([guildId, userId])
-  @@index([guildId])
-  @@index([guildId, wallet])
-}
-
 /// A "join-to-create" temporary voice channel spawned by the Temp Voice module
-/// (premium). Rows let the bot clean up orphaned channels on restart and resolve
+/// Rows let the bot clean up orphaned channels on restart and resolve
 /// a channel's owner for the /voice control commands.
 model TempVoiceChannel {
   channelId String   @id // the created voice channel's snowflake
@@ -395,31 +329,8 @@ model TempVoiceChannel {
   @@index([guildId])
 }
 
-/// Per-server premium subscription (§3). One row per guild. The bot reads the
-/// fast `Guild.premiumTier` flag; this table holds the Stripe billing details
-/// and the authoritative `status`, kept in sync by the Stripe webhook. Billing
-/// is per-server (a subscription upgrades a single guild).
-model GuildSubscription {
-  guildId              String    @id
-  stripeCustomerId     String?
-  stripeSubscriptionId String?   @unique
-  stripePriceId        String?
-  /// Discord user id of the member who purchased. Billing details/portal are
-  /// visible ONLY to them (plus the bot owner) — not to every guild admin.
-  purchasedBy          String?
-  /// Mirrors the Stripe subscription status: active, trialing, past_due,
-  /// canceled, incomplete, etc. `inactive` = never subscribed.
-  status               String    @default("inactive")
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-
-  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
-}
-
 /// One row per (guild, module). `config` is a JSON blob validated by the
-/// matching zod schema in `@solari/shared` on every read and write (§4.1).
+/// matching zod schema in `@refx/shared` on every read and write (§4.1).
 model GuildModuleConfig {
   id        String   @id @default(cuid())
   guildId   String
@@ -623,7 +534,7 @@ model ModerationCase {
 }
 
 /// How often a scheduled message repeats. Mirrors `ScheduleRepeat` in
-/// `@solari/shared` — keep the two in sync.
+/// `@refx/shared` — keep the two in sync.
 enum ScheduleRepeat {
   NONE
   HOURLY
@@ -844,51 +755,4 @@ model InviteUse {
   @@unique([guildId, invitedUserId])
   @@index([guildId, inviterId])
   @@index([guildId])
-}
-
-/// Severity category of a status-page incident (owner-issued).
-enum IncidentSeverity {
-  OUTAGE
-  DEGRADED
-  MAINTENANCE
-  NOTICE
-}
-
-/// Lifecycle stage of an incident, statuspage-style.
-enum IncidentStatus {
-  INVESTIGATING
-  IDENTIFIED
-  MONITORING
-  RESOLVED
-}
-
-/// A status-page incident, created from the owner admin panel and rendered on
-/// /status (active banner while unresolved, then in the incident history).
-model Incident {
-  id         String           @id @default(cuid())
-  title      String
-  severity   IncidentSeverity
-  status     IncidentStatus   @default(INVESTIGATING)
-  /// Affected component label shown on the page (e.g. "Discord bot").
-  component  String?
-  createdAt  DateTime         @default(now())
-  resolvedAt DateTime?
-
-  updates IncidentUpdate[]
-
-  @@index([createdAt])
-  @@index([status])
-}
-
-/// A timestamped update on an incident (each also moves its lifecycle status).
-model IncidentUpdate {
-  id         String         @id @default(cuid())
-  incidentId String
-  status     IncidentStatus
-  message    String
-  createdAt  DateTime       @default(now())
-
-  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
-
-  @@index([incidentId])
 }

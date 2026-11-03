@@ -7,8 +7,8 @@ import {
   TextInputStyle,
   type GuildMember,
 } from 'discord.js';
-import { parseApplicationQuestions } from '@solari/shared';
-import type { ApplicationStatus } from '@solari/database';
+import { parseApplicationQuestions } from '@refx/shared';
+import type { ApplicationStatus } from '@refx/database';
 import { errorEmbed, successEmbed } from '../lib/embeds';
 import { defineComponent } from '../framework/component';
 import {

@@ -1,13 +1,15 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowRight, Plus } from 'lucide-react';
-import { prisma } from '@solari/database';
-import { BRAND } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { BRAND } from '@refx/shared';
 import { auth } from '../../auth';
 import { getManageableGuilds } from '../../lib/auth-guards';
 import { guildIconUrl, type ManageableGuild } from '../../lib/discord';
 import { botInviteUrl } from '../../lib/invite';
 import { LoginButton } from '../../components/auth-buttons';
 import { GlassCard } from '../../components/ui/glass-card';
+import { BrandMark } from '../../components/ui/brand-mark';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +23,14 @@ export default async function ServersPage({
   if (!session?.user?.id) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 text-center">
-        <h1 className="text-2xl font-semibold">Sign in to continue</h1>
-        <p className="text-sm text-white/60">Log in with Discord to manage your servers.</p>
+        <BrandMark size={64} rounded="rounded-2xl" className="shadow-[0_0_40px_-8px_var(--color-brand)]" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-bright)]">
+            {BRAND.community}
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold">{BRAND.name} Dashboard</h1>
+          <p className="mt-2 text-sm text-white/60">Sign in with Discord to manage the bot.</p>
+        </div>
         <LoginButton />
       </main>
     );
@@ -33,7 +41,7 @@ export default async function ServersPage({
   const present = ids.length
     ? await prisma.guild.findMany({
         // leftAt set = the bot was kicked; the row is retained for a re-invite
-        // but the server belongs under "Add Solari", not "Configure".
+        // but the server belongs under "Add ReFx Assistant", not "Configure".
         where: { id: { in: ids }, leftAt: null },
         select: { id: true, memberCount: true },
       })
@@ -43,6 +51,12 @@ export default async function ServersPage({
 
   const configurable = guilds.filter((g) => memberCounts.has(g.id));
   const invitable = guilds.filter((g) => !memberCounts.has(g.id));
+
+  // Single-community bot: when there is exactly one server to configure, skip
+  // the picker. Not after a stale-session bounce, which would just loop back.
+  if (!stale && configurable.length === 1 && configurable[0]) {
+    redirect(`/servers/${configurable[0].id}`);
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">

@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { embedSpecSchema, type EmbedSpec } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { embedSpecSchema, type EmbedSpec } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildChannels } from '../../../../lib/discord-guild';
 import { EmbedsManager, type SavedEmbedDTO } from '../../../../components/embeds-manager';

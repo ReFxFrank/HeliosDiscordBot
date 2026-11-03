@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GuildMember } from 'discord.js';
-import type { EscalationRung } from '@solari/shared';
+import type { EscalationRung } from '@refx/shared';
 import { isImmuneMember, matchEscalation, moderationTargetError } from './moderation';
 
 const fakeMember = (roleIds: string[]): GuildMember =>
@@ -42,9 +42,15 @@ describe('moderationTargetError', () => {
   };
 
   it('blocks self, the bot, the owner, and immune members', () => {
-    expect(moderationTargetError({ ...base, targetId: 'mod', targetMember: null })).toMatch(/yourself/);
-    expect(moderationTargetError({ ...base, targetId: 'bot', targetMember: null })).toMatch(/myself/);
-    expect(moderationTargetError({ ...base, targetId: 'owner', targetMember: null })).toMatch(/owner/);
+    expect(moderationTargetError({ ...base, targetId: 'mod', targetMember: null })).toMatch(
+      /yourself/,
+    );
+    expect(moderationTargetError({ ...base, targetId: 'bot', targetMember: null })).toMatch(
+      /myself/,
+    );
+    expect(moderationTargetError({ ...base, targetId: 'owner', targetMember: null })).toMatch(
+      /owner/,
+    );
     expect(
       moderationTargetError({ ...base, targetId: 't', targetMember: fakeMember(['imm']) }),
     ).toMatch(/immune/);

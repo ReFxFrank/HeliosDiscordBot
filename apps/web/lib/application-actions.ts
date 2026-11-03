@@ -1,13 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   APPLICATION_MAX_QUESTIONS,
   applicationQuestionsSchema,
   applicationsConfigSchema,
   type ApplicationQuestionStyle,
-} from '@solari/shared';
+} from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { applyModuleConfig } from './config-core';
 import { publishLiveCommand } from './redis';

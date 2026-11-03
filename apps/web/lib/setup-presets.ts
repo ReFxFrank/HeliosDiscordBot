@@ -1,11 +1,10 @@
-import type { Module } from '@solari/shared';
+import type { Module } from '@refx/shared';
 import { MODULE_META } from './modules';
 
 /**
  * Quick-setup bundles for the first-run wizard. Each preset enables a curated
  * set of modules with the bot's own sensible defaults (Tickets even
- * auto-configures its channels). Premium modules in a preset are silently
- * skipped on a free server — the wizard never charges or blocks.
+ * auto-configures its channels).
  */
 export interface SetupPreset {
   key: string;
@@ -18,18 +17,18 @@ export interface SetupPreset {
 
 export const SETUP_PRESETS: SetupPreset[] = [
   {
+    key: 'city',
+    name: 'RP City',
+    tagline: 'FiveM status panel, verification, welcomes, tickets, applications & logging.',
+    icon: 'Gamepad2',
+    modules: ['FIVEM', 'VERIFICATION', 'WELCOME', 'TICKETS', 'APPLICATIONS', 'MODERATION', 'LOGGING'],
+  },
+  {
     key: 'community',
     name: 'Community',
     tagline: 'Moderation, auto-mod, welcomes, levels, reaction roles, starboard & logging.',
     icon: 'Users',
     modules: ['MODERATION', 'AUTOMOD', 'WELCOME', 'LEVELING', 'ROLES', 'STARBOARD', 'LOGGING'],
-  },
-  {
-    key: 'gaming',
-    name: 'Gaming',
-    tagline: 'Community basics plus economy, temp voice channels & giveaways.',
-    icon: 'Gamepad2',
-    modules: ['MODERATION', 'AUTOMOD', 'WELCOME', 'LEVELING', 'GIVEAWAYS', 'ECONOMY', 'TEMP_VOICE'],
   },
   {
     key: 'support',
@@ -41,7 +40,7 @@ export const SETUP_PRESETS: SetupPreset[] = [
   {
     key: 'everything',
     name: 'Everything',
-    tagline: 'Turn on every module and trim later. Premium modules need Premium.',
+    tagline: 'Turn on every module and trim later.',
     icon: 'Sparkles',
     modules: MODULE_META.map((m) => m.module),
   },

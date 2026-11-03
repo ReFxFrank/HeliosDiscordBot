@@ -19,7 +19,7 @@ export function generateCaptchaCode(length: number): string {
 
 const WIDTH = 360;
 const HEIGHT = 140;
-const GLYPH_COLORS = ['#a78bfa', '#8b5cf6', '#d946ef', '#38bdf8', '#e7e7ee'];
+const GLYPH_COLORS = ['#3d95ff', '#0072ff', '#70b0ff', '#38bdf8', '#e7e7ee'];
 
 function jitter(spread: number): number {
   return (randomInt(1000) / 1000 - 0.5) * 2 * spread;
@@ -30,16 +30,16 @@ export function renderCaptcha(code: string): Promise<Buffer> {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  // Dark backdrop with a soft violet wash.
+  // Dark backdrop with a soft blue wash.
   const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  gradient.addColorStop(0, '#161221');
-  gradient.addColorStop(1, '#0a0810');
+  gradient.addColorStop(0, '#0f1626');
+  gradient.addColorStop(1, '#060a14');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   // Background noise strokes (behind the glyphs).
   for (let i = 0; i < 6; i++) {
-    ctx.strokeStyle = `rgba(139, 92, 246, ${0.15 + randomInt(20) / 100})`;
+    ctx.strokeStyle = `rgba(0, 114, 255, ${0.15 + randomInt(20) / 100})`;
     ctx.lineWidth = 1 + randomInt(2);
     ctx.beginPath();
     ctx.moveTo(randomInt(WIDTH), randomInt(HEIGHT));

@@ -2,11 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Hash, Volume2, Shield, Sparkles } from 'lucide-react';
-import {
-  isModuleLocked,
-  templateChannelCount,
-  type ServerTemplate,
-} from '@solari/shared';
+import { templateChannelCount, type ServerTemplate } from '@refx/shared';
 import { applyServerTemplateAction } from '../lib/template-actions';
 
 const prettyModule = (module: string): string =>
@@ -19,11 +15,9 @@ type CardState = { status: 'idle' | 'armed' | 'done' | 'error'; message?: string
 
 export function ServerTemplates({
   guildId,
-  isPremium,
   templates,
 }: {
   guildId: string;
-  isPremium: boolean;
   templates: ServerTemplate[];
 }) {
   const [pending, startTransition] = useTransition();
@@ -52,7 +46,6 @@ export function ServerTemplates({
       {templates.map((template) => {
         const categories = template.categories.length;
         const channels = templateChannelCount(template) - categories;
-        const premiumModules = template.modules.filter((module) => isModuleLocked(module, 'FREE'));
         const state = states[template.id] ?? { status: 'idle' };
         const isBusy = pending && busyId === template.id;
 
@@ -84,30 +77,15 @@ export function ServerTemplates({
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {template.modules.map((module) => {
-                const locked = isModuleLocked(module, 'FREE');
-                return (
-                  <span
-                    key={module}
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                      locked
-                        ? 'bg-[var(--color-premium)]/15 text-[var(--color-premium)]'
-                        : 'bg-white/[0.06] text-white/70'
-                    }`}
-                  >
-                    {prettyModule(module)}
-                    {locked ? ' ⭐' : ''}
-                  </span>
-                );
-              })}
+              {template.modules.map((module) => (
+                <span
+                  key={module}
+                  className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] font-medium text-white/70"
+                >
+                  {prettyModule(module)}
+                </span>
+              ))}
             </div>
-
-            {premiumModules.length > 0 && !isPremium && (
-              <p className="text-[11px] text-[var(--color-premium)]/90">
-                ⭐ Premium modules are skipped until this server has Premium — everything else is
-                created.
-              </p>
-            )}
 
             <div className="mt-auto flex items-center gap-3 pt-1">
               {state.status === 'armed' ? (
@@ -115,7 +93,7 @@ export function ServerTemplates({
                   type="button"
                   disabled={isBusy}
                   onClick={() => apply(template.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-premium)] px-4 py-2 text-sm font-semibold text-black transition-transform hover:scale-[1.02] disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-brand-strong)] px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:opacity-60"
                 >
                   <Sparkles className="h-4 w-4" /> {isBusy ? 'Building…' : 'Confirm — build it'}
                 </button>

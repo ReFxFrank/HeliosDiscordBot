@@ -1,4 +1,4 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getApplicationCommands } from '../../../../lib/discord-commands';
 import { CommandToggles } from '../../../../components/command-toggles';

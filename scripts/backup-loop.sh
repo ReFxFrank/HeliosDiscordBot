@@ -10,7 +10,7 @@ set -u
 
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 OFFSITE_RETENTION_DAYS="${BACKUP_S3_RETENTION_DAYS:-30}"
-PREFIX="${BACKUP_S3_PREFIX:-solari}"
+PREFIX="${BACKUP_S3_PREFIX:-refx-bot}"
 
 offsite=0
 if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
@@ -26,7 +26,7 @@ fi
 echo "backup: nightly pg_dump, ${RETENTION_DAYS}-day local retention"
 while true; do
   ts=$(date +%Y%m%d-%H%M%S)
-  file="helios-${ts}.sql.gz"
+  file="refx-${ts}.sql.gz"
   if pg_dump -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" | gzip >"/backups/${file}"; then
     echo "backup: wrote ${file} ($(du -h "/backups/${file}" | cut -f1))"
     if [ "$offsite" -eq 1 ]; then
@@ -43,6 +43,6 @@ while true; do
     echo "backup: pg_dump FAILED" >&2
     rm -f "/backups/${file}"
   fi
-  find /backups -name 'helios-*.sql.gz' -mtime +"$RETENTION_DAYS" -delete
+  find /backups -name 'refx-*.sql.gz' -mtime +"$RETENTION_DAYS" -delete
   sleep 86400
 done

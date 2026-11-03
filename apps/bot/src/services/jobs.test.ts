@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { Queue, Worker } from 'bullmq';
-import { QUEUE_NAMES, QUEUE_PREFIX, type TempActionExpireJob } from '@solari/jobs';
+import { QUEUE_NAMES, QUEUE_PREFIX, type TempActionExpireJob } from '@refx/jobs';
 import type { Client } from 'discord.js';
 import { logger } from '../logger';
 import { JobService, tempBanJobId } from './jobs';

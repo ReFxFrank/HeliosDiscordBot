@@ -7,14 +7,13 @@ import type {
   AutoroleConfig,
   BirthdaysConfig,
   CustomCommandsConfig,
-  EconomyConfig,
+  FivemConfig,
   InviteTrackingConfig,
   LevelingConfig,
   LoggingConfig,
   Module,
   ModerationConfig,
   ModuleWithSchema,
-  MusicConfig,
   PollsConfig,
   StarboardConfig,
   StatsCountersConfig,
@@ -23,9 +22,8 @@ import type {
   TicketsConfig,
   VerificationConfig,
   WelcomeConfig,
-} from '@solari/shared';
-import { isModuleLocked } from '@solari/shared';
-import { prisma } from '@solari/database';
+} from '@refx/shared';
+import { prisma } from '@refx/database';
 import { assertCanManage, requireSession } from './auth-guards';
 import { MODULE_META } from './modules';
 import {
@@ -52,61 +50,52 @@ export async function setModuleEnabled(
 ): Promise<void> {
   const session = await requireSession();
   await assertCanManage(session, guildId);
-  // Entitlement checks, server-side (the UI hides these but the action is a
-  // directly-invokable POST). Only gate ENABLING — disabling is always allowed.
-  if (enabled) await assertModuleAllowed(guildId, module);
+  // Server-side check (the UI hides globally-disabled modules but the action is
+  // a directly-invokable POST). Only gate ENABLING — disabling is always allowed.
+  if (enabled) await assertNotGloballyDisabled(module);
   await applyModuleEnabled(guildId, module, enabled, session.user.id);
   await triggerTicketsAutoSetupIfNeeded(guildId, module, enabled);
   revalidatePath(`/servers/${guildId}`);
 }
 
 /**
- * Reject enabling a module the caller isn't entitled to: a premium module on a
- * non-premium guild, or a module the bot owner has globally disabled. The bot's
+ * Reject enabling a module the bot owner has globally disabled. The bot's
  * runtime already refuses to RUN such modules; this closes the gap where the
  * enabled flag could still be flipped by calling the server action directly.
  */
-async function assertModuleAllowed(guildId: string, module: Module): Promise<void> {
-  const [guild, globalFlag] = await Promise.all([
-    prisma.guild.findUnique({ where: { id: guildId }, select: { premiumTier: true } }),
-    prisma.globalModuleFlag.findUnique({ where: { module }, select: { enabled: true } }),
-  ]);
+async function assertNotGloballyDisabled(module: Module): Promise<void> {
+  const globalFlag = await prisma.globalModuleFlag.findUnique({
+    where: { module },
+    select: { enabled: true },
+  });
   if (globalFlag && !globalFlag.enabled) {
     throw new Error('This module is currently disabled by the bot operator.');
-  }
-  if (isModuleLocked(module, guild?.premiumTier ?? 'FREE')) {
-    throw new Error('That module requires Premium.');
   }
 }
 
 /**
  * Bulk enable/disable every module in the grid. Idempotent by construction:
  * modules already in the requested state are skipped entirely (no writes, no
- * audit spam, no invalidations). Bulk-enable never switches on premium modules
- * for a non-premium guild, and owner-globally-disabled modules are never
+ * audit spam, no invalidations). Owner-globally-disabled modules are never
  * touched in either direction.
  */
 export async function setAllModulesEnabled(guildId: string, enabled: boolean): Promise<void> {
   const session = await requireSession();
   await assertCanManage(session, guildId);
 
-  const [flags, guild, existing] = await Promise.all([
+  const [flags, existing] = await Promise.all([
     prisma.globalModuleFlag.findMany({ where: { enabled: false }, select: { module: true } }),
-    prisma.guild.findUnique({ where: { id: guildId }, select: { premiumTier: true } }),
     prisma.guildModuleConfig.findMany({
       where: { guildId },
       select: { module: true, enabled: true },
     }),
   ]);
   const globallyOff = new Set(flags.map((flag) => flag.module));
-  const isPremium = guild?.premiumTier === 'PREMIUM';
   const current = new Map(existing.map((row) => [row.module as Module, row.enabled]));
 
   const targets = MODULE_META.filter(
     (meta) =>
       !globallyOff.has(meta.module) &&
-      // Free guilds can bulk-disable premium modules but never bulk-enable them.
-      (isPremium || meta.category !== 'premium' || !enabled) &&
       (current.get(meta.module) ?? false) !== enabled,
   );
 
@@ -217,25 +206,11 @@ export async function saveInviteTrackingConfig(
   return saveConfig(guildId, 'INVITE_TRACKING', input, 'invites');
 }
 
-export async function saveMusicConfig(
-  guildId: string,
-  input: MusicConfig,
-): Promise<ActionResult> {
-  return saveConfig(guildId, 'MUSIC', input, 'music');
-}
-
 export async function saveTempVoiceConfig(
   guildId: string,
   input: TempVoiceConfig,
 ): Promise<ActionResult> {
   return saveConfig(guildId, 'TEMP_VOICE', input, 'temp-voice');
-}
-
-export async function saveEconomyConfig(
-  guildId: string,
-  input: EconomyConfig,
-): Promise<ActionResult> {
-  return saveConfig(guildId, 'ECONOMY', input, 'economy');
 }
 
 export async function saveStatsCountersConfig(
@@ -274,5 +249,14 @@ export async function saveGuildSettings(
   await assertCanManage(session, guildId);
   const result = await applyGuildSettings(guildId, input, session.user.id);
   if (result.ok) revalidatePath(`/servers/${guildId}/settings`);
+  return result;
+}
+
+export async function saveFivemConfig(guildId: string, input: FivemConfig): Promise<ActionResult> {
+  const result = await saveConfig(guildId, 'FIVEM', input, 'fivem');
+  // Re-render the status panel with the new settings (title, image, connect info).
+  if (result.ok) {
+    await publishLiveCommand(guildId, 'FIVEM_REFRESH', { repost: false }).catch(() => undefined);
+  }
   return result;
 }

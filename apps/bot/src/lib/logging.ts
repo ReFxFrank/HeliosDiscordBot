@@ -1,5 +1,5 @@
 import type { EmbedBuilder } from 'discord.js';
-import type { LogCategory, LoggingConfig } from '@solari/shared';
+import type { LogCategory, LoggingConfig } from '@refx/shared';
 import type { BotContext } from '../framework/context';
 
 const CHANNEL_KEY: Record<LogCategory, keyof LoggingConfig> = {

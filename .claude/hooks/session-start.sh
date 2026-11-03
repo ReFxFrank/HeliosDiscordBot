@@ -22,12 +22,12 @@ pnpm install ||
 # makes `pnpm typecheck` and the unit tests accurate, and no engine is needed
 # for those. (The stub paths satisfy the CLI's engines-exist precheck; codegen
 # itself runs in WASM.)
-if ! pnpm --filter @solari/database exec prisma generate; then
+if ! pnpm --filter @refx/database exec prisma generate; then
   echo "session-start: full prisma generate failed; generating types-only client"
   PRISMA_SCHEMA_ENGINE_BINARY=/bin/true \
     PRISMA_QUERY_ENGINE_LIBRARY=/bin/true \
     CHECKPOINT_DISABLE=1 \
-    pnpm --filter @solari/database exec prisma generate --no-engine
+    pnpm --filter @refx/database exec prisma generate --no-engine
 fi
 
 echo "session-start: dependencies installed and Prisma client generated"

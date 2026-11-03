@@ -1,26 +1,19 @@
 # Static assets (`apps/web/public`)
 
-Files here are served from the web root, e.g. `public/solari-logo.png` → `/solari-logo.png`.
+Files here are served from the web root, e.g. `public/refx-logo.png` → `/refx-logo.png`.
 
-## Brand logo — `solari-logo.png`
+## Brand logo — `refx-logo.png`
 
-Drop the Solari galaxy logo here as **`solari-logo.png`** (exact filename, lowercase).
-
-A single file powers everything:
+The ReFx logo. A single file powers everything:
 
 - The favicon / browser tab icon, Apple touch icon, and shortcut icon
   (wired in `app/layout.tsx` → `metadata.icons`).
 - Open Graph / Twitter link-preview image (`metadata.openGraph`, `metadata.twitter`).
-- The header + footer brand mark (`components/marketing/brand-mark.tsx`,
-  rendered via the `<BrandMark />` component).
+- The brand mark (`components/ui/brand-mark.tsx`, rendered via `<BrandMark />`).
 
-**Recommended:** a square PNG, **512×512** (or larger), transparent or violet
-background. The `<BrandMark />` uses `object-cover` inside a rounded tile, so a
-square source crops cleanly.
-
-Until the file exists, the brand mark falls back to the violet "S" tile and the
-favicon slot 404s — both harmless. The moment `solari-logo.png` lands, every
-slot picks it up automatically (no code change needed).
+To swap it, replace the file (keep the name). A square PNG of **512×512** or larger
+looks best; `<BrandMark />` uses `object-cover` inside a rounded tile. If the image
+fails to load, the brand mark falls back to a blue "R" tile.
 
 ### Optional extras (auto-detected by Next.js if added to `app/`)
 

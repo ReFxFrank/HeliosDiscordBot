@@ -1,15 +1,11 @@
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 
 /**
  * Counter fields on MemberStat that increment over time. (Invites are derived
  * from the InviteUse table instead of a counter, so they're not listed here.)
  */
 export type MemberStatField =
-  | 'reactionsAdded'
-  | 'threadsCreated'
-  | 'threadsJoined'
-  | 'giveawaysJoined'
-  | 'itemsPurchased';
+  'reactionsAdded' | 'threadsCreated' | 'threadsJoined' | 'giveawaysJoined' | 'itemsPurchased';
 
 /** Boolean (0/1) fields on MemberStat. */
 export type MemberFlagField = 'boosted' | 'birthdaySet';

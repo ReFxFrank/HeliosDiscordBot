@@ -1,6 +1,6 @@
 import type { EmbedBuilder, GuildMember } from 'discord.js';
-import { prisma } from '@solari/database';
-import type { EscalationRung, ModerationConfig } from '@solari/shared';
+import { prisma } from '@refx/database';
+import type { EscalationRung, ModerationConfig } from '@refx/shared';
 import type { BotContext } from '../framework/context';
 
 /** True if the member holds one of the guild's moderation-immune roles. */

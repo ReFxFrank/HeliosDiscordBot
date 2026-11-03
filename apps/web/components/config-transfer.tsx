@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { Download, Upload } from 'lucide-react';
+import { BRAND } from '@refx/shared';
 import { exportGuildConfig, importGuildConfig } from '../lib/config-transfer';
 import { GlassCard } from './ui/glass-card';
 
@@ -18,7 +19,7 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
         const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
-        link.download = `solari-config-${guildId}.json`;
+        link.download = `refx-config-${guildId}.json`;
         link.click();
         URL.revokeObjectURL(url);
         setStatus({ tone: 'ok', text: 'Config exported.' });
@@ -51,7 +52,7 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
           text: `Imported ${result.applied.length} module${result.applied.length === 1 ? '' : 's'}${skippedNote}.`,
         });
       } catch {
-        setStatus({ tone: 'error', text: 'Import failed — is that a Solari export file?' });
+        setStatus({ tone: 'error', text: 'Import failed — is that a ReFx Assistant export file?' });
       }
     });
   }
@@ -61,7 +62,7 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
       <h3 className="font-semibold text-white/90">Backup &amp; transfer</h3>
       <p className="mt-1 text-sm text-white/50">
         Export this server’s entire module configuration as JSON — keep it as a backup or import
-        it into another server running {`Solari`}. Imports are validated module-by-module.
+        it into another server running {BRAND.name}. Imports are validated module-by-module.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button

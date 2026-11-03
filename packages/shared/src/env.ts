@@ -29,17 +29,6 @@ export const botEnvSchema = baseEnvSchema.extend({
   OWNER_IDS: z.string().default('').transform(csvToArray),
   /** Guild to register commands into for instant dev iteration. */
   DEV_GUILD_ID: z.string().optional(),
-  /** Turn on the Lavalink-backed Music module (premium). Requires a running
-   *  Lavalink node — start it with the `music` docker-compose profile. */
-  MUSIC_ENABLED: z
-    .string()
-    .optional()
-    .transform((value) => value === 'true' || value === '1'),
-  LAVALINK_HOST: z.string().default('localhost'),
-  LAVALINK_PORT: z.coerce.number().int().positive().default(2333),
-  LAVALINK_PASSWORD: z.string().default('youshallnotpass'),
-  /** 32+ byte key used to encrypt third-party tokens at rest (§10). */
-  ENCRYPTION_KEY: z.string().min(32).optional(),
   /** Expose a Prometheus /metrics + /health HTTP server per shard. */
   METRICS_ENABLED: z
     .string()
@@ -51,14 +40,16 @@ export const botEnvSchema = baseEnvSchema.extend({
    *  YouTube/Reddit/RSS work without any keys). */
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
-  /** top.gg bot id for the /vote link (defaults to DISCORD_CLIENT_ID). */
-  TOPGG_BOT_ID: z.string().optional(),
-  /** top.gg API token — set to auto-post the server count to your listing. */
-  TOPGG_TOKEN: z.string().optional(),
-  /** discordbotlist.com bot id for stats posting (defaults to DISCORD_CLIENT_ID). */
-  DBL_BOT_ID: z.string().optional(),
-  /** discordbotlist.com API token — set to auto-post the server count there. */
-  DBL_TOKEN: z.string().optional(),
+  /** Public dashboard URL, for the bot's link buttons. Unset hides them. */
+  DASHBOARD_URL: z.string().url().optional(),
+  /** FiveM whitelist API (refx_whitelist resource). Unset disables the API. */
+  FIVEM_API_KEY: z.string().min(24).optional(),
+  /** Port the whitelist API listens on. */
+  FIVEM_API_PORT: z.coerce.number().int().positive().default(30125),
+  /** Interface the whitelist API binds to. */
+  FIVEM_API_HOST: z.string().default('0.0.0.0'),
+  /** The ReFx guild the whitelist checks roles in (defaults to the first guild with the whitelist on). */
+  REFX_GUILD_ID: z.string().optional(),
   /** Invite URL of the official support server (adds a /help button when set). */
   SUPPORT_SERVER_INVITE: z.string().url().optional(),
 });
@@ -69,20 +60,6 @@ export const webEnvSchema = baseEnvSchema.extend({
   DISCORD_CLIENT_ID: z.string().min(1),
   DISCORD_CLIENT_SECRET: z.string().min(1),
   OWNER_IDS: z.string().default('').transform(csvToArray),
-  /** Stripe premium billing (§3). All optional — unset disables the upgrade
-   *  flow and the dashboard shows "billing not configured". */
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  /** Monthly recurring Price the per-server Premium subscription checks out against. */
-  STRIPE_PREMIUM_PRICE_ID: z.string().optional(),
-  /** Yearly recurring Price — enables the Yearly plan when set. */
-  STRIPE_YEARLY_PRICE_ID: z.string().optional(),
-  /** One-time Price — enables the Lifetime plan (checkout in payment mode) when set. */
-  STRIPE_LIFETIME_PRICE_ID: z.string().optional(),
-  /** Shared secret matching the Authorization set in the top.gg webhooks panel. */
-  TOPGG_WEBHOOK_AUTH: z.string().optional(),
-  /** Shared secret matching the Authorization set in the discordbotlist.com webhook panel. */
-  DBL_WEBHOOK_AUTH: z.string().optional(),
   /** Invite URL of the official support server (adds a footer link when set). */
   SUPPORT_SERVER_INVITE: z.string().url().optional(),
 });

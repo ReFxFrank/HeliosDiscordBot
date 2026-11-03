@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import { autoroleConfigSchema } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { autoroleConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { AutoroleForm } from '../../../../components/autorole-form';

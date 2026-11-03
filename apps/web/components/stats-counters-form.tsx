@@ -8,7 +8,7 @@ import {
   type StatCounter,
   type StatCounterType,
   type StatsCountersConfig,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { ChannelOption } from '../lib/discord-guild';
 import { saveStatsCountersConfig } from '../lib/config-actions';
 import { ChannelSelect } from './ui/entity-select';

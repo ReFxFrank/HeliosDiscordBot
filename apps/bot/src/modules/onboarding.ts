@@ -1,54 +1,16 @@
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
-  PermissionFlagsBits,
-  type Guild,
-  type GuildTextBasedChannel,
-  type TextChannel,
-} from 'discord.js';
-import { prisma } from '@solari/database';
-import { BRAND } from '@solari/shared';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, type Guild } from 'discord.js';
+import { prisma } from '@refx/database';
+import { BRAND } from '@refx/shared';
+import { env } from '../env';
 import { brandedEmbed } from '../lib/embeds';
 
-const SITE = 'https://solari.gg';
-
 /**
- * Pick a channel to greet a freshly-joined guild in: the server's system
- * channel when we can post there, otherwise the first text channel where we
- * have View + Send. Returns null if there's nowhere we're allowed to talk.
- */
-function firstSendableChannel(guild: Guild): GuildTextBasedChannel | null {
-  const me = guild.members.me;
-  if (!me) return null;
-
-  const canSend = (channel: GuildTextBasedChannel): boolean => {
-    const perms = channel.permissionsFor(me);
-    return Boolean(
-      perms?.has(PermissionFlagsBits.ViewChannel) && perms.has(PermissionFlagsBits.SendMessages),
-    );
-  };
-
-  const system = guild.systemChannel;
-  if (system && canSend(system)) return system;
-
-  const text = guild.channels.cache
-    .filter(
-      (channel): channel is TextChannel =>
-        channel.type === ChannelType.GuildText && canSend(channel),
-    )
-    .sort((a, b) => a.rawPosition - b.rawPosition)
-    .first();
-
-  return text ?? null;
-}
-
-/**
- * Post a one-time branded welcome when Solari joins a guild: what it is, and
- * buttons straight to this server's dashboard and the wiki. Idempotent via
- * `Guild.onboardedAt` — a re-invite (or a duplicate gateway event) never
- * double-posts. Best-effort: missing permissions or a race just no-op.
+ * DM the server owner a one-time hello when the bot joins a guild: what it is,
+ * how to set it up, and a button to the dashboard. It's a DM rather than a post
+ * in the system channel because on a community server that channel is public
+ * (on ReFx it's #boosts). Idempotent via `Guild.onboardedAt`, so a re-invite or
+ * a duplicate gateway event never sends it twice. Best-effort: closed DMs or a
+ * race just no-op.
  */
 export async function sendGuildWelcome(guild: Guild): Promise<void> {
   // Claim the onboarding slot atomically: only the update that actually flips a
@@ -60,29 +22,28 @@ export async function sendGuildWelcome(guild: Guild): Promise<void> {
   });
   if (claimed.count === 0) return;
 
-  const channel = firstSendableChannel(guild);
-  if (!channel) return;
+  const owner = await guild.fetchOwner().catch(() => null);
+  if (!owner) return;
 
   const embed = brandedEmbed({
-    title: `👋 Thanks for adding ${BRAND.name}!`,
+    title: `👋 ${BRAND.name} joined ${guild.name}`,
     description:
-      `${BRAND.name} is an all-in-one bot — moderation, auto-mod, welcomes, leveling, ` +
-      'economy, tickets, giveaways and much more, all managed from one dashboard.\n\n' +
-      '**Get started:** open the dashboard below, pick this server, and choose a Quick ' +
-      'Setup preset — we’ll switch on a sensible bundle of modules with smart defaults ' +
-      'in one click. You can fine-tune everything from there.',
-  }).addFields({
-    name: 'Need a hand?',
-    value: `The wiki has a short setup guide for every module. Run \`/help\` any time.`,
+      `I run the ${BRAND.community} Discord: FiveM city status, welcomes, verification, ` +
+      'tickets, applications, levels and moderation, all managed from one dashboard.\n\n' +
+      '**Get started:** run `/refx-setup` to link every module to the ReFx channels and ' +
+      'roles, then post the panels from the dashboard. `/help` lists the commands.',
   });
 
-  const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setStyle(ButtonStyle.Link)
-      .setLabel('Open dashboard')
-      .setURL(`${SITE}/servers/${guild.id}`),
-    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Wiki').setURL('https://wiki.solari.gg'),
-  );
+  const components = env.DASHBOARD_URL
+    ? [
+        new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('Open dashboard')
+            .setURL(`${env.DASHBOARD_URL.replace(/\/$/, '')}/servers/${guild.id}`),
+        ),
+      ]
+    : [];
 
-  await channel.send({ embeds: [embed], components: [links] }).catch(() => undefined);
+  await owner.send({ embeds: [embed], components }).catch(() => undefined);
 }

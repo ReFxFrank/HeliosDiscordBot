@@ -1,5 +1,5 @@
 {
-  "name": "@solari/jobs",
+  "name": "@refx/jobs",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@solari/shared": "workspace:*",
+    "@refx/shared": "workspace:*",
     "bullmq": "^5.34.6",
     "ioredis": "^5.4.2"
   },

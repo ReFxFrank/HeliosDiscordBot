@@ -1,7 +1,7 @@
 import { Queue, Worker, type Job } from 'bullmq';
-import { QUEUE_NAMES, QUEUE_PREFIX, type TempActionExpireJob } from '@solari/jobs';
+import { QUEUE_NAMES, QUEUE_PREFIX, type TempActionExpireJob } from '@refx/jobs';
 import type { Client } from 'discord.js';
-import { prisma, type PrismaClient } from '@solari/database';
+import { prisma, type PrismaClient } from '@refx/database';
 import type { Logger } from '../logger';
 import { bullConnection } from './redis';
 import { captureError } from './sentry';

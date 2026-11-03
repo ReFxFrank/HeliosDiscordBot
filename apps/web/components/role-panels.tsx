@@ -9,7 +9,7 @@ import {
   type RolePanelInput,
   type RolePanelMode,
   type RolePanelType,
-} from '@solari/shared';
+} from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { createRolePanel, deleteRolePanel, redeployRolePanel } from '../lib/panel-actions';
 import { GlassCard } from './ui/glass-card';
@@ -122,7 +122,7 @@ function PanelPreview({ form }: { form: FormState }) {
       {(form.title || form.description) && (
         <div
           className="mb-2 max-w-[440px] rounded-[4px] bg-[#2b2d31] px-3 py-2.5"
-          style={{ borderLeft: '4px solid #8b5cf6' }}
+          style={{ borderLeft: '4px solid #0072ff' }}
         >
           {form.title && <div className="mb-1 font-semibold text-white">{form.title}</div>}
           {form.description && (

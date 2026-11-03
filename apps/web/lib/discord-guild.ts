@@ -1,4 +1,4 @@
-import { GUILD_ENTITIES_TTL_SECONDS, guildEntitiesKey, type GuildEntityKind } from '@solari/shared';
+import { GUILD_ENTITIES_TTL_SECONDS, guildEntitiesKey, type GuildEntityKind } from '@refx/shared';
 import { getRedis } from './redis';
 
 /**

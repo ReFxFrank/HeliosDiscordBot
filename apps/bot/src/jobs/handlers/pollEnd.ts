@@ -1,4 +1,4 @@
-import type { PollEndJob } from '@solari/jobs';
+import type { PollEndJob } from '@refx/jobs';
 import { endPoll } from '../../modules/polls';
 import type { JobContext } from '../../services/jobs';
 

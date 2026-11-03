@@ -15,8 +15,8 @@ import type {
   ApplicationQuestion,
   ApplicationQuestionStyle,
   ApplicationsConfig,
-} from '@solari/shared';
-import { APPLICATION_MAX_QUESTIONS } from '@solari/shared';
+} from '@refx/shared';
+import { APPLICATION_MAX_QUESTIONS } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import {
   createForm,

@@ -6,7 +6,7 @@ import {
   type Client,
   type GuildTextBasedChannel,
 } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { brandedEmbed } from '../lib/embeds';
 import { buildCustomId } from '../framework/customId';
 import type { Logger } from '../logger';

@@ -1,13 +1,13 @@
 import { ChannelType, type Client, type Guild, type GuildMember, type Message } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import {
   eligibleVoiceMembers,
   levelFromXp,
   parseModuleConfig,
   type LevelingConfig,
   type VoiceChannelView,
-} from '@solari/shared';
-import { QUEUE_NAMES } from '@solari/jobs';
+} from '@refx/shared';
+import { QUEUE_NAMES } from '@refx/jobs';
 import { applyPlaceholders, type PlaceholderMember } from '../lib/placeholders';
 import { voiceXpJobId, type JobService } from '../services/jobs';
 import { evaluateAchievements } from './achievements';
@@ -347,8 +347,7 @@ export async function runVoiceXpTick(guildId: string, deps: VoiceXpDeps): Promis
         avatar: cached?.user.avatar,
       });
       if (!result.leveledUp) continue;
-      const member =
-        cached ?? (await guild.members.fetch(userId).catch(() => null));
+      const member = cached ?? (await guild.members.fetch(userId).catch(() => null));
       if (!member) continue;
       await announceVoiceLevelUp(member, config, result.level, deps.logger);
       await applyRoleRewards(member, config, result.level);

@@ -1,5 +1,5 @@
 import { MessageFlags } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { defineComponent } from '../framework/component';
 import { POLL_LETTERS, buildPollMessage } from '../modules/polls';
 

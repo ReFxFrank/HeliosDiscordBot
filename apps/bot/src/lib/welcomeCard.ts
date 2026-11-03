@@ -7,14 +7,14 @@ import { safeFetchBuffer } from './safeFetch';
  * Welcome-card renderer — a banner image with the member's avatar, a title, and
  * their name, appended to the welcome message. Pure pixels in, PNG buffer out.
  * A custom background is fetched through the SSRF guard; on any failure it falls
- * back to the Solari violet gradient so a card always renders.
+ * back to the ReFx blue gradient so a card always renders.
  */
 
 const WIDTH = 1024;
 const HEIGHT = 320;
-const ACCENT = '#8b5cf6';
+const ACCENT = '#0072ff';
 const TEXT = '#ffffff';
-const MUTED = '#c9c2da';
+const MUTED = '#c2cde0';
 
 export interface WelcomeCardInput {
   displayName: string;
@@ -34,7 +34,14 @@ function truncate(ctx: SKRSContext2D, text: string, maxWidth: number): string {
 }
 
 /** Draw an image cover-fitted (fills the box, cropping overflow). */
-function drawCover(ctx: SKRSContext2D, image: Image, x: number, y: number, w: number, h: number): void {
+function drawCover(
+  ctx: SKRSContext2D,
+  image: Image,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
   const scale = Math.max(w / image.width, h / image.height);
   const dw = image.width * scale;
   const dh = image.height * scale;
@@ -61,7 +68,7 @@ async function drawAvatar(
     ctx.drawImage(image, cx - radius, cy - radius, radius * 2, radius * 2);
   } catch (err) {
     logger.debug({ err }, 'Welcome card avatar load failed; using fallback');
-    ctx.fillStyle = '#1e1830';
+    ctx.fillStyle = '#141c2e';
     ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
   }
   ctx.restore();
@@ -94,11 +101,11 @@ export async function renderWelcomeCard(input: WelcomeCardInput): Promise<Buffer
   }
   if (!drewBackground) {
     const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-    gradient.addColorStop(0, '#1a1030');
-    gradient.addColorStop(1, '#0a0810');
+    gradient.addColorStop(0, '#0b1a33');
+    gradient.addColorStop(1, '#060a14');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
+    ctx.fillStyle = 'rgba(0, 114, 255, 0.18)';
     ctx.beginPath();
     ctx.arc(WIDTH / 2, -40, 260, 0, Math.PI * 2);
     ctx.fill();

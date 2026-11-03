@@ -1,5 +1,10 @@
-import { AuditLogEvent, PermissionFlagsBits, type Guild, type GuildAuditLogsEntry } from 'discord.js';
-import type { AntiNukeConfig } from '@solari/shared';
+import {
+  AuditLogEvent,
+  PermissionFlagsBits,
+  type Guild,
+  type GuildAuditLogsEntry,
+} from 'discord.js';
+import type { AntiNukeConfig } from '@refx/shared';
 import { brandedEmbed } from '../lib/embeds';
 import { sendLog } from '../lib/logging';
 import { createModerationCase } from '../lib/cases';
@@ -26,7 +31,10 @@ const WATCHED: Partial<Record<number, Bucket>> = {
   [AuditLogEvent.RoleDelete]: 'roleDelete',
 };
 
-const THRESHOLD_KEY: Record<Bucket, keyof Pick<AntiNukeConfig, 'banKickThreshold' | 'channelDeleteThreshold' | 'roleDeleteThreshold'>> = {
+const THRESHOLD_KEY: Record<
+  Bucket,
+  keyof Pick<AntiNukeConfig, 'banKickThreshold' | 'channelDeleteThreshold' | 'roleDeleteThreshold'>
+> = {
   banKick: 'banKickThreshold',
   channelDelete: 'channelDeleteThreshold',
   roleDelete: 'roleDeleteThreshold',
@@ -83,7 +91,9 @@ export async function handleAuditEntryForAntiNuke(
   let outcome = 'alert only (member not found)';
   try {
     if (antiNuke.action === 'ban') {
-      if (member ? member.bannable : guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers)) {
+      if (
+        member ? member.bannable : guild.members.me?.permissions.has(PermissionFlagsBits.BanMembers)
+      ) {
         await guild.members.ban(executorId, { reason, deleteMessageSeconds: 0 });
         outcome = 'banned';
         await createModerationCase({

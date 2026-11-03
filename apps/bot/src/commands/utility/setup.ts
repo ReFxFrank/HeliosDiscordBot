@@ -6,12 +6,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
-import {
-  getServerTemplate,
-  isModuleLocked,
-  SERVER_TEMPLATES,
-  templateChannelCount,
-} from '@solari/shared';
+import { getServerTemplate, SERVER_TEMPLATES, templateChannelCount } from '@refx/shared';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireLevel } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
@@ -48,9 +43,6 @@ const command: Command = {
       return;
     }
 
-    // Entitlement is resolved from our DB inside applyServerTemplate; for the
-    // preview we just flag which modules are premium so the operator knows.
-    const premiumModules = template.modules.filter((module) => isModuleLocked(module, 'FREE'));
     const categories = template.categories.length;
     const channels = templateChannelCount(template) - categories;
 
@@ -67,10 +59,7 @@ const command: Command = {
       {
         name: 'Heads-up',
         value:
-          'Existing channels and roles with the same name are left untouched — nothing is deleted.' +
-          (premiumModules.length
-            ? `\n⭐ Premium-only (skipped unless this server has Premium): ${premiumModules.join(', ')}`
-            : ''),
+          'Existing channels and roles with the same name are left untouched — nothing is deleted.',
       },
     );
 
@@ -103,7 +92,9 @@ const command: Command = {
       });
     } catch {
       await interaction.editReply({
-        embeds: [brandedEmbed({ kind: 'default', description: 'Setup timed out — nothing changed.' })],
+        embeds: [
+          brandedEmbed({ kind: 'default', description: 'Setup timed out — nothing changed.' }),
+        ],
         components: [],
       });
       return;
@@ -142,10 +133,8 @@ const command: Command = {
       `**${result.createdRoles.length}** roles created` +
         (result.skippedRoles.length ? ` · ${result.skippedRoles.length} already existed` : ''),
     ];
-    if (result.enabledModules.length) lines.push(`Modules enabled: ${result.enabledModules.join(', ')}`);
-    if (result.premiumSkippedModules.length) {
-      lines.push(`⭐ Skipped (needs Premium): ${result.premiumSkippedModules.join(', ')}`);
-    }
+    if (result.enabledModules.length)
+      lines.push(`Modules enabled: ${result.enabledModules.join(', ')}`);
     if (result.hitChannelLimit) {
       lines.push("⚠️ Stopped early — this server is near Discord's 500-channel limit.");
     }

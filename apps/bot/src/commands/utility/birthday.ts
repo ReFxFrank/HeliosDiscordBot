@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
-import { isValidMonthDay, parseModuleConfig } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { isValidMonthDay, parseModuleConfig } from '@refx/shared';
 import { brandedEmbed, errorEmbed, successEmbed } from '../../lib/embeds';
 import { RequireGuild } from '../../lib/permissions';
 import { scheduleNextBirthdayRun } from '../../modules/birthdays';

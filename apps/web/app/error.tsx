@@ -19,10 +19,10 @@ export default function AppError({ reset }: { error: Error; reset: () => void })
             Try again
           </button>
           <Link
-            href="/"
+            href="/servers"
             className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70"
           >
-            Home
+            Your servers
           </Link>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import type { GiveawayEndJob } from '@solari/jobs';
+import type { GiveawayEndJob } from '@refx/jobs';
 import { endGiveaway } from '../../modules/giveaway';
 import type { JobContext } from '../../services/jobs';
 

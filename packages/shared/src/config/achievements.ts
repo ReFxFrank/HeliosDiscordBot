@@ -11,14 +11,12 @@ import { z } from 'zod';
 export const ACHIEVEMENT_TYPES = [
   'LEVEL',
   'MESSAGES',
-  'COINS',
   'VOICE_MINUTES',
   'REACTIONS',
   'THREADS_CREATED',
   'THREADS_JOINED',
   'INVITES',
   'GIVEAWAYS_JOINED',
-  'ITEMS_PURCHASED',
   'SERVER_BOOSTED',
   'BIRTHDAY_SET',
 ] as const;
@@ -27,14 +25,12 @@ export type AchievementType = (typeof ACHIEVEMENT_TYPES)[number];
 export const ACHIEVEMENT_TYPE_LABELS: Record<AchievementType, string> = {
   LEVEL: 'Reach level',
   MESSAGES: 'Send messages',
-  COINS: 'Hold coins (wallet + bank)',
   VOICE_MINUTES: 'Minutes in voice',
   REACTIONS: 'Add reactions',
   THREADS_CREATED: 'Create threads',
   THREADS_JOINED: 'Join threads',
   INVITES: 'Invite members',
   GIVEAWAYS_JOINED: 'Enter giveaways',
-  ITEMS_PURCHASED: 'Buy shop items',
   SERVER_BOOSTED: 'Boost the server',
   BIRTHDAY_SET: 'Set a birthday',
 };
@@ -43,14 +39,12 @@ export const ACHIEVEMENT_TYPE_LABELS: Record<AchievementType, string> = {
 export const ACHIEVEMENT_TYPE_UNIT: Record<AchievementType, string> = {
   LEVEL: '',
   MESSAGES: 'messages',
-  COINS: 'coins',
   VOICE_MINUTES: 'min',
   REACTIONS: 'reactions',
   THREADS_CREATED: 'threads',
   THREADS_JOINED: 'threads',
   INVITES: 'invites',
   GIVEAWAYS_JOINED: 'giveaways',
-  ITEMS_PURCHASED: 'items',
   SERVER_BOOSTED: '',
   BIRTHDAY_SET: '',
 };
@@ -86,7 +80,6 @@ export function isTieredAchievement(a: { tiers: unknown[] }): boolean {
 export const achievementTierSchema = z.object({
   threshold: z.number().int().min(1).max(1_000_000_000),
   rewardRoleId: z.string().nullable().default(null),
-  rewardCoins: z.number().int().min(0).max(1_000_000).default(0),
   rewardXp: z.number().int().min(0).max(1_000_000).default(0),
 });
 export type AchievementTierDef = z.infer<typeof achievementTierSchema>;
@@ -123,7 +116,6 @@ function migrateAchievement(raw: unknown): unknown {
         {
           threshold: r.threshold,
           rewardRoleId: r.rewardRoleId ?? null,
-          rewardCoins: r.rewardCoins ?? 0,
           rewardXp: r.rewardXp ?? 0,
         },
       ],
@@ -135,13 +127,12 @@ function migrateAchievement(raw: unknown): unknown {
 const bareTier = (threshold: number): AchievementTierDef => ({
   threshold,
   rewardRoleId: null,
-  rewardCoins: 0,
   rewardXp: 0,
 });
 
 /**
  * Curated MEE6-style starter achievements. Ids are assigned when added to a
- * guild's config. Only stats Solari tracks (level, messages, voice, coins) are
+ * guild's config. Only stats the bot tracks (level, messages, voice) are
  * used, so every preset actually unlocks.
  */
 export const ACHIEVEMENT_PRESETS: Omit<Achievement, 'id'>[] = [
@@ -173,13 +164,6 @@ export const ACHIEVEMENT_PRESETS: Omit<Achievement, 'id'>[] = [
     type: 'LEVEL',
     enabled: true,
     tiers: [bareTier(5), bareTier(25), bareTier(50), bareTier(100)],
-  },
-  {
-    name: 'Coin Collector',
-    description: 'Amass coins in your wallet and bank',
-    type: 'COINS',
-    enabled: true,
-    tiers: [bareTier(1000), bareTier(10000), bareTier(100000), bareTier(1000000)],
   },
   {
     name: 'Reaction Master',
@@ -234,13 +218,6 @@ export const ACHIEVEMENT_PRESETS: Omit<Achievement, 'id'>[] = [
     name: 'Santa is in Town',
     description: 'Participate in a giveaway',
     type: 'GIVEAWAYS_JOINED',
-    enabled: true,
-    tiers: [bareTier(1)],
-  },
-  {
-    name: 'Khajiit Has Wares',
-    description: 'Buy an economy item',
-    type: 'ITEMS_PURCHASED',
     enabled: true,
     tiers: [bareTier(1)],
   },

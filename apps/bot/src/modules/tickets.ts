@@ -11,9 +11,9 @@ import {
   type GuildTextBasedChannel,
   type OverwriteResolvable,
 } from 'discord.js';
-import { prisma } from '@solari/database';
-import { QUEUE_NAMES } from '@solari/jobs';
-import { parseModuleConfig, REDIS_CHANNELS, type TicketsConfig } from '@solari/shared';
+import { prisma } from '@refx/database';
+import { QUEUE_NAMES } from '@refx/jobs';
+import { parseModuleConfig, REDIS_CHANNELS, type TicketsConfig } from '@refx/shared';
 import { redis } from '../services/redis';
 import { brandedEmbed } from '../lib/embeds';
 import { buildCustomId } from '../framework/customId';
@@ -99,7 +99,9 @@ export async function autoSetupTickets(guildId: string, deps: TicketDeps): Promi
   const assignable = guild.roles.cache.filter(
     (role) => !role.managed && role.id !== guild.roles.everyone.id,
   );
-  let supportRoles = [...assignable.filter((role) => /support|staff|mod|helper|admin/i.test(role.name)).values()];
+  let supportRoles = [
+    ...assignable.filter((role) => /support|staff|mod|helper|admin/i.test(role.name)).values(),
+  ];
   if (supportRoles.length === 0) {
     supportRoles = [
       ...assignable
@@ -154,8 +156,7 @@ export async function autoSetupTickets(guildId: string, deps: TicketDeps): Promi
   // Transcript archive — hidden with the category's staff-only permissions.
   const transcripts =
     guild.channels.cache.find(
-      (channel) =>
-        channel.type === ChannelType.GuildText && channel.name === 'ticket-transcripts',
+      (channel) => channel.type === ChannelType.GuildText && channel.name === 'ticket-transcripts',
     ) ??
     (await guild.channels.create({
       name: 'ticket-transcripts',

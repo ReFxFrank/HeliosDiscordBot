@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { TempVoiceConfig } from '@solari/shared';
+import type { TempVoiceConfig } from '@refx/shared';
 import type { ChannelOption } from '../lib/discord-guild';
 import { saveTempVoiceConfig } from '../lib/config-actions';
 import { ChannelSelect } from './ui/entity-select';

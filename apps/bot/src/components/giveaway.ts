@@ -1,5 +1,5 @@
 import { MessageFlags } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { defineComponent } from '../framework/component';
 import { bumpMemberStat } from '../lib/memberStats';
 import { evaluateAchievements } from '../modules/achievements';

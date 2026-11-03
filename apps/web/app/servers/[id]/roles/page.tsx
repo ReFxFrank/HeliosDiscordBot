@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import type { RolePanelOption } from '@solari/shared';
+import { prisma } from '@refx/database';
+import type { RolePanelOption } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { RolePanels, type PanelSummary } from '../../../../components/role-panels';

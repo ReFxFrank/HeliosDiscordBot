@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ChevronDown, Clock, Code2, Plus, X } from 'lucide-react';
-import type { EmbedSpec } from '@solari/shared';
+import type { EmbedSpec } from '@refx/shared';
 import { Field } from './form';
 
 /**
@@ -53,7 +53,7 @@ export const EMPTY_EMBED_DRAFT: EmbedDraft = {
   timestamp: false,
 };
 
-const DEFAULT_COLOR = '#8b5cf6';
+const DEFAULT_COLOR = '#0072ff';
 const trimOrUndef = (value: string): string | undefined => (value.trim() ? value.trim() : undefined);
 
 /** Normalize a draft into an EmbedSpec, or `undefined` when nothing renders. */
@@ -218,7 +218,7 @@ function useTodayLabel(): string {
  * render its panel inside the same chrome.
  */
 export function MessagePreviewShell({
-  botName = 'Solari',
+  botName = 'ReFx Assistant',
   botAvatarUrl,
   children,
 }: {
@@ -227,7 +227,7 @@ export function MessagePreviewShell({
   children: React.ReactNode;
 }) {
   const time = useTodayLabel();
-  const initial = botName.trim().charAt(0).toUpperCase() || 'S';
+  const initial = botName.trim().charAt(0).toUpperCase() || 'R';
   return (
     <div className="rounded-md bg-[#313338] p-3 text-[13px] leading-snug text-[#dbdee1]">
       <div className="flex gap-3">
@@ -236,7 +236,7 @@ export function MessagePreviewShell({
         ) : (
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#a78bfa,#7c3aed)' }}
+            style={{ background: 'linear-gradient(135deg,#3d95ff,#005ad1)' }}
           >
             {initial}
           </div>
@@ -382,7 +382,7 @@ export function EmbedBuilder({
   content?: string;
   onContentChange?: (value: string) => void;
   contentPlaceholder?: string;
-  /** Preview identity — defaults to the Solari bot. */
+  /** Preview identity — defaults to the ReFx Assistant bot. */
   botName?: string;
   botAvatarUrl?: string;
 }) {
@@ -466,7 +466,7 @@ export function EmbedBuilder({
                   className={`${smallInput} w-24 font-mono`}
                   value={value.color}
                   onChange={(e) => patch({ color: e.target.value })}
-                  placeholder="#8b5cf6"
+                  placeholder="#0072ff"
                 />
               </div>
             </Field>

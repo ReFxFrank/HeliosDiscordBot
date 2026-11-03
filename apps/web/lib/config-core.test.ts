@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Redis } from 'ioredis';
-import { REDIS_CHANNELS } from '@solari/shared';
-import { prisma } from '@solari/database';
+import { REDIS_CHANNELS } from '@refx/shared';
+import { prisma } from '@refx/database';
 import { applyModuleConfig, applyModuleEnabled } from './config-core';
 import { getRedis } from './redis';
 import { canManageGuild, type DiscordGuildSummary } from './discord';

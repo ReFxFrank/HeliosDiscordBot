@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
@@ -11,10 +11,10 @@ import { cn } from '../../../../lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-// Series colors validated against the card surface (#161221) with the dataviz
-// palette checks: violet alone on single-series charts; the blue/red pair
+// Series colors validated against the card surface (#0b1322) with the dataviz
+// palette checks: ReFx blue alone on single-series charts; the blue/red pair
 // (CVD ΔE 66) only co-occurs on the joins-vs-leaves chart.
-const VIOLET = '#8b5cf6';
+const BRAND_BLUE = '#3d95ff';
 const BLUE = '#3987e5';
 const RED = '#e66767';
 
@@ -112,7 +112,7 @@ export default async function InsightsPage({
               title="Messages per day"
               labels={labels}
               series={[
-                { name: 'Messages', color: VIOLET, values: insights.days.map((d) => d.messages) },
+                { name: 'Messages', color: BRAND_BLUE, values: insights.days.map((d) => d.messages) },
               ]}
             />
             <ActivityChart
@@ -121,7 +121,7 @@ export default async function InsightsPage({
               series={[
                 {
                   name: 'Active members',
-                  color: VIOLET,
+                  color: BRAND_BLUE,
                   values: insights.days.map((d) => d.activeMembers),
                 },
               ]}
@@ -141,7 +141,7 @@ export default async function InsightsPage({
                 series={[
                   {
                     name: 'Members',
-                    color: VIOLET,
+                    color: BRAND_BLUE,
                     values: insights.days.map((d) => d.memberCount),
                   },
                 ]}
@@ -173,7 +173,7 @@ export default async function InsightsPage({
                           className="block h-full rounded-full"
                           style={{
                             width: `${maxChannel > 0 ? Math.max(3, (channel.count / maxChannel) * 100) : 0}%`,
-                            backgroundColor: VIOLET,
+                            backgroundColor: BRAND_BLUE,
                           }}
                         />
                       </span>

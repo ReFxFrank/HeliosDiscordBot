@@ -21,7 +21,7 @@ interface TwitchEnv {
   TWITCH_CLIENT_SECRET?: string;
 }
 
-const USER_AGENT = 'SolariBot/1.0 (+https://solari.gg)';
+const USER_AGENT = 'ReFxAssistant/1.0 (ReFx Roleplay Discord bot)';
 const MAX_ITEMS = 15;
 
 export function isSocialPlatform(value: string): value is SocialPlatform {
@@ -33,7 +33,10 @@ export function platformAvailable(platform: SocialPlatform, env: TwitchEnv): boo
   return platform !== 'twitch' || Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET);
 }
 
-async function fetchText(url: string, headers: Record<string, string> = {}): Promise<string | null> {
+async function fetchText(
+  url: string,
+  headers: Record<string, string> = {},
+): Promise<string | null> {
   try {
     const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT, ...headers } });
     if (!res.ok) return null;

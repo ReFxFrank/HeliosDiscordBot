@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { AutoroleConfig } from '@solari/shared';
+import type { AutoroleConfig } from '@refx/shared';
 import type { RoleOption } from '../lib/discord-guild';
 import { saveAutoroleConfig } from '../lib/config-actions';
 import { Field, SaveBar, type SaveStatus } from './ui/form';

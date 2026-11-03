@@ -1,5 +1,5 @@
-import { prisma } from '@solari/database';
-import type { Module } from '@solari/shared';
+import { prisma } from '@refx/database';
+import type { Module } from '@refx/shared';
 
 export interface AuditEntry {
   guildId: string;

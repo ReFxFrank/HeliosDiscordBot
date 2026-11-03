@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { SuggestionsConfig } from '@solari/shared';
+import type { SuggestionsConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveSuggestionsConfig } from '../lib/config-actions';
 import { Field, SaveBar, type SaveStatus } from './ui/form';

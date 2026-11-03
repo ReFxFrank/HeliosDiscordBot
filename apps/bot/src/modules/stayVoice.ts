@@ -1,5 +1,11 @@
-import { ChannelType, GatewayOpcodes, PermissionFlagsBits, type Client, type Guild } from 'discord.js';
-import { prisma } from '@solari/database';
+import {
+  ChannelType,
+  GatewayOpcodes,
+  PermissionFlagsBits,
+  type Client,
+  type Guild,
+} from 'discord.js';
+import { prisma } from '@refx/database';
 import type { Logger } from '../logger';
 
 /**
@@ -23,31 +29,18 @@ function sendVoiceState(guild: Guild, channelId: string | null): void {
 }
 
 /**
- * Music must always win over stay-voice: while a Lavalink player exists for a
- * guild, stay-voice never touches voice state (it was yanking the bot out of
- * the music channel seconds after /play). client.ts registers the real check
- * when the Music module is enabled; the default assumes no music.
- */
-let musicActive: (guildId: string) => boolean = () => false;
-export function setMusicActiveCheck(check: (guildId: string) => boolean): void {
-  musicActive = check;
-}
-
-/**
  * Reconcile the bot's voice presence in one guild with its configured channel:
  * join it or move to it. Safe to call repeatedly — a no-op when already in the
- * right place, when music is playing, or when no channel is configured.
+ * right place, or when no channel is configured.
  * Disconnecting on an unset config only happens with `allowDisconnect` (the
  * explicit settings-change path) — never from the passive rejoin/startup paths,
- * where "in voice with no stay config" usually means Music is at work.
+ * so a stray settings blip never kicks the bot out of voice.
  */
 export async function syncStayVoice(
   guild: Guild,
   logger: Logger,
   opts: { allowDisconnect?: boolean } = {},
 ): Promise<void> {
-  if (musicActive(guild.id)) return;
-
   const row = await prisma.guild.findUnique({
     where: { id: guild.id },
     select: { stayVoiceChannelId: true },
@@ -62,8 +55,7 @@ export async function syncStayVoice(
   if (currentId === targetId) return;
 
   const channel =
-    guild.channels.cache.get(targetId) ??
-    (await guild.channels.fetch(targetId).catch(() => null));
+    guild.channels.cache.get(targetId) ?? (await guild.channels.fetch(targetId).catch(() => null));
   const joinable =
     channel &&
     (channel.type === ChannelType.GuildVoice || channel.type === ChannelType.GuildStageVoice) &&

@@ -1,4 +1,4 @@
-import { Prisma, prisma, type CaseType, type ModerationCase } from '@solari/database';
+import { Prisma, prisma, type CaseType, type ModerationCase } from '@refx/database';
 
 /**
  * Idempotent, race-tolerant guild ensure. Under concurrent first-touch of a new

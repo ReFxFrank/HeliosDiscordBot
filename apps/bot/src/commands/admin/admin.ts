@@ -1,12 +1,11 @@
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import type { Command } from '../../framework/command';
 import { RequireBotOwner } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
 import { invalidateBlacklist } from '../../services/blacklist';
 
 type BlacklistKind = 'GUILD' | 'USER';
-type Tier = 'FREE' | 'PREMIUM';
 
 function uptime(ms: number): string {
   const total = Math.floor(ms / 1000);
@@ -21,21 +20,6 @@ const command: Command = {
     .setName('admin')
     .setDescription('Bot-owner administration.')
     .addSubcommand((s) => s.setName('stats').setDescription('Global bot statistics.'))
-    .addSubcommand((s) =>
-      s
-        .setName('premium')
-        .setDescription("Manually set a guild's premium tier (comp / revoke).")
-        .addStringOption((o) =>
-          o.setName('guild_id').setDescription('Target guild id').setRequired(true),
-        )
-        .addStringOption((o) =>
-          o
-            .setName('tier')
-            .setDescription('Tier to set')
-            .setRequired(true)
-            .addChoices({ name: 'Premium', value: 'PREMIUM' }, { name: 'Free', value: 'FREE' }),
-        ),
-    )
     .addSubcommand((s) =>
       s
         .setName('leaveguild')
@@ -117,7 +101,10 @@ const command: Command = {
         });
         invalidateBlacklist();
         await reply(
-          brandedEmbed({ kind: 'success', description: `🚫 Blacklisted **${type}** \`${targetId}\`.` }),
+          brandedEmbed({
+            kind: 'success',
+            description: `🚫 Blacklisted **${type}** \`${targetId}\`.`,
+          }),
         );
         return;
       }
@@ -126,44 +113,24 @@ const command: Command = {
       await prisma.blacklist.deleteMany({ where: { type, targetId } });
       invalidateBlacklist();
       await reply(
-        brandedEmbed({ kind: 'success', description: `✅ Removed **${type}** \`${targetId}\` from the blacklist.` }),
-      );
-      return;
-    }
-
-    if (sub === 'stats') {
-      const [premiumCount, blacklistCount] = await Promise.all([
-        prisma.guild.count({ where: { premiumTier: 'PREMIUM' } }),
-        prisma.blacklist.count(),
-      ]);
-      await reply(
         brandedEmbed({
-          kind: 'default',
-          title: '📊 Solari — global stats',
-          description:
-            `**Servers:** ${ctx.client.guilds.cache.size.toLocaleString()}\n` +
-            `**Premium servers:** ${premiumCount.toLocaleString()}\n` +
-            `**Blacklisted:** ${blacklistCount.toLocaleString()}\n` +
-            `**Uptime:** ${uptime(ctx.client.uptime ?? 0)}`,
+          kind: 'success',
+          description: `✅ Removed **${type}** \`${targetId}\` from the blacklist.`,
         }),
       );
       return;
     }
 
-    if (sub === 'premium') {
-      const guildId = interaction.options.getString('guild_id', true).trim();
-      const tier = interaction.options.getString('tier', true) as Tier;
-      await prisma.guild.upsert({
-        where: { id: guildId },
-        update: { premiumTier: tier },
-        create: { id: guildId, premiumTier: tier },
-      });
+    if (sub === 'stats') {
+      const blacklistCount = await prisma.blacklist.count();
       await reply(
         brandedEmbed({
-          kind: 'success',
+          kind: 'default',
+          title: '📊 ReFx Assistant — stats',
           description:
-            `✅ Set guild \`${guildId}\` to **${tier}**.` +
-            (tier === 'PREMIUM' ? ' (Manual override — a Stripe event may change it later.)' : ''),
+            `**Servers:** ${ctx.client.guilds.cache.size.toLocaleString()}\n` +
+            `**Blacklisted:** ${blacklistCount.toLocaleString()}\n` +
+            `**Uptime:** ${uptime(ctx.client.uptime ?? 0)}`,
         }),
       );
       return;
@@ -181,7 +148,9 @@ const command: Command = {
     }
     const name = guild.name;
     await guild.leave();
-    await reply(brandedEmbed({ kind: 'success', description: `👋 Left **${name}** (\`${guildId}\`).` }));
+    await reply(
+      brandedEmbed({ kind: 'success', description: `👋 Left **${name}** (\`${guildId}\`).` }),
+    );
   },
 };
 

@@ -1,5 +1,5 @@
 import type { Client } from 'discord.js';
-import type { PrismaClient } from '@solari/database';
+import type { PrismaClient } from '@refx/database';
 import type { Redis } from 'ioredis';
 import type { Logger } from '../logger';
 

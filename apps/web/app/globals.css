@@ -1,26 +1,25 @@
 @import 'tailwindcss';
 
 /*
- * Solari design system (§7). Dark, glassmorphic, premium. Tailwind v4 reads
- * these tokens via the CSS-first `@theme` block, exposing utilities like
- * `text-brand` / `bg-base`. The monospace-numeral rule for data surfaces is
- * enforced via the `--font-mono` token applied to stat/leaderboard panels.
- * The brand accent is a premium violet, paired with the gold premium tier.
+ * ReFx Assistant design system. Dark glass panels over deep navy gradients
+ * with a subtle ReFx-blue glow — the same palette as the ReFx site and the
+ * in-game UI. Tailwind v4 reads these tokens via the CSS-first `@theme` block.
+ * The monospace-numeral rule for data surfaces is enforced via `--font-mono`.
  */
 @theme {
-  --color-base: #0a0810;
-  --color-base-elevated: #161221;
-  --color-brand: #8b5cf6;
-  --color-brand-bright: #a78bfa;
-  /* Darker violet for FILLS behind white text (buttons, logo marks) — #8b5cf6
-   * is too light for white text (4.23:1); this clears WCAG AA (5.70:1). */
-  --color-brand-strong: #7c3aed;
+  --color-base: #070b12;
+  --color-base-elevated: #0f1828;
+  --color-brand: #0072ff;
+  --color-brand-bright: #3d95ff;
+  /* Darker blue for FILLS behind white text (buttons, logo marks) — clears
+   * WCAG AA for white text where #0072ff alone is borderline. */
+  --color-brand-strong: #005ad1;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #f43f5e;
   --color-info: #38bdf8;
-  /* Premium accent — reserved exclusively for the paid tier (crown, badges). */
-  --color-premium: #f5c451;
+  /* Trophy/podium gold for leaderboards. */
+  --color-gold: #f5c451;
 
   --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
@@ -37,13 +36,19 @@ body {
 
 body {
   background:
-    radial-gradient(900px 600px at 12% -8%, rgba(139, 92, 246, 0.18), transparent 60%) fixed,
-    radial-gradient(1000px 700px at 92% 4%, rgba(167, 139, 250, 0.1), transparent 55%) fixed,
-    radial-gradient(1200px 900px at 50% -10%, #130d20 0%, #0a0810 60%) fixed,
-    #0a0810;
-  color: #e7e7ee;
+    radial-gradient(900px 600px at 12% -8%, rgba(0, 114, 255, 0.14), transparent 60%) fixed,
+    radial-gradient(1000px 700px at 92% 4%, rgba(42, 163, 255, 0.07), transparent 55%) fixed,
+    radial-gradient(1200px 900px at 50% -10%, #0a111d 0%, #070b12 60%) fixed,
+    linear-gradient(180deg, #070b12, #05080e) fixed,
+    #05080e;
+  color: #eef6ff;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(0, 114, 255, 0.45);
+  color: #fff;
 }
 
 /*
@@ -57,61 +62,38 @@ select {
 }
 select option,
 select optgroup {
-  background-color: #161221;
-  color: #e7e7ee;
+  background-color: #0f1828;
+  color: #eef6ff;
 }
 
-/* Glass panel primitive used across module cards and stat surfaces. */
+/* Dark glass panel used across module cards and stat surfaces: navy gradient,
+ * hairline border and a faint blue beam along the top edge. */
 .glass {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(14, 24, 42, 0.78), rgba(7, 13, 24, 0.84));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px);
   box-shadow:
-    0 12px 32px -14px rgba(0, 0, 0, 0.65),
+    0 18px 44px -24px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(0, 114, 255, 0.04),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
-
-/* Subtle gold aura for premium surfaces (upgrade cards, premium chips). */
-.premium-glow {
-  box-shadow:
-    0 0 0 1px rgba(245, 196, 81, 0.25),
-    0 18px 48px -22px rgba(245, 196, 81, 0.4);
+/* Layered so `absolute`/`fixed`/`sticky` utilities on a glass element still win. */
+@layer components {
+  .glass {
+    position: relative;
+  }
+}
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(0, 114, 255, 0.45), transparent);
+  pointer-events: none;
 }
 
-/* ── Motion — Solari's own animated feel (landing + accents) ──────────────── */
-@keyframes aurora-drift {
-  0% {
-    transform: translate(-50%, 0) scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translate(-44%, 5%) scale(1.18);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, 0) scale(1);
-    opacity: 0.7;
-  }
-}
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-16px);
-  }
-}
-@keyframes reveal-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Animated ReFx-blue gradient text for accents. */
 @keyframes gradient-pan {
   0%,
   100% {
@@ -121,77 +103,13 @@ select optgroup {
     background-position: 100% 50%;
   }
 }
-
-.animate-aurora {
-  animation: aurora-drift 15s ease-in-out infinite;
-}
-.animate-float {
-  animation: float-slow 8s ease-in-out infinite;
-}
-
-/* Above-the-fold entrance: runs on load (pair with an inline animation-delay). */
-.enter {
-  opacity: 0;
-  animation: reveal-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Scroll reveal: hidden until the Reveal observer adds .is-visible. */
-.reveal {
-  opacity: 0;
-  transform: translateY(20px);
-}
-.reveal.is-visible {
-  animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Animated violet→fuchsia gradient text for hero accents. */
 .text-gradient {
-  background-image: linear-gradient(100deg, #a78bfa, #8b5cf6, #d946ef, #a78bfa);
+  background-image: linear-gradient(100deg, #7db7ff, #0072ff, #2aa3ff, #7db7ff);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: gradient-pan 7s ease-in-out infinite;
-}
-
-/* ── Landing accents (ReactBits/AnimateUI-inspired, dependency-free) ──────── */
-
-/* Infinite chip marquee: the Marquee component drives the pan with rAF (so
- * hover can EASE the speed down instead of hard-pausing); this just supplies
- * the clipping + edge fade. */
-.marquee {
-  overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-}
-.marquee-track {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-}
-
-/* Periodic sheen sweep across primary CTAs. */
-@keyframes shine-sweep {
-  0%,
-  55% {
-    transform: translateX(-150%) skewX(-18deg);
-  }
-  85%,
-  100% {
-    transform: translateX(220%) skewX(-18deg);
-  }
-}
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-}
-.btn-shine::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 40%;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-  animation: shine-sweep 4.5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 /* Pointer-tracking radial glow (SpotlightCard sets --spot-x / --spot-y). */
@@ -202,10 +120,12 @@ select optgroup {
   content: '';
   position: absolute;
   inset: 0;
+  /* Overrides the .glass beam when both classes share an element. */
+  height: auto;
   border-radius: inherit;
   background: radial-gradient(
     240px circle at var(--spot-x, 50%) var(--spot-y, 50%),
-    rgba(139, 92, 246, 0.16),
+    rgba(0, 114, 255, 0.16),
     transparent 70%
   );
   opacity: 0;
@@ -216,7 +136,7 @@ select optgroup {
   opacity: 1;
 }
 
-/* Soft pulse for the hero badge's live dot. */
+/* Soft pulse for live-status dots. */
 @keyframes dot-pulse {
   0%,
   100% {
@@ -230,26 +150,10 @@ select optgroup {
   animation: dot-pulse 2.4s ease-out infinite;
 }
 
-/* Card hover lift used across the module/feature grids. */
-.lift {
-  transition:
-    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.25s ease,
-    border-color 0.25s ease;
-}
-.lift:hover {
-  transform: translateY(-4px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-  }
-  .reveal,
-  .enter {
-    opacity: 1 !important;
-    transform: none !important;
   }
 }

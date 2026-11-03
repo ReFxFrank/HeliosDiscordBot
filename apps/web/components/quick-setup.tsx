@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { SETUP_PRESETS, type SetupPreset } from '../lib/setup-presets';
 import { applySetupPreset, dismissSetup } from '../lib/setup-actions';
-import { SpotlightCard } from './marketing/spotlight-card';
+import { SpotlightCard } from './ui/spotlight-card';
 import { cn } from '../lib/utils';
 
 const PRESET_ICONS: Record<SetupPreset['icon'], LucideIcon> = {
@@ -73,7 +73,7 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
       className="relative overflow-hidden rounded-3xl border border-[var(--color-brand)]/25 p-6 sm:p-8"
       style={{
         background:
-          'linear-gradient(120deg, rgba(139,92,246,0.16), rgba(217,70,239,0.10) 55%, rgba(10,8,16,0) 100%)',
+          'linear-gradient(120deg, rgba(0,114,255,0.16), rgba(42,163,255,0.08) 55%, rgba(7,11,18,0) 100%)',
       }}
     >
       <div
@@ -96,7 +96,7 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
           <Sparkles className="h-3.5 w-3.5" /> Quick setup
         </span>
         <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-[1.75rem]">
-          Welcome to Solari — let&rsquo;s set up{' '}
+          Welcome to ReFx Assistant — let&rsquo;s set up{' '}
           <bdi className="text-[var(--color-brand-bright)]">{cleanName(guildName)}</bdi>
         </h2>
         <p className="mt-2.5 max-w-2xl text-pretty text-sm leading-relaxed text-white/75 sm:text-[15px]">

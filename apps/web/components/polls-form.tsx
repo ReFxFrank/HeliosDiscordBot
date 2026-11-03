@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import type { PollsConfig } from '@solari/shared';
+import type { PollsConfig } from '@refx/shared';
 import { savePollsConfig } from '../lib/config-actions';
 import { SettingsSection } from './ui/settings-section';
 import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
@@ -40,7 +40,7 @@ export function PollsForm({ guildId, initial }: { guildId: string; initial: Poll
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                value={HEX.test(config.color) ? config.color : '#8b5cf6'}
+                value={HEX.test(config.color) ? config.color : '#0072ff'}
                 onChange={(e) => update('color', e.target.value)}
                 className="h-9 w-12 shrink-0 cursor-pointer rounded border border-white/10 bg-transparent"
                 aria-label="Poll embed color"

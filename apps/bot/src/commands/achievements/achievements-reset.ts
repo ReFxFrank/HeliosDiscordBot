@@ -1,5 +1,5 @@
 import { MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { prisma } from '@solari/database';
+import { prisma } from '@refx/database';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireUserPermissions } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
@@ -7,7 +7,9 @@ import { brandedEmbed, errorEmbed } from '../../lib/embeds';
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName('achievements-reset')
-    .setDescription('Reset achievement progress for a member and/or a specific achievement (admin).')
+    .setDescription(
+      'Reset achievement progress for a member and/or a specific achievement (admin).',
+    )
     .addUserOption((o) => o.setName('user').setDescription('Reset only this member'))
     .addStringOption((o) =>
       o.setName('achievement_id').setDescription('Reset only this achievement id'),
