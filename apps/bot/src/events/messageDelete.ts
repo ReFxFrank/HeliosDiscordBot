@@ -21,8 +21,9 @@ export default defineEvent({
 
     let deletedBy: string;
     if (executor && executor.id !== author?.id) deletedBy = `<@${executor.id}>`;
-    else if (author) deletedBy = `<@${author.id}> (themselves)`;
-    else deletedBy = 'The author (self-deletes aren’t in the audit log)';
+    // Discord's audit log records neither self-deletes nor deletes done by bots.
+    else if (author) deletedBy = `<@${author.id}> themselves, or a bot`;
+    else deletedBy = 'The author or a bot (not in the audit log)';
 
     const embed = brandedEmbed({ kind: 'danger', title: 'Message deleted' })
       .setDescription(message.content?.slice(0, 1024) || '*content not cached*')

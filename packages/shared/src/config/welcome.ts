@@ -15,7 +15,7 @@ export const DEFAULT_WELCOME_EMBED = {
   description:
     'Welcome {user}\n\n' +
     'Feel free to have a look around, if you have any questions, please feel free to message a member of the Admin or Staff Team for assistance!\n\n' +
-    'Please head over to the rules channel to review the city and community rules. Afterwards you may apply in the verify channel for your membership role! After acceptance, you will gain access to the rest of the community channels.\n\n' +
+    'Please head over to the rules channel to review the city and community rules. Then answer the quick join questions to unlock the rest of the community, or hit Start Verification in the verify channel.\n\n' +
     'Hope to see you out on the streets!',
   color: '#70B0FF',
   footer: 'ReFx Roleplay',

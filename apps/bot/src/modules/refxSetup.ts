@@ -182,7 +182,7 @@ export async function runRefxSetup(
   const welcomeDescription =
     'Welcome {user}\n\n' +
     `Feel free to have a look around, if you have any questions, please feel free to message a ${mention(adminTeam, 'Admin Team', '@&')} member or a ${mention(staffTeam, 'Staff Team', '@&')} member for assistance!\n\n` +
-    `Please head over to ${mention(rules, '#rules', '#')} to review the city and community rules. Afterwards you may apply in ${mention(verify, '#verify', '#')} for your membership role! After acceptance, you will gain access to the rest of the community channels.\n\n` +
+    `Please head over to ${mention(rules, '#rules', '#')} to review the city and community rules. Then answer the quick join questions to unlock the rest of the community. Skipped them? Hit Start Verification in ${mention(verify, '#verify', '#')}.\n\n` +
     'Hope to see you out on the streets!';
 
   const updates: Partial<Record<ModuleWithSchema, Record<string, unknown>>> = {

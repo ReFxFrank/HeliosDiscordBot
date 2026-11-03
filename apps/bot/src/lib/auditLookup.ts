@@ -4,8 +4,8 @@ import { AuditLogEvent, type Guild } from 'discord.js';
  * Work out who deleted a message from the guild audit log (needs View Audit
  * Log). Discord quirks this handles:
  *
- *   - Deleting your OWN message never creates an entry, so "no entry" means the
- *     author (or a bot cleaning up its own message) did it.
+ *   - Deleting your OWN message never creates an entry, and neither does a
+ *     bot deleting anything, so "no entry" means the author or a bot did it.
  *   - Repeated deletes by the same moderator, of the same author, in the same
  *     channel are merged into one entry whose `extra.count` goes up while its
  *     timestamp stays at the first delete. We count how many of each entry's
@@ -31,7 +31,7 @@ const toAuditUser = (
 ): AuditUser | null => (user ? { id: user.id, bot: user.bot } : null);
 
 export interface DeleteAttribution {
-  /** Who deleted it, or null when the audit log has nothing (a self-delete). */
+  /** Who deleted it, or null when the audit log has nothing (the author or a bot). */
   executor: AuditUser | null;
   /** The message author, as the audit log records it (fills in uncached messages). */
   target: AuditUser | null;
