@@ -114,6 +114,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      // Discord now returns an RFC 9207 `iss` on the callback. Without an issuer
+      // here Auth.js expects its "https://authjs.dev" placeholder and rejects the
+      // login ("unexpected iss"). The token/userinfo URLs are set, so this is
+      // only used for that check, never for OIDC discovery.
+      issuer: 'https://discord.com',
       // Must include the full `url`, not just `params`: Auth.js REPLACES the
       // provider's default `authorization` when you pass an object, and Discord
       // has no OIDC `issuer` for the discovery fallback — so omitting `url`
