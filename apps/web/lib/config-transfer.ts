@@ -3,7 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { prisma } from '@refx/database';
-import { MODULES, MODULE_CONFIG_SCHEMAS, type Module, type ModuleWithSchema } from '@refx/shared';
+import {
+  BRAND,
+  MODULES,
+  MODULE_CONFIG_SCHEMAS,
+  type Module,
+  type ModuleWithSchema,
+} from '@refx/shared';
 import { assertCanManage, requireSession } from './auth-guards';
 import { applyModuleConfig, applyModuleEnabled } from './config-core';
 
@@ -28,10 +34,7 @@ export async function exportGuildConfig(guildId: string): Promise<string> {
 
 const importSchema = z.object({
   version: z.literal(1),
-  modules: z.record(
-    z.string(),
-    z.object({ enabled: z.boolean(), config: z.unknown().optional() }),
-  ),
+  modules: z.record(z.string(), z.object({ enabled: z.boolean(), config: z.unknown().optional() })),
 });
 
 export interface ImportSummary {
@@ -51,13 +54,16 @@ export async function importGuildConfig(guildId: string, raw: string): Promise<I
   } catch {
     return {
       ok: false,
-      error: 'That file is not a valid ReFx Assistant config export.',
+      error: `That file is not a valid ${BRAND.name} config export.`,
       applied: [],
       skipped: [],
     };
   }
 
-  const flags = await prisma.globalModuleFlag.findMany({ where: { enabled: false }, select: { module: true } });
+  const flags = await prisma.globalModuleFlag.findMany({
+    where: { enabled: false },
+    select: { module: true },
+  });
   const globallyOff = new Set(flags.map((flag) => flag.module));
 
   const applied: string[] = [];

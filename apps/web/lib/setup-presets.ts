@@ -1,4 +1,4 @@
-import type { Module } from '@refx/shared';
+import { FEATURES, type Module } from '@refx/shared';
 import { MODULE_META } from './modules';
 
 /**
@@ -11,17 +11,41 @@ export interface SetupPreset {
   name: string;
   tagline: string;
   /** lucide icon name, resolved in the client component. */
-  icon: 'Users' | 'Gamepad2' | 'LifeBuoy' | 'Sparkles';
+  icon: 'Users' | 'Gamepad2' | 'LifeBuoy' | 'Sparkles' | 'Radio';
   modules: Module[];
 }
 
-export const SETUP_PRESETS: SetupPreset[] = [
+const ALL_PRESETS: SetupPreset[] = [
+  {
+    key: 'stream',
+    name: 'Stream Community',
+    tagline: 'Go-live alerts, welcomes, levels, reaction roles, giveaways, moderation & logging.',
+    icon: 'Radio',
+    modules: [
+      'SOCIAL',
+      'WELCOME',
+      'LEVELING',
+      'ROLES',
+      'GIVEAWAYS',
+      'MODERATION',
+      'AUTOMOD',
+      'LOGGING',
+    ],
+  },
   {
     key: 'city',
     name: 'RP City',
     tagline: 'FiveM status panel, verification, welcomes, tickets, applications & logging.',
     icon: 'Gamepad2',
-    modules: ['FIVEM', 'VERIFICATION', 'WELCOME', 'TICKETS', 'APPLICATIONS', 'MODERATION', 'LOGGING'],
+    modules: [
+      'FIVEM',
+      'VERIFICATION',
+      'WELCOME',
+      'TICKETS',
+      'APPLICATIONS',
+      'MODERATION',
+      'LOGGING',
+    ],
   },
   {
     key: 'community',
@@ -45,6 +69,11 @@ export const SETUP_PRESETS: SetupPreset[] = [
     modules: MODULE_META.map((m) => m.module),
   },
 ];
+
+/** Presets this instance offers; a FiveM instance leads with the city one. */
+export const SETUP_PRESETS: SetupPreset[] = FEATURES.fivem
+  ? [...ALL_PRESETS].sort((a, b) => Number(b.key === 'city') - Number(a.key === 'city'))
+  : ALL_PRESETS.filter((preset) => preset.key !== 'city');
 
 export function setupPreset(key: string): SetupPreset | null {
   return SETUP_PRESETS.find((preset) => preset.key === key) ?? null;

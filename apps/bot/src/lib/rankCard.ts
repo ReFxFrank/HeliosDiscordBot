@@ -1,3 +1,4 @@
+import { BRAND } from '@refx/shared';
 import { createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas';
 import { logger } from '../logger';
 import { ensureFonts, FONT_BOLD, FONT_REGULAR } from './canvasFonts';
@@ -22,7 +23,7 @@ export interface RankCardInput {
 
 const WIDTH = 900;
 const HEIGHT = 270;
-const ACCENT = '#0072ff';
+const ACCENT = BRAND.colorHex;
 const BG = '#0c1220';
 const PANEL = '#141c2e';
 const TRACK = '#24324a';

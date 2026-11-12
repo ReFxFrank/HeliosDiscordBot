@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from '@refx/shared';
 import { useRef, type ReactNode } from 'react';
 import { inputClass } from './form';
 
@@ -15,7 +16,7 @@ export const WELCOME_PLACEHOLDERS: Placeholder[] = [
   { token: '{user}', label: 'Mention', sample: '@NewMember' },
   { token: '{user.name}', label: 'Username', sample: 'NewMember' },
   { token: '{user.tag}', label: 'Tag', sample: 'NewMember#0001' },
-  { token: '{server}', label: 'Server', sample: 'ReFx Roleplay' },
+  { token: '{server}', label: 'Server', sample: BRAND.community },
   { token: '{memberCount}', label: 'Member #', sample: '1,234' },
   { token: '{accountAge}', label: 'Account age', sample: '42 days' },
 ];
@@ -23,13 +24,14 @@ export const WELCOME_PLACEHOLDERS: Placeholder[] = [
 export const LEVEL_PLACEHOLDERS: Placeholder[] = [
   { token: '{user}', label: 'Mention', sample: '@Member' },
   { token: '{level}', label: 'Level', sample: '5' },
-  { token: '{server}', label: 'Server', sample: 'ReFx Roleplay' },
+  { token: '{server}', label: 'Server', sample: BRAND.community },
 ];
 
 /** Minimal Discord markdown: bold (**), italics (*), inline code (`). */
 function renderMarkdown(text: string): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith('**') && part.endsWith('**'))
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
     if (part.startsWith('`') && part.endsWith('`'))
       return (
         <code key={i} className="rounded bg-black/30 px-1 text-[13px]">
@@ -60,7 +62,10 @@ export function DiscordPreview({
   // Highlight @mentions produced by substitution.
   const withMentions = resolved.split(/(@[A-Za-z0-9_#]+)/g).map((chunk, i) =>
     chunk.startsWith('@') ? (
-      <span key={i} className="rounded bg-[var(--color-brand)]/25 px-1 font-medium text-[var(--color-brand-bright)]">
+      <span
+        key={i}
+        className="rounded bg-[var(--color-brand)]/25 px-1 font-medium text-[var(--color-brand-bright)]"
+      >
         {chunk}
       </span>
     ) : (
@@ -70,24 +75,36 @@ export function DiscordPreview({
 
   return (
     <div className="rounded-xl border border-white/10 bg-[#2b2d31] p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/30">Preview</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/30">
+        Preview
+      </p>
       <div className="flex gap-3">
-        <img
-          src="/refx-logo.png"
-          alt=""
-          aria-hidden
-          className="h-10 w-10 shrink-0 rounded-full bg-[var(--color-brand-strong)] object-cover"
-        />
+        {BRAND.logo ? (
+          <img
+            src={BRAND.logo}
+            alt=""
+            aria-hidden
+            className="h-10 w-10 shrink-0 rounded-full bg-[var(--color-brand-strong)] object-cover"
+          />
+        ) : (
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--color-brand-strong)] font-semibold text-white">
+            {BRAND.name.slice(0, 1)}
+          </span>
+        )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-white">ReFx Assistant</span>
+            <span className="font-medium text-white">{BRAND.name}</span>
             <span className="rounded bg-[var(--color-brand)] px-1 py-px text-[9px] font-bold uppercase text-white">
               App
             </span>
             <span className="text-xs text-white/35">Today at 12:00 PM</span>
           </div>
           <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#dbdee1]">
-            {content.trim() ? withMentions : <span className="text-white/30">Nothing to preview.</span>}
+            {content.trim() ? (
+              withMentions
+            ) : (
+              <span className="text-white/30">Nothing to preview.</span>
+            )}
           </div>
         </div>
       </div>

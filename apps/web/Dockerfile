@@ -12,6 +12,22 @@ RUN apt-get update \
   && corepack enable
 WORKDIR /app
 
+# Per-instance branding (see packages/shared/src/constants.ts). NEXT_PUBLIC_*
+# values are inlined into the client bundle at build time, so they are build
+# args; compose fills them from the instance's .env.
+ARG NEXT_PUBLIC_BRAND_NAME=
+ARG NEXT_PUBLIC_BRAND_COMMUNITY=
+ARG NEXT_PUBLIC_BRAND_COLOR=
+ARG NEXT_PUBLIC_BRAND_FOOTER=
+ARG NEXT_PUBLIC_BRAND_LOGO=
+ARG NEXT_PUBLIC_FEATURE_FIVEM=
+ENV NEXT_PUBLIC_BRAND_NAME=$NEXT_PUBLIC_BRAND_NAME \
+    NEXT_PUBLIC_BRAND_COMMUNITY=$NEXT_PUBLIC_BRAND_COMMUNITY \
+    NEXT_PUBLIC_BRAND_COLOR=$NEXT_PUBLIC_BRAND_COLOR \
+    NEXT_PUBLIC_BRAND_FOOTER=$NEXT_PUBLIC_BRAND_FOOTER \
+    NEXT_PUBLIC_BRAND_LOGO=$NEXT_PUBLIC_BRAND_LOGO \
+    NEXT_PUBLIC_FEATURE_FIVEM=$NEXT_PUBLIC_FEATURE_FIVEM
+
 COPY . .
 RUN pnpm install --frozen-lockfile \
   && pnpm --filter @refx/database generate \

@@ -18,6 +18,7 @@ import {
   type LiveCommandMessage,
   type RolePanelOption,
   type ScheduledMessagePayload,
+  type SocialSubscriptionPayload,
 } from '@refx/shared';
 import type { Logger } from '../logger';
 import { subscriber } from './redis';
@@ -34,6 +35,7 @@ import {
 import { endLockdown, lockdownServer } from '../modules/lockdown';
 import { applyServerTemplate } from '../modules/serverTemplate';
 import { syncStayVoice } from '../modules/stayVoice';
+import { baselineSubscription, cancelSocialPoll, scheduleSocialPoll } from '../modules/social';
 import { brandedEmbed } from '../lib/embeds';
 import { buildEmbedFromSpec } from '../lib/embedSpec';
 import { refreshStatsCounters } from '../modules/statsCounters';
@@ -74,6 +76,19 @@ export class LiveCommandService {
         await this.fivem.refresh(
           message.guildId,
           Boolean((message.payload as FivemRefreshPayload | undefined)?.repost),
+        );
+        return;
+      case 'SOCIAL_SUBSCRIBE': {
+        const { subscriptionId } = message.payload as SocialSubscriptionPayload;
+        // Baseline to the source's current latest so the backlog isn't dumped.
+        await baselineSubscription(subscriptionId).catch(() => undefined);
+        await scheduleSocialPoll(this.jobs, subscriptionId);
+        return;
+      }
+      case 'SOCIAL_UNSUBSCRIBE':
+        await cancelSocialPoll(
+          this.jobs,
+          (message.payload as SocialSubscriptionPayload).subscriptionId,
         );
         return;
       case 'DEPLOY_PANEL':

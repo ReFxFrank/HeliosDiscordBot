@@ -104,7 +104,7 @@ both. Players need the Discord desktop app running, so FiveM can see their
 - Tunnel: `refx-bot`.
 - Config: `/etc/cloudflared/refx-bot.yml`.
 - Service: `refx-bot-tunnel.service`, running as root.
-- DNS: the CNAMEs `bot.refx.gg` and `bot-api.refx.gg` point at the tunnel
+- DNS: the CNAMEs `bot.refx.gg`, `bot-api.refx.gg` and `hopps.refx.gg` (the Professor Hopps dashboard, port 3001) point at the tunnel
   (created with `cloudflared tunnel route dns`).
 
 ```bash
@@ -136,6 +136,53 @@ $C run --rm bot pnpm --filter @refx/database migrate:deploy
 Run `deploy:commands` again whenever a slash command is added or renamed.
 Once the repo is pushed somewhere, `scripts/redeploy.sh` does the same from a
 `git pull`.
+
+## Other instances (Professor Hopps)
+
+The same code runs more than one bot. Each instance has its own folder on the
+VPS, its own Discord application, database, Redis and `.env`, and is branded by
+that `.env` (`BRAND_NAME`, `BRAND_COMMUNITY`, `BRAND_COLOR`, `BRAND_FOOTER`,
+`BRAND_LOGO`, `BRAND_PRESENCE`). `FEATURE_FIVEM=false` hides everything FiveM
+(the module, `/status`, `/players`, `/refx-setup`, the whitelist API) and offers
+`/community-setup` instead. ReFx Assistant is simply the instance with none of
+these set.
+
+| Instance | Folder | Compose project | Dashboard port |
+| --- | --- | --- | --- |
+| ReFx Assistant | `/opt/refx-bot` | `refx-bot` | 3000 |
+| Professor Hopps (Ribbit Retreat) | `/opt/hopps-bot` | `hopps-bot` | 3001 |
+
+A second instance needs `-p <project>` on every compose command, and host ports
+that don't collide (`WEB_PORT`, `POSTGRES_PORT`, `REDIS_PORT`, `FIVEM_API_PORT`
+in its `.env`):
+
+```bash
+cd /opt/hopps-bot
+C="sudo docker compose -p hopps-bot -f docker-compose.yml -f docker-compose.prod.yml --profile apps"
+$C up -d --build
+$C run --rm bot pnpm --filter @refx/database migrate:deploy
+$C run --rm bot pnpm --filter @refx/bot deploy:commands
+```
+
+The dashboard bakes the branding in at build time, so rebuild `web` after
+changing a `BRAND_*` value. To set an instance up:
+
+1. Create its Discord application (Bot tab: Server Members and Message Content
+   intents on; OAuth2 redirect `https://<dashboard host>/api/auth/callback/discord`)
+   and, for go-live alerts, a Twitch developer app (<https://dev.twitch.tv/console/apps>,
+   any OAuth redirect such as `http://localhost`, category "Chat Bot").
+2. Store the credentials with hidden input:
+
+   ```bash
+   ssh -t rallyforge-staging-admin bash /opt/hopps-bot/scripts/set-discord-secrets.sh
+   ```
+
+3. Start it (commands above), invite the bot, then run
+   `/community-setup twitch:<username>` in the server. It links the modules to
+   the channels and roles it finds by name and adds the go-live alert. More
+   alerts (YouTube, Reddit, Bluesky, RSS) are on the dashboard's Social Alerts page.
+
+When redeploying, ship the tarball into each instance folder and rebuild each.
 
 ## Local development
 

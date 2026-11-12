@@ -122,7 +122,7 @@ function PanelPreview({ form }: { form: FormState }) {
       {(form.title || form.description) && (
         <div
           className="mb-2 max-w-[440px] rounded-[4px] bg-[#2b2d31] px-3 py-2.5"
-          style={{ borderLeft: '4px solid #0072ff' }}
+          style={{ borderLeft: '4px solid var(--color-brand)' }}
         >
           {form.title && <div className="mb-1 font-semibold text-white">{form.title}</div>}
           {form.description && (
@@ -261,7 +261,8 @@ export function RolePanels({
                   <p className="truncate font-medium text-white/90">{panel.title}</p>
                   <p className="text-xs text-white/40">
                     {panel.type} · {panel.mode} · {panel.optionCount} roles · #
-                    {channelLabel(panel.channelId)} · {panel.messageId ? 'deployed' : 'not deployed'}
+                    {channelLabel(panel.channelId)} ·{' '}
+                    {panel.messageId ? 'deployed' : 'not deployed'}
                   </p>
                 </div>
                 <button

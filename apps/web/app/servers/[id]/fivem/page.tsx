@@ -1,5 +1,6 @@
 import { prisma } from '@refx/database';
-import { fivemConfigSchema } from '@refx/shared';
+import { notFound } from 'next/navigation';
+import { FEATURES, fivemConfigSchema } from '@refx/shared';
 import { guardGuildAccess } from '../../../../lib/auth-guards';
 import { getGuildEntities } from '../../../../lib/discord-guild';
 import { readFivemSnapshot } from '../../../../lib/fivem-status';
@@ -9,6 +10,7 @@ import { FivemStatusCard } from '../../../../components/fivem-status-card';
 export const dynamic = 'force-dynamic';
 
 export default async function FivemConfigPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!FEATURES.fivem) notFound();
   const { id } = await params;
   await guardGuildAccess(id);
 

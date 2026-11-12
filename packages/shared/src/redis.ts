@@ -39,7 +39,9 @@ export type LiveCommandType =
   | 'SYNC_STAY_VOICE'
   | 'REFRESH_COMMAND_TOGGLES'
   | 'APPLY_SERVER_TEMPLATE'
-  | 'FIVEM_REFRESH';
+  | 'FIVEM_REFRESH'
+  | 'SOCIAL_SUBSCRIBE'
+  | 'SOCIAL_UNSUBSCRIBE';
 
 export interface LiveCommandMessage<TPayload = unknown> {
   type: LiveCommandType;
@@ -58,6 +60,11 @@ export interface DeletePanelPayload {
 
 export interface GiveawayActionPayload {
   giveawayId: string;
+}
+
+/** SOCIAL_SUBSCRIBE / SOCIAL_UNSUBSCRIBE: an alert was added or removed on the dashboard. */
+export interface SocialSubscriptionPayload {
+  subscriptionId: string;
 }
 
 export interface ScheduledMessagePayload {

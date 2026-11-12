@@ -1,3 +1,4 @@
+import { FEATURES } from '@refx/shared';
 import { MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireLevel } from '../../lib/permissions';
@@ -11,6 +12,7 @@ const command: Command = {
       'Point every module at the ReFx channels and roles (config only, safe to re-run).',
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+  available: () => FEATURES.fivem,
   preconditions: [RequireGuild, RequireLevel('admin')],
   async execute(interaction, ctx) {
     if (!interaction.inCachedGuild()) return;

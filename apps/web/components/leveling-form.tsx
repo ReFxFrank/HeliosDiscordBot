@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { levelUpAnnounceModes, type LevelingConfig } from '@refx/shared';
+import { BRAND, levelUpAnnounceModes, type LevelingConfig } from '@refx/shared';
 import type { ChannelOption, RoleOption } from '../lib/discord-guild';
 import { saveLevelingConfig } from '../lib/config-actions';
 import { Switch } from './ui/switch';
@@ -57,7 +57,10 @@ export function LevelingForm({
     update('rewards', [...config.rewards, { level: 1, roleId: '' }]);
   }
   function removeReward(index: number): void {
-    update('rewards', config.rewards.filter((_, i) => i !== index));
+    update(
+      'rewards',
+      config.rewards.filter((_, i) => i !== index),
+    );
   }
 
   function save(): void {
@@ -98,7 +101,10 @@ export function LevelingForm({
               onChange={(e) => update('textXpMax', clampInt(e.target.value, 0, 25))}
             />
           </Field>
-          <Field label="Message cooldown (seconds)" hint="Minimum gap between XP awards per member.">
+          <Field
+            label="Message cooldown (seconds)"
+            hint="Minimum gap between XP awards per member."
+          >
             <input
               type="number"
               min={0}
@@ -121,7 +127,7 @@ export function LevelingForm({
 
       <SettingsSection
         title="Level-Up Announcements"
-        description="Where and how ReFx Assistant celebrates a member reaching a new level."
+        description={`Where and how ${BRAND.name} celebrates a member reaching a new level.`}
       >
         <div className="flex flex-col gap-5">
           <div className="max-w-md">
@@ -177,7 +183,9 @@ export function LevelingForm({
           <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
             <div>
               <p className="text-sm text-white/90">Enable rank cards</p>
-              <p className="text-xs text-white/50">/rank renders a generated card instead of text.</p>
+              <p className="text-xs text-white/50">
+                /rank renders a generated card instead of text.
+              </p>
             </div>
             <Switch
               checked={config.cardEnabled}
@@ -244,10 +252,15 @@ export function LevelingForm({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             {config.rewards.length === 0 && (
-              <p className="text-sm text-white/50">No rewards yet. Add one to grant roles by level.</p>
+              <p className="text-sm text-white/50">
+                No rewards yet. Add one to grant roles by level.
+              </p>
             )}
             {config.rewards.map((reward, index) => (
-              <div key={index} className="flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+              <div
+                key={index}
+                className="flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3"
+              >
                 <label className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium text-white/60">At level</span>
                   <input

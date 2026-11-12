@@ -1,4 +1,4 @@
-import type { Module } from '@refx/shared';
+import { FEATURES, type Module } from '@refx/shared';
 import {
   ShieldAlert,
   ShieldBan,
@@ -282,6 +282,7 @@ const META_ENTRIES = [
     icon: Bell,
     category: 'core',
     accent: 'sky',
+    configSlug: 'social',
   },
   {
     module: 'TEMP_VOICE',
@@ -316,7 +317,10 @@ type MissingModuleMeta = Exclude<Module, (typeof META_ENTRIES)[number]['module']
 const metaCoversEveryModule: [MissingModuleMeta] extends [never] ? true : MissingModuleMeta = true;
 void metaCoversEveryModule;
 
-export const MODULE_META: ModuleMeta[] = META_ENTRIES;
+/** Modules this instance offers (FiveM is hidden when FEATURE_FIVEM=false). */
+export const MODULE_META: ModuleMeta[] = (META_ENTRIES as ModuleMeta[]).filter(
+  (meta) => FEATURES.fivem || meta.module !== 'FIVEM',
+);
 
 export const MODULE_META_BY_KEY: Record<Module, ModuleMeta> = Object.fromEntries(
   MODULE_META.map((meta) => [meta.module, meta]),

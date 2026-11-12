@@ -5,7 +5,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
-import { BRAND } from '@refx/shared';
+import { BRAND, FEATURES } from '@refx/shared';
 import type { Command } from '../../framework/command';
 import { env } from '../../env';
 import { Cooldown } from '../../lib/permissions';
@@ -14,7 +14,11 @@ import { brandedEmbed } from '../../lib/embeds';
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('How to use the bot — city status, levels, tickets and staff tools.'),
+    .setDescription(
+      FEATURES.fivem
+        ? 'How to use the bot — city status, levels, tickets and staff tools.'
+        : 'How to use the bot — levels, roles, tickets and staff tools.',
+    ),
   preconditions: [Cooldown(5)],
   async execute(interaction) {
     const links = new ActionRowBuilder<ButtonBuilder>();
@@ -40,12 +44,16 @@ const command: Command = {
         brandedEmbed({
           kind: 'info',
           title: `👋 ${BRAND.name}`,
-          description: `I run the ${BRAND.community} Discord: city status, welcomes, levels, tickets, applications and moderation.`,
+          description: FEATURES.fivem
+            ? `I run the ${BRAND.community} Discord: city status, welcomes, levels, tickets, applications and moderation.`
+            : `I run the ${BRAND.community} Discord: go-live alerts, welcomes, levels, roles, giveaways, tickets and moderation.`,
         }).addFields(
           {
             name: 'Popular commands',
             value: [
-              '`/status` · `/players` — is the city up, and who’s in it',
+              ...(FEATURES.fivem
+                ? ['`/status` · `/players` — is the city up, and who’s in it']
+                : []),
               '`/rank` · `/leaderboard` — levels and XP',
               '`/ticket` — get help from staff',
               '`/giveaway` · `/poll` · `/remind` — community tools',
@@ -56,7 +64,9 @@ const command: Command = {
             name: 'For staff',
             value:
               '`/warn` · `/warnings` · `/timeout` · `/ban` — moderation\n' +
-              'Everything else is configured from the dashboard; `/refx-setup` re-links the modules to the ReFx channels and roles.',
+              (FEATURES.fivem
+                ? 'Everything else is configured from the dashboard; `/refx-setup` re-links the modules to the ReFx channels and roles.'
+                : '`/social` — go-live and new-video alerts\nEverything else is configured from the dashboard; `/community-setup` links the modules to your channels.'),
           },
         ),
       ],

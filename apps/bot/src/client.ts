@@ -8,6 +8,7 @@ import {
   type ClientEvents,
 } from 'discord.js';
 import { prisma } from '@refx/database';
+import { BRAND, FEATURES } from '@refx/shared';
 import { env } from './env';
 import { logger } from './logger';
 import { captureError, initSentry } from './services/sentry';
@@ -139,8 +140,11 @@ async function bootstrap(): Promise<void> {
       { user: ready.user.tag, guilds: ready.guilds.cache.size, shards: ready.shard?.ids ?? [0] },
       'Shard ready',
     );
-    // The FiveM poller replaces this with the city's player count once it runs.
-    ready.user.setActivity({ name: 'ReFx Roleplay', type: ActivityType.Watching });
+    // On a FiveM instance the poller replaces this with the city's player count.
+    ready.user.setActivity({
+      name: env.BRAND_PRESENCE ?? BRAND.community,
+      type: ActivityType.Watching,
+    });
     guildGauge.set(ready.guilds.cache.size);
     // Workers use the authed REST client, so start them once logged in.
     jobs.startWorkers();
@@ -169,8 +173,10 @@ async function bootstrap(): Promise<void> {
     stopMetrics = startMetricsServer(ready.shard?.ids[0] ?? 0);
     stopHeartbeat = startHeartbeat(ready, ready.shard?.ids[0] ?? 0);
     stopInsights = startInsightsFlush(ready, prisma, redis, logger);
-    stopFivemApi = startFivemApi(base, ready.shard?.ids[0] ?? 0);
-    fivem.start();
+    if (FEATURES.fivem) {
+      stopFivemApi = startFivemApi(base, ready.shard?.ids[0] ?? 0);
+      fivem.start();
+    }
   });
 
   let shuttingDown = false;

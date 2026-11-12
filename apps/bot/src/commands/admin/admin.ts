@@ -1,3 +1,4 @@
+import { BRAND } from '@refx/shared';
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
 import { prisma } from '@refx/database';
 import type { Command } from '../../framework/command';
@@ -126,7 +127,7 @@ const command: Command = {
       await reply(
         brandedEmbed({
           kind: 'default',
-          title: '📊 ReFx Assistant — stats',
+          title: `📊 ${BRAND.name} — stats`,
           description:
             `**Servers:** ${ctx.client.guilds.cache.size.toLocaleString()}\n` +
             `**Blacklisted:** ${blacklistCount.toLocaleString()}\n` +

@@ -1,3 +1,4 @@
+import { IS_DEFAULT_BRAND, BRAND } from '@refx/shared';
 import Link from 'next/link';
 import { prisma } from '@refx/database';
 import { TrendingDown, TrendingUp } from 'lucide-react';
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic';
 // Series colors validated against the card surface (#0b1322) with the dataviz
 // palette checks: ReFx blue alone on single-series charts; the blue/red pair
 // (CVD ΔE 66) only co-occurs on the joins-vs-leaves chart.
-const BRAND_BLUE = '#3d95ff';
+const BRAND_BLUE = IS_DEFAULT_BRAND ? '#3d95ff' : BRAND.colorHex;
 const BLUE = '#3987e5';
 const RED = '#e66767';
 
@@ -85,8 +86,8 @@ export default async function InsightsPage({
 
       {insights.empty ? (
         <GlassCard className="p-10 text-center text-sm text-white/40">
-          No activity recorded yet — insights start collecting once the bot sees messages and
-          joins. Check back tomorrow.
+          No activity recorded yet — insights start collecting once the bot sees messages and joins.
+          Check back tomorrow.
         </GlassCard>
       ) : (
         <>
@@ -112,7 +113,11 @@ export default async function InsightsPage({
               title="Messages per day"
               labels={labels}
               series={[
-                { name: 'Messages', color: BRAND_BLUE, values: insights.days.map((d) => d.messages) },
+                {
+                  name: 'Messages',
+                  color: BRAND_BLUE,
+                  values: insights.days.map((d) => d.messages),
+                },
               ]}
             />
             <ActivityChart
@@ -156,9 +161,7 @@ export default async function InsightsPage({
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Top channels */}
             <GlassCard className="p-4">
-              <h3 className="mb-3 text-sm font-semibold text-white/85">
-                Top channels ({range}d)
-              </h3>
+              <h3 className="mb-3 text-sm font-semibold text-white/85">Top channels ({range}d)</h3>
               {insights.topChannels.length === 0 ? (
                 <p className="py-6 text-center text-sm text-white/40">No messages counted yet.</p>
               ) : (
@@ -242,7 +245,7 @@ function StatTile({
   deltaUpIsGood?: boolean;
 }) {
   const showDelta = delta !== undefined && delta !== null;
-  const good = showDelta && (delta >= 0) === Boolean(deltaUpIsGood);
+  const good = showDelta && delta >= 0 === Boolean(deltaUpIsGood);
   return (
     <GlassCard className="p-4">
       <p className="text-xs text-white/45">{label}</p>

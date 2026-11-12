@@ -19,7 +19,7 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
         const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
-        link.download = `refx-config-${guildId}.json`;
+        link.download = `bot-config-${guildId}.json`;
         link.click();
         URL.revokeObjectURL(url);
         setStatus({ tone: 'ok', text: 'Config exported.' });
@@ -45,14 +45,13 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
           setStatus({ tone: 'error', text: result.error ?? 'Import failed.' });
           return;
         }
-        const skippedNote =
-          result.skipped.length > 0 ? ` · ${result.skipped.length} skipped` : '';
+        const skippedNote = result.skipped.length > 0 ? ` · ${result.skipped.length} skipped` : '';
         setStatus({
           tone: 'ok',
           text: `Imported ${result.applied.length} module${result.applied.length === 1 ? '' : 's'}${skippedNote}.`,
         });
       } catch {
-        setStatus({ tone: 'error', text: 'Import failed — is that a ReFx Assistant export file?' });
+        setStatus({ tone: 'error', text: `Import failed — is that a ${BRAND.name} export file?` });
       }
     });
   }
@@ -61,8 +60,8 @@ export function ConfigTransfer({ guildId }: { guildId: string }) {
     <GlassCard className="p-5">
       <h3 className="font-semibold text-white/90">Backup &amp; transfer</h3>
       <p className="mt-1 text-sm text-white/50">
-        Export this server’s entire module configuration as JSON — keep it as a backup or import
-        it into another server running {BRAND.name}. Imports are validated module-by-module.
+        Export this server’s entire module configuration as JSON — keep it as a backup or import it
+        into another server running {BRAND.name}. Imports are validated module-by-module.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button

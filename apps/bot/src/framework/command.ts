@@ -31,6 +31,8 @@ export interface Command {
   data: CommandData;
   /** If set, the command requires this module to be enabled for the guild. */
   module?: Module;
+  /** Whether this instance offers the command at all (see FEATURES). Default: yes. */
+  available?: () => boolean;
   preconditions?: Precondition[];
   execute(interaction: ChatInputCommandInteraction, ctx: BotContext): Promise<void> | void;
   autocomplete?(interaction: AutocompleteInteraction, ctx: BotContext): Promise<void> | void;

@@ -1,3 +1,4 @@
+import { FEATURES } from '@refx/shared';
 import { MessageFlags, SlashCommandBuilder } from 'discord.js';
 import { buildStatusComponents, buildStatusEmbed, readSnapshot } from '../../modules/fivem';
 import { errorEmbed } from '../../lib/embeds';
@@ -9,6 +10,7 @@ const command: Command = {
     .setName('status')
     .setDescription('Is the city up? Players online, connect info and the next restart.'),
   module: 'FIVEM',
+  available: () => FEATURES.fivem,
   preconditions: [RequireGuild, Cooldown(5)],
   async execute(interaction, ctx) {
     const guildId = interaction.guildId!;

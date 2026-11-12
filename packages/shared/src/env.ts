@@ -40,6 +40,8 @@ export const botEnvSchema = baseEnvSchema.extend({
    *  YouTube/Reddit/RSS work without any keys). */
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  /** Bot status line ("Watching …"). Defaults to the community name. */
+  BRAND_PRESENCE: z.string().max(120).optional(),
   /** Public dashboard URL, for the bot's link buttons. Unset hides them. */
   DASHBOARD_URL: z.string().url().optional(),
   /** FiveM whitelist API (refx_whitelist resource). Unset disables the API. */

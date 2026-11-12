@@ -1,10 +1,12 @@
 'use client';
 
+import { BRAND } from '@refx/shared';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Gamepad2,
+  Radio,
   LifeBuoy,
   Loader2,
   Sparkles,
@@ -20,6 +22,7 @@ import { cn } from '../lib/utils';
 const PRESET_ICONS: Record<SetupPreset['icon'], LucideIcon> = {
   Users,
   Gamepad2,
+  Radio,
   LifeBuoy,
   Sparkles,
 };
@@ -88,7 +91,11 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
         aria-label="Skip setup"
         className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-white/40 transition-colors hover:bg-white/[0.06] hover:text-white/80 disabled:opacity-50"
       >
-        {active === '__skip' ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+        {active === '__skip' ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <X className="h-4 w-4" />
+        )}
       </button>
 
       <div className="relative">
@@ -96,7 +103,7 @@ export function QuickSetup({ guildId, guildName }: { guildId: string; guildName:
           <Sparkles className="h-3.5 w-3.5" /> Quick setup
         </span>
         <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-[1.75rem]">
-          Welcome to ReFx Assistant — let&rsquo;s set up{' '}
+          Welcome to {BRAND.name} — let&rsquo;s set up{' '}
           <bdi className="text-[var(--color-brand-bright)]">{cleanName(guildName)}</bdi>
         </h2>
         <p className="mt-2.5 max-w-2xl text-pretty text-sm leading-relaxed text-white/75 sm:text-[15px]">

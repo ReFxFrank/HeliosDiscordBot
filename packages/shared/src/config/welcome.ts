@@ -1,25 +1,40 @@
 import { z } from 'zod';
+import { BRAND, FEATURES } from '../constants';
 import { embedSpecSchema } from '../embed';
 
 export const WELCOME_THUMBNAILS = ['server', 'user', 'custom', 'none'] as const;
 export type WelcomeThumbnail = (typeof WELCOME_THUMBNAILS)[number];
 
 /**
- * Default welcome embed, modelled on the one ReFx used before (MEE6): a blue
- * "Welcome!" card pointing new members at the rules and verification. Channel
- * and role mentions are filled in by `/refx-setup` once it knows the guild.
+ * Default welcome embed. On a FiveM instance it is modelled on the card ReFx
+ * used before (MEE6), pointing new members at the rules and verification;
+ * channel and role mentions are filled in by `/refx-setup`. Other instances
+ * get a neutral community greeting in the brand colour.
  */
-export const DEFAULT_WELCOME_EMBED = {
-  author: { name: 'ReFx Assistant' },
-  title: 'Welcome!',
-  description:
-    'Welcome {user}\n\n' +
-    'Feel free to have a look around, if you have any questions, please feel free to message a member of the Admin or Staff Team for assistance!\n\n' +
-    'Please head over to the rules channel to review the city and community rules. Then answer the quick join questions to unlock the rest of the community, or hit Start Verification in the verify channel.\n\n' +
-    'Hope to see you out on the streets!',
-  color: '#70B0FF',
-  footer: 'ReFx Roleplay',
-} satisfies z.input<typeof embedSpecSchema>;
+export const DEFAULT_WELCOME_EMBED = (
+  FEATURES.fivem
+    ? {
+        author: { name: BRAND.name },
+        title: 'Welcome!',
+        description:
+          'Welcome {user}\n\n' +
+          'Feel free to have a look around, if you have any questions, please feel free to message a member of the Admin or Staff Team for assistance!\n\n' +
+          'Please head over to the rules channel to review the city and community rules. Then answer the quick join questions to unlock the rest of the community, or hit Start Verification in the verify channel.\n\n' +
+          'Hope to see you out on the streets!',
+        color: '#70B0FF',
+        footer: BRAND.footer,
+      }
+    : {
+        author: { name: BRAND.name },
+        title: 'Welcome!',
+        description:
+          'Welcome {user} to **{server}**!\n\n' +
+          'Have a look around and say hi. Please give the rules a quick read first.\n\n' +
+          'You are member #{memberCount}.',
+        color: BRAND.colorHex,
+        footer: BRAND.footer,
+      }
+) satisfies z.input<typeof embedSpecSchema>;
 
 export const welcomeConfigSchema = z.object({
   channelId: z.string().nullable().default(null),

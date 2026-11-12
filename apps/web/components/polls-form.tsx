@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from '@refx/shared';
 import { useState, useTransition } from 'react';
 import type { PollsConfig } from '@refx/shared';
 import { savePollsConfig } from '../lib/config-actions';
@@ -31,16 +32,13 @@ export function PollsForm({ guildId, initial }: { guildId: string; initial: Poll
 
   return (
     <div className="flex flex-col gap-4">
-      <SettingsSection
-        title="Poll Appearance"
-        description="How poll messages look on this server."
-      >
+      <SettingsSection title="Poll Appearance" description="How poll messages look on this server.">
         <div className="max-w-sm">
           <Field label="Embed color" hint="Applied to new polls.">
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                value={HEX.test(config.color) ? config.color : '#0072ff'}
+                value={HEX.test(config.color) ? config.color : BRAND.colorHex}
                 onChange={(e) => update('color', e.target.value)}
                 className="h-9 w-12 shrink-0 cursor-pointer rounded border border-white/10 bg-transparent"
                 aria-label="Poll embed color"

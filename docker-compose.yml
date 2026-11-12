@@ -93,6 +93,14 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      # Instance branding, baked into the dashboard bundle at build time.
+      args:
+        NEXT_PUBLIC_BRAND_NAME: ${BRAND_NAME:-}
+        NEXT_PUBLIC_BRAND_COMMUNITY: ${BRAND_COMMUNITY:-}
+        NEXT_PUBLIC_BRAND_COLOR: ${BRAND_COLOR:-}
+        NEXT_PUBLIC_BRAND_FOOTER: ${BRAND_FOOTER:-}
+        NEXT_PUBLIC_BRAND_LOGO: ${BRAND_LOGO:-}
+        NEXT_PUBLIC_FEATURE_FIVEM: ${FEATURE_FIVEM:-}
     restart: unless-stopped
     profiles: ['apps']
     env_file: .env

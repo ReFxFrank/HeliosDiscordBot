@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, type Guild } from 'discord.js';
 import { prisma } from '@refx/database';
-import { BRAND } from '@refx/shared';
+import { BRAND, FEATURES } from '@refx/shared';
 import { env } from '../env';
 import { brandedEmbed } from '../lib/embeds';
 
@@ -27,11 +27,15 @@ export async function sendGuildWelcome(guild: Guild): Promise<void> {
 
   const embed = brandedEmbed({
     title: `👋 ${BRAND.name} joined ${guild.name}`,
-    description:
-      `I run the ${BRAND.community} Discord: FiveM city status, welcomes, verification, ` +
-      'tickets, applications, levels and moderation, all managed from one dashboard.\n\n' +
-      '**Get started:** run `/refx-setup` to link every module to the ReFx channels and ' +
-      'roles, then post the panels from the dashboard. `/help` lists the commands.',
+    description: FEATURES.fivem
+      ? `I run the ${BRAND.community} Discord: FiveM city status, welcomes, verification, ` +
+        'tickets, applications, levels and moderation, all managed from one dashboard.\n\n' +
+        '**Get started:** run `/refx-setup` to link every module to the ReFx channels and ' +
+        'roles, then post the panels from the dashboard. `/help` lists the commands.'
+      : `I run the ${BRAND.community} Discord: go-live alerts, welcomes, levels, roles, ` +
+        'giveaways, tickets and moderation, all managed from one dashboard.\n\n' +
+        '**Get started:** run `/community-setup` to link the modules to your channels, ' +
+        'then fine-tune everything on the dashboard. `/help` lists the commands.',
   });
 
   const components = env.DASHBOARD_URL

@@ -1,11 +1,27 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { BRAND } from '@refx/shared';
+import type { CSSProperties } from 'react';
+import { BRAND, FEATURES, IS_DEFAULT_BRAND } from '@refx/shared';
 import './globals.css';
 
 // Shown in link previews (Discord embeds) and the browser tab.
 const TITLE = `${BRAND.name} — ${BRAND.community} Dashboard`;
-const DESCRIPTION = `Configure ${BRAND.name}, the Discord bot for the ${BRAND.community} FiveM community.`;
+const DESCRIPTION = `Configure ${BRAND.name}, the Discord bot for the ${BRAND.community}${FEATURES.fivem ? ' FiveM' : ''} community.`;
+// Icon slots use the instance logo; without one the browser falls back to none.
+const ICONS = BRAND.logo ? [BRAND.logo] : [];
+
+/**
+ * Non-default instances re-tint the dashboard from one colour: the bright and
+ * strong variants are mixed from it, and every tint in globals.css derives from
+ * these three tokens.
+ */
+const THEME: CSSProperties | undefined = IS_DEFAULT_BRAND
+  ? undefined
+  : ({
+      '--color-brand': BRAND.colorHex,
+      '--color-brand-bright': `color-mix(in srgb, ${BRAND.colorHex} 72%, white)`,
+      '--color-brand-strong': `color-mix(in srgb, ${BRAND.colorHex} 78%, black)`,
+    } as CSSProperties);
 
 /** Absolute base for OG/Twitter image URLs; only set when the deploy URL is known. */
 function metadataBase(): URL | undefined {
@@ -26,12 +42,7 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: BRAND.name,
-  // Single source of truth for every icon slot: apps/web/public/refx-logo.png.
-  icons: {
-    icon: '/refx-logo.png',
-    shortcut: '/refx-logo.png',
-    apple: '/refx-logo.png',
-  },
+  icons: BRAND.logo ? { icon: BRAND.logo, shortcut: BRAND.logo, apple: BRAND.logo } : undefined,
   // Dashboard pages sit behind Discord sign-in; keep them out of search results.
   robots: { index: false, follow: false },
   openGraph: {
@@ -39,23 +50,23 @@ export const metadata: Metadata = {
     siteName: BRAND.name,
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: '/refx-logo.png', alt: BRAND.community }],
+    images: ICONS.map((url) => ({ url, alt: BRAND.community })),
   },
   twitter: {
     card: 'summary',
     title: TITLE,
     description: DESCRIPTION,
-    images: ['/refx-logo.png'],
+    images: ICONS,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0072ff',
+  themeColor: BRAND.colorHex,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={THEME}>
       <body>{children}</body>
     </html>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from '@refx/shared';
 import { useEffect, useState } from 'react';
 import { ChevronDown, Clock, Code2, Plus, X } from 'lucide-react';
 import type { EmbedSpec } from '@refx/shared';
@@ -53,8 +54,9 @@ export const EMPTY_EMBED_DRAFT: EmbedDraft = {
   timestamp: false,
 };
 
-const DEFAULT_COLOR = '#0072ff';
-const trimOrUndef = (value: string): string | undefined => (value.trim() ? value.trim() : undefined);
+const DEFAULT_COLOR = BRAND.colorHex;
+const trimOrUndef = (value: string): string | undefined =>
+  value.trim() ? value.trim() : undefined;
 
 /** Normalize a draft into an EmbedSpec, or `undefined` when nothing renders. */
 export function draftToSpec(draft: EmbedDraft): EmbedSpec | undefined {
@@ -84,12 +86,12 @@ export function draftToSpec(draft: EmbedDraft): EmbedSpec | undefined {
 
   const hasContent = Boolean(
     spec.title ||
-      spec.description ||
-      spec.imageUrl ||
-      spec.thumbnailUrl ||
-      spec.footer ||
-      spec.author?.name ||
-      (spec.fields && spec.fields.length > 0),
+    spec.description ||
+    spec.imageUrl ||
+    spec.thumbnailUrl ||
+    spec.footer ||
+    spec.author?.name ||
+    (spec.fields && spec.fields.length > 0),
   );
   return hasContent ? spec : undefined;
 }
@@ -218,7 +220,7 @@ function useTodayLabel(): string {
  * render its panel inside the same chrome.
  */
 export function MessagePreviewShell({
-  botName = 'ReFx Assistant',
+  botName = BRAND.name,
   botAvatarUrl,
   children,
 }: {
@@ -236,7 +238,10 @@ export function MessagePreviewShell({
         ) : (
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#3d95ff,#005ad1)' }}
+            style={{
+              background:
+                'linear-gradient(135deg,var(--color-brand-bright),var(--color-brand-strong))',
+            }}
           >
             {initial}
           </div>
@@ -258,9 +263,10 @@ export function MessagePreviewShell({
 
 /** The embed card itself (colored left bar + fields), without the message frame. */
 export function DiscordEmbedCard({ spec }: { spec: EmbedSpec }) {
-  const accent = spec.color && /^#?[0-9a-fA-F]{6}$/.test(spec.color)
-    ? `#${spec.color.replace('#', '')}`
-    : DEFAULT_COLOR;
+  const accent =
+    spec.color && /^#?[0-9a-fA-F]{6}$/.test(spec.color)
+      ? `#${spec.color.replace('#', '')}`
+      : DEFAULT_COLOR;
   return (
     <div
       className="max-w-[440px] rounded-[4px] bg-[#2b2d31] px-3 py-2.5"
@@ -271,7 +277,11 @@ export function DiscordEmbedCard({ spec }: { spec: EmbedSpec }) {
           {spec.author?.name && (
             <div className="mb-1.5 flex items-center gap-1.5">
               {spec.author.iconUrl && (
-                <img src={spec.author.iconUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+                <img
+                  src={spec.author.iconUrl}
+                  alt=""
+                  className="h-5 w-5 rounded-full object-cover"
+                />
               )}
               <span className="text-xs font-semibold text-white">{spec.author.name}</span>
             </div>
@@ -307,7 +317,11 @@ export function DiscordEmbedCard({ spec }: { spec: EmbedSpec }) {
           {(spec.footer || spec.timestamp) && (
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#dbdee1]/60">
               {spec.footerIconUrl && spec.footer && (
-                <img src={spec.footerIconUrl} alt="" className="h-4 w-4 rounded-full object-cover" />
+                <img
+                  src={spec.footerIconUrl}
+                  alt=""
+                  className="h-4 w-4 rounded-full object-cover"
+                />
               )}
               {spec.footer && <span>{spec.footer}</span>}
               {spec.footer && spec.timestamp && <span>•</span>}
@@ -627,7 +641,9 @@ export function EmbedBuilder({
               className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white"
             >
               <Code2 className="h-4 w-4" /> {showJson ? 'Hide JSON' : 'Import / export JSON'}
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showJson ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${showJson ? 'rotate-180' : ''}`}
+              />
             </button>
           </div>
 

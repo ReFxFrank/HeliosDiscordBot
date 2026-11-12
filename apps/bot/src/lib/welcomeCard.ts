@@ -1,3 +1,4 @@
+import { BRAND } from '@refx/shared';
 import { createCanvas, loadImage, type Image, type SKRSContext2D } from '@napi-rs/canvas';
 import { logger } from '../logger';
 import { ensureFonts, FONT_BOLD, FONT_REGULAR } from './canvasFonts';
@@ -12,7 +13,7 @@ import { safeFetchBuffer } from './safeFetch';
 
 const WIDTH = 1024;
 const HEIGHT = 320;
-const ACCENT = '#0072ff';
+const ACCENT = BRAND.colorHex;
 const TEXT = '#ffffff';
 const MUTED = '#c2cde0';
 
@@ -105,7 +106,7 @@ export async function renderWelcomeCard(input: WelcomeCardInput): Promise<Buffer
     gradient.addColorStop(1, '#060a14');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = 'rgba(0, 114, 255, 0.18)';
+    ctx.fillStyle = `${BRAND.colorHex}2e`;
     ctx.beginPath();
     ctx.arc(WIDTH / 2, -40, 260, 0, Math.PI * 2);
     ctx.fill();

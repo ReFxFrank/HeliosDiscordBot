@@ -6,6 +6,7 @@ export * from './i18n';
 export * from './leveling';
 export * from './roles';
 export * from './schedule';
+export * from './social';
 export * from './embed';
 export * from './polls';
 export * from './config';

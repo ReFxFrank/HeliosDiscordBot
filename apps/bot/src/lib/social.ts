@@ -4,6 +4,7 @@
  * Twitch needs an app token from TWITCH_CLIENT_ID/SECRET. Each fetcher returns
  * items newest-first; the poller dedups against the stored lastItemId.
  */
+import { BRAND } from '@refx/shared';
 import { safeFetchText } from './safeFetch';
 
 export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'reddit', 'bluesky', 'rss'] as const;
@@ -21,7 +22,7 @@ interface TwitchEnv {
   TWITCH_CLIENT_SECRET?: string;
 }
 
-const USER_AGENT = 'ReFxAssistant/1.0 (ReFx Roleplay Discord bot)';
+const USER_AGENT = `${BRAND.name.replace(/[^A-Za-z0-9]/g, '')}/1.0 (Discord bot)`;
 const MAX_ITEMS = 15;
 
 export function isSocialPlatform(value: string): value is SocialPlatform {

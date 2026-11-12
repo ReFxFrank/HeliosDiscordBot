@@ -34,6 +34,8 @@ export async function loadCommands(): Promise<Map<string, Command>> {
       logger.warn({ file }, 'Skipping file without a valid command default export');
       continue;
     }
+    // Not offered by this instance (e.g. FiveM commands on a community bot).
+    if (command.available && !command.available()) continue;
     if (commands.has(command.data.name)) {
       logger.warn({ name: command.data.name, file }, 'Duplicate command name; overwriting');
     }
