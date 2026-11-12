@@ -598,20 +598,34 @@ enum TicketStatus {
   CLOSED
 }
 
-/// A support ticket (§8 Tickets). Backed by a private channel; closed by a
-/// user/command or the durable `ticketAutoClose` job after inactivity. The
-/// channel is deleted on close after a transcript is archived.
+/// A support ticket (§8 Tickets). Backed by a private channel. Closing (by
+/// staff, a command, or the durable `ticketAutoClose` job after inactivity)
+/// locks the channel and archives a transcript; the channel stays until staff
+/// delete it (`deletedAt`) or reopen the ticket.
 model Ticket {
-  id             String       @id @default(cuid())
-  guildId        String
-  channelId      String       @unique
-  number         Int
-  openerId       String
-  status         TicketStatus @default(OPEN)
-  closedById     String?
-  closedAt       DateTime?
-  lastActivityAt DateTime     @default(now())
-  createdAt      DateTime     @default(now())
+  id               String       @id @default(cuid())
+  guildId          String
+  channelId        String       @unique
+  number           Int
+  openerId         String
+  status           TicketStatus @default(OPEN)
+  /// Ticket type id from the Tickets config (null = the built-in ticket).
+  typeId           String?
+  /// The type's label when the ticket was opened, kept for logs after a rename.
+  typeLabel        String?
+  /// Staff member handling the ticket.
+  claimedById      String?
+  /// Answers to the opening questions: [{ question, answer }].
+  answers          Json?
+  /// The first message in the channel, which carries the Close / Claim buttons.
+  controlMessageId String?
+  closedById       String?
+  closedAt         DateTime?
+  closeReason      String?
+  /// When the channel was deleted. Null on a closed ticket = locked, still there.
+  deletedAt        DateTime?
+  lastActivityAt   DateTime     @default(now())
+  createdAt        DateTime     @default(now())
 
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 

@@ -25,8 +25,8 @@ export default async function TicketsConfigPage({ params }: { params: Promise<{ 
       <div>
         <h2 className="text-lg font-semibold text-white/90">Tickets</h2>
         <p className="text-sm text-white/50">
-          Private support channels with transcripts and inactivity auto-close.{' '}
-          <span className="font-mono text-white/40">{openCount} open</span>
+          Private support channels: ticket types, opening questions, claiming, transcripts and
+          auto-close. <span className="font-mono text-white/40">{openCount} open</span>
         </p>
       </div>
       <TicketsForm guildId={id} initial={initial} roles={roles} channels={channels} />

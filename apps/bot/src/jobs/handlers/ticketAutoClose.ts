@@ -19,7 +19,12 @@ export async function handleTicketAutoClose(
   const thresholdMs = config.autoCloseHours * HOUR_MS;
   const idleMs = Date.now() - ticket.lastActivityAt.getTime();
   if (idleMs >= thresholdMs - 1000) {
-    await closeTicket(ticket.channelId, ctx.client.user?.id ?? ticket.openerId, ctx, 'inactivity');
+    await closeTicket(
+      ticket.channelId,
+      ctx.client.user?.id ?? ticket.openerId,
+      ctx,
+      `No activity for ${config.autoCloseHours} hours.`,
+    );
   } else {
     // Activity reset the clock since this job was armed — re-arm for what's left.
     await ctx.jobs.schedule(

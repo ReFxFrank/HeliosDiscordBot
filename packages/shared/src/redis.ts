@@ -92,6 +92,8 @@ export interface ScheduledMessagePayload {
 
 export interface DeployTicketPanelPayload {
   channelId: string;
+  /** Set when the dashboard waits for the outcome (see `runLiveCommand`). */
+  requestId?: string;
 }
 
 export interface DeployVerifyPanelPayload {

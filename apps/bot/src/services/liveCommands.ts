@@ -27,7 +27,7 @@ import { redis, subscriber } from './redis';
 import { deployRolePanel } from '../modules/rolePanelDeploy';
 import { endGiveaway, rerollGiveaway } from '../modules/giveaway';
 import { armScheduledMessage } from '../modules/scheduledMessages';
-import { autoSetupTickets, buildTicketPanelMessage, getTicketsConfig } from '../modules/tickets';
+import { autoSetupTickets, deployTicketPanel } from '../modules/tickets';
 import { buildVerificationPanel } from '../modules/verification';
 import {
   buildApplyPanelMessage,
@@ -128,10 +128,7 @@ export class LiveCommandService {
         );
         return;
       case 'DEPLOY_TICKET_PANEL':
-        await this.deployTicketPanel(
-          message.guildId,
-          (message.payload as DeployTicketPanelPayload).channelId,
-        );
+        await this.deployTicketPanel(message.guildId, message.payload as DeployTicketPanelPayload);
         return;
       case 'SETUP_TICKETS':
         // Zero-config bootstrap when the module is enabled unconfigured.
@@ -270,18 +267,31 @@ export class LiveCommandService {
     }
   }
 
-  private async deployTicketPanel(guildId: string, channelId: string): Promise<void> {
+  /** Post or update the ticket panel; reports back when the dashboard is waiting. */
+  private async deployTicketPanel(
+    guildId: string,
+    payload: DeployTicketPanelPayload,
+  ): Promise<void> {
     const guild = this.client.guilds.cache.get(guildId);
-    const channel =
-      guild?.channels.cache.get(channelId) ??
-      (await guild?.channels.fetch(channelId).catch(() => null));
-    if (!channel || !channel.isTextBased() || channel.isDMBased()) return;
-    const config = await getTicketsConfig(guildId);
-    await channel
-      .send(buildTicketPanelMessage(config))
-      .catch((err: unknown) =>
-        this.logger.warn({ err, guildId, channelId }, 'Deploy ticket panel failed'),
-      );
+    let result: LiveCommandResult;
+    try {
+      result = guild
+        ? await deployTicketPanel(guild, payload.channelId, this.logger)
+        : { ok: false, error: "I'm not in that server any more." };
+    } catch (err) {
+      this.logger.error({ err, guildId }, 'Deploy ticket panel crashed');
+      result = { ok: false, error: 'The bot hit an unexpected error posting the panel.' };
+    }
+    if (payload.requestId) {
+      await redis
+        .set(
+          liveResultKey(payload.requestId),
+          JSON.stringify(result),
+          'EX',
+          LIVE_RESULT_TTL_SECONDS,
+        )
+        .catch(() => undefined);
+    }
   }
 
   private async deployVerifyPanel(guildId: string, channelId: string): Promise<void> {
