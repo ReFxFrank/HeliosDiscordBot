@@ -1,9 +1,15 @@
 import { type Client } from 'discord.js';
 import { prisma } from '@refx/database';
 import { QUEUE_NAMES } from '@refx/jobs';
+import { renderSocialMessage, type SocialMessageVars } from '@refx/shared';
 import { env } from '../env';
 import { brandedEmbed } from '../lib/embeds';
-import { fetchLatest, type SocialItem, type SocialPlatform } from '../lib/social';
+import { fetchLatest, fetchTwitchState, type SocialItem, type SocialPlatform } from '../lib/social';
+import {
+  buildTwitchEndedEmbed,
+  buildTwitchLiveEmbed,
+  buildTwitchWatchRow,
+} from '../lib/twitchAlert';
 import type { JobService } from '../services/jobs';
 import type { Logger } from '../logger';
 
@@ -81,20 +87,16 @@ export async function pollSubscription(subscriptionId: string, deps: PollDeps): 
   if (!cfg?.enabled) return;
 
   try {
+    // Twitch is a live/offline STATE, not a feed, and has its own alert lifecycle.
+    if (sub.platform === 'twitch') {
+      await pollTwitch(deps, sub);
+      return;
+    }
+
     const items = await fetchLatest(sub.platform as SocialPlatform, sub.target, env);
     if (items.length === 0) return;
     const newest = items[0];
     if (!newest) return;
-
-    // Twitch is a live/offline STATE, not a feed: post when the id (started_at)
-    // changes — a genuine new go-live, including after an offline gap.
-    if (sub.platform === 'twitch') {
-      if (newest.id !== sub.lastItemId) {
-        await postItems(deps, sub, [newest]);
-        await updateLastItem(sub.id, newest.id);
-      }
-      return;
-    }
 
     // Feed platforms (youtube/reddit/rss): dedup against lastItemId.
     if (!sub.lastItemId) {
@@ -125,17 +127,40 @@ async function updateLastItem(id: string, lastItemId: string): Promise<void> {
   await prisma.socialSubscription.update({ where: { id }, data: { lastItemId } });
 }
 
+type Subscription = NonNullable<Awaited<ReturnType<typeof prisma.socialSubscription.findUnique>>>;
+
+async function alertChannel(client: Client, channelId: string) {
+  const channel =
+    client.channels.cache.get(channelId) ??
+    (await client.channels.fetch(channelId).catch(() => null));
+  return channel?.isTextBased() && !channel.isDMBased() ? channel : null;
+}
+
+/**
+ * The text sent above an alert's embed: the custom message when one is set
+ * (with its placeholders filled), otherwise just the role ping. Only the
+ * configured role can ever be pinged, whatever the message contains.
+ */
+function alertContent(
+  sub: Pick<Subscription, 'message' | 'mentionRoleId'>,
+  vars: Omit<SocialMessageVars, 'role'>,
+) {
+  const role = sub.mentionRoleId ? `<@&${sub.mentionRoleId}>` : '';
+  const content = sub.message ? renderSocialMessage(sub.message, { ...vars, role }) : role;
+  return {
+    content: content || undefined,
+    allowedMentions: { parse: [], roles: sub.mentionRoleId ? [sub.mentionRoleId] : [] },
+  };
+}
+
 async function postItems(
   deps: PollDeps,
-  sub: { channelId: string; mentionRoleId: string | null; platform: string },
+  sub: Subscription,
   itemsOldestFirst: SocialItem[],
 ): Promise<void> {
-  const channel =
-    deps.client.channels.cache.get(sub.channelId) ??
-    (await deps.client.channels.fetch(sub.channelId).catch(() => null));
-  if (!channel?.isTextBased() || channel.isDMBased()) return;
+  const channel = await alertChannel(deps.client, sub.channelId);
+  if (!channel) return;
 
-  const mention = sub.mentionRoleId ? `<@&${sub.mentionRoleId}>` : undefined;
   for (const item of itemsOldestFirst) {
     const embed = brandedEmbed({ kind: 'info' })
       .setTitle(item.title.slice(0, 256))
@@ -145,12 +170,113 @@ async function postItems(
     if (item.url) embed.setURL(item.url);
     await channel
       .send({
-        content: mention,
+        ...alertContent(sub, {
+          streamer: item.author ?? '',
+          title: item.title,
+          game: '',
+          url: item.url,
+        }),
         embeds: [embed],
-        allowedMentions: { roles: sub.mentionRoleId ? [sub.mentionRoleId] : [] },
       })
       .catch(() => undefined);
   }
+}
+
+// ── Twitch: one alert message per broadcast ─────────────────────────────────
+
+/** Consecutive "offline" polls before a live alert is closed (Twitch's API
+ *  briefly reports nothing during ad breaks and reconnects). */
+const OFFLINE_POLLS_BEFORE_END = 2;
+const offlinePolls = new Map<string, number>();
+
+/** Give or take the live role (needs both a role and the streamer's member). */
+async function setLiveRole(deps: PollDeps, sub: Subscription, live: boolean): Promise<void> {
+  if (!sub.liveRoleId || !sub.liveUserId) return;
+  const guild = deps.client.guilds.cache.get(sub.guildId);
+  const member = await guild?.members.fetch(sub.liveUserId).catch(() => null);
+  if (!member) return;
+  const change = live
+    ? member.roles.add(sub.liveRoleId, 'Twitch stream went live')
+    : member.roles.remove(sub.liveRoleId, 'Twitch stream ended');
+  await change.catch((err: unknown) =>
+    deps.logger.warn({ err, subscriptionId: sub.id }, 'Live role update failed'),
+  );
+}
+
+/** Rewrite the stream's alert into its "ended" form and stop tracking it. */
+async function endTwitchAlert(deps: PollDeps, sub: Subscription): Promise<void> {
+  offlinePolls.delete(sub.id);
+  if (sub.liveMessageId) {
+    const channel = await alertChannel(deps.client, sub.channelId);
+    const message = await channel?.messages.fetch(sub.liveMessageId).catch(() => null);
+    const live = message?.embeds[0];
+    if (message && live) {
+      await message
+        .edit({ embeds: [buildTwitchEndedEmbed(live.toJSON(), sub.lastItemId)] })
+        .catch(() => undefined);
+    }
+  }
+  await setLiveRole(deps, sub, false);
+  await prisma.socialSubscription.update({ where: { id: sub.id }, data: { liveMessageId: null } });
+}
+
+async function pollTwitch(deps: PollDeps, sub: Subscription): Promise<void> {
+  const state = await fetchTwitchState(sub.target, env);
+  // Couldn't reach Twitch: change nothing, try again next poll.
+  if (state.status === 'unknown') return;
+
+  if (state.status === 'offline') {
+    if (!sub.liveMessageId) return;
+    const misses = (offlinePolls.get(sub.id) ?? 0) + 1;
+    if (misses < OFFLINE_POLLS_BEFORE_END) offlinePolls.set(sub.id, misses);
+    else await endTwitchAlert(deps, sub);
+    return;
+  }
+
+  offlinePolls.delete(sub.id);
+  const { stream } = state;
+  const channel = await alertChannel(deps.client, sub.channelId);
+
+  // Same broadcast as last poll: refresh the preview frame and viewer count.
+  if (stream.startedAt === sub.lastItemId) {
+    if (!sub.liveMessageId || !channel) return;
+    const message = await channel.messages.fetch(sub.liveMessageId).catch(() => null);
+    if (!message) {
+      // Staff deleted the alert; stop editing it (the role still clears at the end).
+      await prisma.socialSubscription.update({
+        where: { id: sub.id },
+        data: { liveMessageId: null },
+      });
+      return;
+    }
+    await message.edit({ embeds: [buildTwitchLiveEmbed(stream)] }).catch(() => undefined);
+    return;
+  }
+
+  // A new broadcast. Close the previous alert first if it never saw "offline".
+  if (sub.liveMessageId) await endTwitchAlert(deps, sub);
+  const sent = channel
+    ? await channel
+        .send({
+          ...alertContent(sub, {
+            streamer: stream.userName,
+            title: stream.title,
+            game: stream.game,
+            url: stream.url,
+          }),
+          embeds: [buildTwitchLiveEmbed(stream)],
+          components: [buildTwitchWatchRow(stream.url)],
+        })
+        .catch((err: unknown) => {
+          deps.logger.warn({ err, subscriptionId: sub.id }, 'Twitch alert post failed');
+          return null;
+        })
+    : null;
+  await prisma.socialSubscription.update({
+    where: { id: sub.id },
+    data: { lastItemId: stream.startedAt, liveMessageId: sent?.id ?? null },
+  });
+  await setLiveRole(deps, sub, true);
 }
 
 /** Re-arm every subscription's poll scheduler on startup (idempotent upsert). */

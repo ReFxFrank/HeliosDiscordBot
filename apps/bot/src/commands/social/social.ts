@@ -3,6 +3,7 @@ import { prisma } from '@refx/database';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireUserPermissions } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
+import { SOCIAL_MESSAGE_MAX } from '@refx/shared';
 import { env } from '../../env';
 import { isSafePublicUrl, isSocialPlatform, platformAvailable } from '../../lib/social';
 import { baselineSubscription, cancelSocialPoll, scheduleSocialPoll } from '../../modules/social';
@@ -44,7 +45,19 @@ const command: Command = {
             .setDescription('Where to post (defaults to here)')
             .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement),
         )
-        .addRoleOption((o) => o.setName('mention').setDescription('Role to ping on new items')),
+        .addRoleOption((o) => o.setName('mention').setDescription('Role to ping on new items'))
+        .addStringOption((o) =>
+          o
+            .setName('message')
+            .setDescription('Custom text: {streamer} {title} {game} {url} {role}')
+            .setMaxLength(SOCIAL_MESSAGE_MAX),
+        )
+        .addUserOption((o) =>
+          o.setName('streamer').setDescription('Twitch: the streamer’s Discord account'),
+        )
+        .addRoleOption((o) =>
+          o.setName('live_role').setDescription('Twitch: role the streamer holds while live'),
+        ),
     )
     .addSubcommand((s) => s.setName('list').setDescription("List this server's alerts."))
     .addSubcommand((s) =>
@@ -158,6 +171,20 @@ const command: Command = {
     }
     const channelId = interaction.options.getChannel('channel')?.id ?? interaction.channelId;
     const mention = interaction.options.getRole('mention');
+    const message = interaction.options.getString('message')?.trim() || null;
+    const streamer = interaction.options.getUser('streamer');
+    const liveRole = interaction.options.getRole('live_role');
+    if (Boolean(streamer) !== Boolean(liveRole) || (liveRole && platform !== 'twitch')) {
+      await interaction.reply({
+        embeds: [
+          errorEmbed(
+            'The live role needs both `streamer` and `live_role`, and only works for Twitch alerts.',
+          ),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     const count = await prisma.socialSubscription.count({
       where: { guildId: interaction.guildId },
@@ -178,6 +205,9 @@ const command: Command = {
         target,
         channelId,
         mentionRoleId: mention?.id ?? null,
+        message,
+        liveRoleId: liveRole?.id ?? null,
+        liveUserId: streamer?.id ?? null,
       },
     });
     // Baseline to the current latest so we don't dump the backlog, then start polling.

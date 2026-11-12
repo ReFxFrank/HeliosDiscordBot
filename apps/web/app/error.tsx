@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useStalePageReload } from '../lib/use-stale-page-reload';
 
-export default function AppError({ reset }: { error: Error; reset: () => void }) {
+export default function AppError({ error, reset }: { error: Error; reset: () => void }) {
+  // A page left open across a dashboard update: one reload fixes it.
+  const reloading = useStalePageReload(error);
+  if (reloading) return null;
   return (
     <main className="mx-auto mt-16 max-w-md px-6">
       <div className="glass rounded-2xl p-8 text-center">

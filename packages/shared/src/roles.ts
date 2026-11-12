@@ -32,3 +32,46 @@ export const rolePanelInputSchema = z.object({
     }),
 });
 export type RolePanelInput = z.infer<typeof rolePanelInputSchema>;
+
+/**
+ * Why a panel draft can't be saved, in words an admin can act on (empty when it
+ * is valid). Used by the dashboard form and its server action so both say the
+ * same thing instead of a bare "could not save".
+ */
+export function rolePanelProblems(input: unknown): string[] {
+  const result = rolePanelInputSchema.safeParse(input);
+  if (result.success) return [];
+  const problems = new Set<string>();
+  for (const issue of result.error.issues) {
+    const [field, index, part] = issue.path;
+    const row = typeof index === 'number' ? `Role ${index + 1}` : 'A role';
+    if (field === 'title') {
+      problems.add(
+        issue.code === 'too_big'
+          ? 'The title is too long (256 characters at most).'
+          : 'Give the panel a title.',
+      );
+    } else if (field === 'description') {
+      problems.add('The description is too long (2,000 characters at most).');
+    } else if (field === 'options' && part === 'label') {
+      problems.add(
+        issue.code === 'too_big'
+          ? `${row}: the label is too long (80 characters at most).`
+          : `${row}: add a label.`,
+      );
+    } else if (field === 'options' && part === 'emoji') {
+      problems.add(`${row}: the emoji is too long. Use one emoji, or <:name:id> for a custom one.`);
+    } else if (field === 'options' && part === 'description') {
+      problems.add(`${row}: the dropdown description is too long (100 characters at most).`);
+    } else if (field === 'options' && part === 'roleId') {
+      problems.add(`${row}: pick a role.`);
+    } else if (field === 'options' && issue.code === 'too_small') {
+      problems.add('Add at least one role. Each row needs both a role and a label.');
+    } else if (field === 'options' && issue.code === 'too_big') {
+      problems.add('A panel can hold 25 roles at most.');
+    } else {
+      problems.add(issue.message);
+    }
+  }
+  return [...problems];
+}

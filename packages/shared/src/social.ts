@@ -73,20 +73,97 @@ export function normalizeSocialTarget(platform: SocialPlatform, raw: string): st
   return value.replace(/^@/, '');
 }
 
+const snowflake = z.string().regex(/^\d{17,20}$/);
+
+/** Longest custom alert text (it is sent as the message above the embed). */
+export const SOCIAL_MESSAGE_MAX = 500;
+
+/** Placeholders a custom alert message can use. */
+export const SOCIAL_MESSAGE_PLACEHOLDERS = [
+  '{streamer}',
+  '{title}',
+  '{game}',
+  '{url}',
+  '{role}',
+] as const;
+
+export interface SocialMessageVars {
+  /** Channel / author name. */
+  streamer: string;
+  title: string;
+  /** Twitch category; empty for other platforms. */
+  game: string;
+  url: string;
+  /** The ping role as a mention, or '' when none is set. */
+  role: string;
+}
+
+/**
+ * Fill a custom alert message. Unknown `{tokens}` are left as typed; the result
+ * is trimmed and capped at Discord's message limit.
+ */
+export function renderSocialMessage(template: string, vars: SocialMessageVars): string {
+  const values: Record<string, string> = {
+    '{streamer}': vars.streamer,
+    '{title}': vars.title,
+    '{game}': vars.game,
+    '{url}': vars.url,
+    '{role}': vars.role,
+  };
+  return template
+    .replace(/\{[a-z]+\}/g, (token) => values[token] ?? token)
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
+    .slice(0, 2000);
+}
+
+/**
+ * A Twitch stream preview at 1280x720. Twitch serves the same URL for a whole
+ * broadcast and Discord caches images by URL, so `bust` (e.g. a timestamp)
+ * forces a fresh frame each time the alert is updated.
+ */
+export function twitchPreviewUrl(template: string, bust: number | string): string {
+  if (!template) return '';
+  const url = template.replace('{width}', '1280').replace('{height}', '720');
+  return `${url}${url.includes('?') ? '&' : '?'}t=${bust}`;
+}
+
+/** "2h 05m" / "47m" for a stream's length. */
+export function formatStreamDuration(ms: number): string {
+  const minutes = Math.max(0, Math.round(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return hours > 0 ? `${hours}h ${String(rest).padStart(2, '0')}m` : `${rest}m`;
+}
+
 export const socialSubscriptionInputSchema = z
   .object({
     platform: z.enum(SOCIAL_PLATFORMS),
     target: z.string().min(1).max(500),
     channelId: z.string().regex(/^\d{17,20}$/, 'Pick a channel.'),
-    mentionRoleId: z
+    mentionRoleId: snowflake.nullable().default(null),
+    /** Custom text sent with the alert; null uses the plain role ping. */
+    message: z
       .string()
-      .regex(/^\d{17,20}$/)
+      .max(SOCIAL_MESSAGE_MAX)
       .nullable()
-      .default(null),
+      .default(null)
+      .transform((value) => value?.trim() || null),
+    /** Twitch only: role held by `liveUserId` while the stream is live. */
+    liveRoleId: snowflake.nullable().default(null),
+    liveUserId: snowflake.nullable().default(null),
   })
   .transform((input) => ({ ...input, target: normalizeSocialTarget(input.platform, input.target) }))
   .refine((input) => TARGET_RULES[input.platform](input.target), {
     message: 'That doesn’t look right for this platform.',
     path: ['target'],
+  })
+  .refine((input) => Boolean(input.liveRoleId) === Boolean(input.liveUserId), {
+    message: 'Set both the live role and the streamer, or neither.',
+    path: ['liveRoleId'],
+  })
+  .refine((input) => input.platform === 'twitch' || !input.liveRoleId, {
+    message: 'The live role only works for Twitch alerts.',
+    path: ['liveRoleId'],
   });
 export type SocialSubscriptionInput = z.input<typeof socialSubscriptionInputSchema>;

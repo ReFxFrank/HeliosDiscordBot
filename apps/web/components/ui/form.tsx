@@ -30,12 +30,15 @@ export function SaveBar({
   onSave,
   savedMessage = 'Saved — live on the bot.',
   label = 'Save changes',
+  errorMessage = 'Could not save.',
 }: {
   pending: boolean;
   status: SaveStatus;
   onSave: () => void;
   savedMessage?: string;
   label?: string;
+  /** Shown when `status` is 'error'; say what went wrong when you know. */
+  errorMessage?: string;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -51,7 +54,7 @@ export function SaveBar({
         <span className="text-sm text-[var(--color-success)]">{savedMessage}</span>
       )}
       {status === 'error' && (
-        <span className="text-sm text-[var(--color-danger)]">Could not save.</span>
+        <span className="text-sm text-[var(--color-danger)]">{errorMessage}</span>
       )}
     </div>
   );

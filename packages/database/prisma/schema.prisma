@@ -308,6 +308,14 @@ model SocialSubscription {
   mentionRoleId String?
   /// Id of the most recent item already posted (dedup).
   lastItemId    String?
+  /// Custom alert text sent with the embed ({streamer} {title} {game} {url} {role}).
+  message       String?
+  /// Twitch: the alert message for the stream currently live, edited while it
+  /// runs and marked ended afterwards. Null when offline.
+  liveMessageId String?
+  /// Twitch: role given to `liveUserId` while the stream is live (both or neither).
+  liveRoleId    String?
+  liveUserId    String?
   createdAt     DateTime @default(now())
 
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)

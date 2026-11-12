@@ -101,6 +101,8 @@ services:
         NEXT_PUBLIC_BRAND_FOOTER: ${BRAND_FOOTER:-}
         NEXT_PUBLIC_BRAND_LOGO: ${BRAND_LOGO:-}
         NEXT_PUBLIC_FEATURE_FIVEM: ${FEATURE_FIVEM:-}
+        # Keeps dashboard buttons working on pages left open across a redeploy.
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}
     restart: unless-stopped
     profiles: ['apps']
     env_file: .env

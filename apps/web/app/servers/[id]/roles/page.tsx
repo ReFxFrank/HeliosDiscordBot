@@ -20,11 +20,12 @@ export default async function RolesPage({ params }: { params: Promise<{ id: stri
   const panels: PanelSummary[] = rows.map((panel) => ({
     id: panel.id,
     title: panel.title,
+    description: panel.description,
     mode: panel.mode,
     type: panel.type,
     channelId: panel.channelId,
     messageId: panel.messageId,
-    optionCount: (panel.options as RolePanelOption[]).length,
+    options: panel.options as RolePanelOption[],
   }));
 
   return (
@@ -32,7 +33,8 @@ export default async function RolesPage({ params }: { params: Promise<{ id: stri
       <div>
         <h2 className="text-lg font-semibold text-white/90">Self-assignable roles</h2>
         <p className="text-sm text-white/50">
-          Button and select-menu role panels. Creating a panel deploys it to the channel.
+          Button and select-menu role panels. Creating a panel posts it to the channel; editing one
+          updates the posted message in place.
         </p>
       </div>
       <RolePanels guildId={id} panels={panels} roles={roles} channels={channels} />

@@ -37,7 +37,8 @@ export async function createSocialSubscription(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Check the alert details.' };
   }
-  const { platform, target, channelId, mentionRoleId } = parsed.data;
+  const { platform, target, channelId, mentionRoleId, message, liveRoleId, liveUserId } =
+    parsed.data;
   if (platform === 'twitch' && !twitchConfigured()) {
     return {
       ok: false,
@@ -65,7 +66,7 @@ export async function createSocialSubscription(
 
   await prisma.guild.upsert({ where: { id: guildId }, update: {}, create: { id: guildId } });
   const created = await prisma.socialSubscription.create({
-    data: { guildId, platform, target, channelId, mentionRoleId },
+    data: { guildId, platform, target, channelId, mentionRoleId, message, liveRoleId, liveUserId },
   });
   await writeAuditLog({
     guildId,

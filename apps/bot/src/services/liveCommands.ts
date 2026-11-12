@@ -3,7 +3,9 @@ import { prisma } from '@refx/database';
 import { QUEUE_NAMES } from '@refx/jobs';
 import {
   embedSpecSchema,
+  LIVE_RESULT_TTL_SECONDS,
   REDIS_CHANNELS,
+  liveResultKey,
   type DeletePanelPayload,
   type DeployEmbedPayload,
   type DeployPanelPayload,
@@ -16,13 +18,13 @@ import {
   type ApplyServerTemplatePayload,
   type LockdownStartPayload,
   type LiveCommandMessage,
-  type RolePanelOption,
+  type LiveCommandResult,
   type ScheduledMessagePayload,
   type SocialSubscriptionPayload,
 } from '@refx/shared';
 import type { Logger } from '../logger';
-import { subscriber } from './redis';
-import { buildPanelMessage } from '../modules/roles';
+import { redis, subscriber } from './redis';
+import { deployRolePanel } from '../modules/rolePanelDeploy';
 import { endGiveaway, rerollGiveaway } from '../modules/giveaway';
 import { armScheduledMessage } from '../modules/scheduledMessages';
 import { autoSetupTickets, buildTicketPanelMessage, getTicketsConfig } from '../modules/tickets';
@@ -205,40 +207,27 @@ export class LiveCommandService {
     }
   }
 
+  /**
+   * Post a role panel and, when the dashboard is waiting (`requestId`), report
+   * the outcome so a failure reaches the admin with its reason.
+   */
   private async deployPanel(guildId: string, payload: DeployPanelPayload): Promise<void> {
-    const panel = await prisma.reactionRolePanel.findUnique({ where: { id: payload.panelId } });
-    if (!panel || panel.guildId !== guildId || !panel.channelId) return;
-
-    const guild = this.client.guilds.cache.get(guildId);
-    const channel =
-      guild?.channels.cache.get(panel.channelId) ??
-      (await guild?.channels.fetch(panel.channelId).catch(() => null));
-    if (!channel || !channel.isTextBased() || channel.isDMBased()) return;
-
-    const messageBody = buildPanelMessage({
-      id: panel.id,
-      title: panel.title,
-      description: panel.description,
-      mode: panel.mode,
-      type: panel.type,
-      options: panel.options as RolePanelOption[],
-    });
-
+    let result: LiveCommandResult;
     try {
-      if (panel.messageId) {
-        const existing = await channel.messages.fetch(panel.messageId).catch(() => null);
-        if (existing) {
-          await existing.edit(messageBody);
-          return;
-        }
-      }
-      const sent = await channel.send(messageBody);
-      await prisma.reactionRolePanel.update({
-        where: { id: panel.id },
-        data: { messageId: sent.id },
-      });
+      result = await deployRolePanel(this.client, this.logger, guildId, payload.panelId);
     } catch (err) {
-      this.logger.warn({ err, panelId: panel.id }, 'Deploy panel failed');
+      this.logger.error({ err, panelId: payload.panelId }, 'Deploy panel crashed');
+      result = { ok: false, error: 'The bot hit an unexpected error posting the panel.' };
+    }
+    if (payload.requestId) {
+      await redis
+        .set(
+          liveResultKey(payload.requestId),
+          JSON.stringify(result),
+          'EX',
+          LIVE_RESULT_TTL_SECONDS,
+        )
+        .catch(() => undefined);
     }
   }
 

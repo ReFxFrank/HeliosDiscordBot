@@ -221,7 +221,8 @@ function useTodayLabel(): string {
  */
 export function MessagePreviewShell({
   botName = BRAND.name,
-  botAvatarUrl,
+  // The instance logo doubles as the bot avatar in previews (letter tile when there is none).
+  botAvatarUrl = BRAND.logo || undefined,
   children,
 }: {
   botName?: string;

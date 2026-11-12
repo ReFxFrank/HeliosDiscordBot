@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   SOCIAL_MAX_PER_GUILD,
+  SOCIAL_MESSAGE_MAX,
+  SOCIAL_MESSAGE_PLACEHOLDERS,
   SOCIAL_PLATFORMS,
   SOCIAL_PLATFORM_LABELS,
   SOCIAL_TARGET_HINTS,
@@ -22,6 +24,11 @@ export interface SocialAlertSummary {
   target: string;
   channelId: string;
   mentionRoleId: string | null;
+  message: string | null;
+  liveRoleId: string | null;
+  liveUserId: string | null;
+  /** Twitch: an alert for a stream in progress is being kept up to date. */
+  live: boolean;
 }
 
 const emptyForm = {
@@ -29,6 +36,9 @@ const emptyForm = {
   target: '',
   channelId: '',
   mentionRoleId: '',
+  message: '',
+  liveRoleId: '',
+  liveUserId: '',
 };
 
 export function SocialAlerts({
@@ -54,6 +64,7 @@ export function SocialAlerts({
   const channelName = (id: string) => channels.find((c) => c.id === id)?.name ?? id;
   const roleName = (id: string) => roles.find((r) => r.id === id)?.name ?? id;
   const full = alerts.length >= SOCIAL_MAX_PER_GUILD;
+  const isTwitch = form.platform === 'twitch';
 
   function create(): void {
     const candidate = {
@@ -61,6 +72,9 @@ export function SocialAlerts({
       target: form.target,
       channelId: form.channelId,
       mentionRoleId: form.mentionRoleId || null,
+      message: form.message.trim() || null,
+      liveRoleId: (isTwitch && form.liveRoleId) || null,
+      liveUserId: (isTwitch && form.liveUserId.trim()) || null,
     };
     const parsed = socialSubscriptionInputSchema.safeParse(candidate);
     if (!parsed.success) {
@@ -139,6 +153,49 @@ export function SocialAlerts({
             />
           </Field>
         </div>
+        <Field
+          label="Custom message"
+          hint={`Optional. Sent above the alert instead of the plain role ping. Placeholders: ${SOCIAL_MESSAGE_PLACEHOLDERS.join(' ')}`}
+        >
+          <textarea
+            className={`${inputClass} min-h-20 resize-y`}
+            value={form.message}
+            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+            maxLength={SOCIAL_MESSAGE_MAX}
+            placeholder={
+              isTwitch
+                ? '{role} {streamer} is live playing {game}! {url}'
+                : '{role} New from {streamer}: {title}'
+            }
+          />
+        </Field>
+        {isTwitch ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Live role"
+              hint="Optional. Given to the streamer while live and removed when the stream ends."
+            >
+              <RoleSelect
+                roles={roles}
+                placeholder="None"
+                selected={form.liveRoleId ? [form.liveRoleId] : []}
+                onChange={(ids) => setForm((f) => ({ ...f, liveRoleId: ids[0] ?? '' }))}
+              />
+            </Field>
+            <Field
+              label="Streamer’s Discord user ID"
+              hint="Who gets the live role. Right-click their name in Discord → Copy User ID."
+            >
+              <input
+                className={`${inputClass} font-mono`}
+                value={form.liveUserId}
+                onChange={(e) => setForm((f) => ({ ...f, liveUserId: e.target.value }))}
+                inputMode="numeric"
+                maxLength={20}
+              />
+            </Field>
+          </div>
+        ) : null}
         {form.platform === 'twitch' && !twitchReady ? (
           <p className="text-sm text-[var(--color-warning)]">
             Twitch alerts need a Twitch developer app: set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET
@@ -173,10 +230,17 @@ export function SocialAlerts({
                 <p className="truncate font-medium text-white/90">
                   {SOCIAL_PLATFORM_LABELS[alert.platform] ?? alert.platform}
                   <span className="ml-2 font-mono text-white/60">{alert.target}</span>
+                  {alert.live ? (
+                    <span className="ml-2 rounded bg-[var(--color-danger)]/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-danger)]">
+                      Live
+                    </span>
+                  ) : null}
                 </p>
                 <p className="text-xs text-white/40">
                   #{channelName(alert.channelId)}
                   {alert.mentionRoleId ? ` · pings @${roleName(alert.mentionRoleId)}` : ''}
+                  {alert.message ? ' · custom message' : ''}
+                  {alert.liveRoleId ? ` · live role @${roleName(alert.liveRoleId)}` : ''}
                 </p>
               </div>
               <button

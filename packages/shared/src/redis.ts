@@ -51,7 +51,26 @@ export interface LiveCommandMessage<TPayload = unknown> {
 
 export interface DeployPanelPayload {
   panelId: string;
+  /** When set, the bot reports the outcome under `liveResultKey(requestId)`. */
+  requestId?: string;
 }
+
+/**
+ * Outcome of a live command the dashboard is waiting on. The bot writes it to
+ * Redis (short TTL) and the dashboard's server action polls for it, so a failed
+ * post can be shown to the admin with its reason instead of failing silently.
+ */
+export interface LiveCommandResult {
+  ok: boolean;
+  /** Why it failed, in words an admin can act on. */
+  error?: string;
+  /** It worked, but something needs attention (e.g. a role the bot can't assign). */
+  warnings?: string[];
+}
+
+export const liveResultKey = (requestId: string): string => `helios:result:${requestId}`;
+/** How long a result stays readable. */
+export const LIVE_RESULT_TTL_SECONDS = 60;
 
 export interface DeletePanelPayload {
   channelId: string;

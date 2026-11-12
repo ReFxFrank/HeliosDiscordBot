@@ -271,26 +271,103 @@ async function twitchAppToken(env: TwitchEnv): Promise<string | null> {
 }
 
 interface TwitchStreams {
-  data?: { id: string; title: string; user_name: string; user_login: string; started_at: string }[];
+  data?: {
+    id: string;
+    title: string;
+    user_name: string;
+    user_login: string;
+    started_at: string;
+    game_name?: string;
+    viewer_count?: number;
+    thumbnail_url?: string;
+  }[];
+}
+
+interface TwitchUsers {
+  data?: { login: string; profile_image_url?: string }[];
+}
+
+/** A stream that is live right now. */
+export interface TwitchStream {
+  /** Stable for one continuous broadcast (unlike the stream id, which can
+   *  rotate mid-stream), so a new value means a genuine new go-live. */
+  startedAt: string;
+  title: string;
+  userName: string;
+  userLogin: string;
+  url: string;
+  game: string;
+  viewers: number;
+  /** Preview template containing `{width}x{height}`. */
+  thumbnailUrl: string;
+  avatarUrl: string | null;
+}
+
+/**
+ * `unknown` means Twitch couldn't be reached or answered badly. The poller must
+ * not treat that as "went offline", or a blip would end a live alert.
+ */
+export type TwitchState =
+  { status: 'live'; stream: TwitchStream } | { status: 'offline' } | { status: 'unknown' };
+
+const AVATAR_TTL_MS = 6 * 60 * 60 * 1000;
+const twitchAvatars = new Map<string, { url: string | null; at: number }>();
+
+async function twitchAvatar(
+  login: string,
+  headers: Record<string, string>,
+): Promise<string | null> {
+  const cached = twitchAvatars.get(login);
+  if (cached && Date.now() - cached.at < AVATAR_TTL_MS) return cached.url;
+  const users = await fetchJson<TwitchUsers>(
+    `https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`,
+    headers,
+  );
+  if (!users) return cached?.url ?? null; // keep a stale avatar over none
+  const url = users.data?.[0]?.profile_image_url ?? null;
+  twitchAvatars.set(login, { url, at: Date.now() });
+  return url;
+}
+
+/** Whether a Twitch channel is live right now, with the stream's details. */
+export async function fetchTwitchState(login: string, env: TwitchEnv): Promise<TwitchState> {
+  const token = await twitchAppToken(env);
+  if (!token || !env.TWITCH_CLIENT_ID) return { status: 'unknown' };
+  const headers = { 'Client-Id': env.TWITCH_CLIENT_ID, Authorization: `Bearer ${token}` };
+  const streams = await fetchJson<TwitchStreams>(
+    `https://api.twitch.tv/helix/streams?user_login=${encodeURIComponent(login)}`,
+    headers,
+  );
+  if (!streams || !Array.isArray(streams.data)) return { status: 'unknown' };
+  const stream = streams.data[0];
+  if (!stream) return { status: 'offline' };
+  return {
+    status: 'live',
+    stream: {
+      startedAt: stream.started_at || stream.id,
+      title: stream.title,
+      userName: stream.user_name,
+      userLogin: stream.user_login,
+      url: `https://twitch.tv/${stream.user_login}`,
+      game: stream.game_name ?? '',
+      viewers: stream.viewer_count ?? 0,
+      thumbnailUrl: stream.thumbnail_url ?? '',
+      avatarUrl: await twitchAvatar(stream.user_login, headers),
+    },
+  };
 }
 
 async function fetchTwitch(login: string, env: TwitchEnv): Promise<SocialItem[]> {
-  const token = await twitchAppToken(env);
-  if (!token || !env.TWITCH_CLIENT_ID) return [];
-  const streams = await fetchJson<TwitchStreams>(
-    `https://api.twitch.tv/helix/streams?user_login=${encodeURIComponent(login)}`,
-    { 'Client-Id': env.TWITCH_CLIENT_ID, Authorization: `Bearer ${token}` },
-  );
-  const stream = streams?.data?.[0];
-  if (!stream) return []; // offline — the poller keeps lastItemId so it re-posts next go-live
+  const state = await fetchTwitchState(login, env);
+  // Offline (or unreachable): the poller keeps lastItemId, so the next go-live posts.
+  if (state.status !== 'live') return [];
+  const { stream } = state;
   return [
     {
-      // started_at is stable for a continuous broadcast (unlike stream.id, which
-      // can rotate mid-stream), so a new value == a genuine new go-live.
-      id: stream.started_at || stream.id,
-      title: `${stream.user_name} is live — ${stream.title}`,
-      url: `https://twitch.tv/${stream.user_login}`,
-      author: stream.user_name,
+      id: stream.startedAt,
+      title: `${stream.userName} is live — ${stream.title}`,
+      url: stream.url,
+      author: stream.userName,
     },
   ];
 }

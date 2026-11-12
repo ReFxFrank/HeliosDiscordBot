@@ -28,6 +28,13 @@ ENV NEXT_PUBLIC_BRAND_NAME=$NEXT_PUBLIC_BRAND_NAME \
     NEXT_PUBLIC_BRAND_LOGO=$NEXT_PUBLIC_BRAND_LOGO \
     NEXT_PUBLIC_FEATURE_FIVEM=$NEXT_PUBLIC_FEATURE_FIVEM
 
+# Next salts every Server Action id with this key and invents a new one per
+# build when it is unset, which breaks any dashboard page left open across a
+# redeploy ("Failed to find Server Action"). A fixed per-instance key keeps
+# the ids stable, so open pages keep working after an update.
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=
+ENV NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+
 COPY . .
 RUN pnpm install --frozen-lockfile \
   && pnpm --filter @refx/database generate \
