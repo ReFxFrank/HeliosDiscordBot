@@ -1,4 +1,10 @@
-import { AttachmentBuilder, type GuildMember, type PartialGuildMember } from 'discord.js';
+import {
+  AttachmentBuilder,
+  EmbedBuilder,
+  type GuildMember,
+  type PartialGuildMember,
+} from 'discord.js';
+import { BRAND } from '@refx/shared';
 import { applyPlaceholders } from '../lib/placeholders';
 import { renderWelcomeCard } from '../lib/welcomeCard';
 import { buildEmbedFromSpec } from '../lib/embedSpec';
@@ -53,12 +59,18 @@ async function sendWelcome(member: GuildMember, ctx: BotContext): Promise<void> 
         // The card renders inside the embed rather than as a loose attachment.
         if (files.length > 0) embed.setImage('attachment://welcome.png');
       }
+      // The banner is its own image-only embed sent first, so it sits above the
+      // welcome (an embed's own image always goes at the bottom). Same colour bar.
+      const banner = config.bannerUrl
+        ? new EmbedBuilder().setImage(config.bannerUrl).setColor(embed?.data.color ?? BRAND.color)
+        : null;
+      const embeds = [banner, embed].filter((e): e is EmbedBuilder => e !== null);
       const content = config.message.trim() ? fill(config.message) : undefined;
-      if (content || embed || files.length > 0) {
+      if (content || embeds.length > 0 || files.length > 0) {
         await channel
           .send({
             content,
-            embeds: embed ? [embed] : [],
+            embeds,
             files,
             // Ping the newcomer, never roles/everyone pasted into a template.
             allowedMentions: { users: [member.id] },

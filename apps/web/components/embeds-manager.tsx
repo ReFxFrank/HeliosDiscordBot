@@ -107,9 +107,7 @@ export function EmbedsManager({
           messageId: items.find((e) => e.id === result.id)?.messageId ?? null,
         };
         setItems(
-          editing.id
-            ? items.map((e) => (e.id === result.id ? saved : e))
-            : [saved, ...items],
+          editing.id ? items.map((e) => (e.id === result.id ? saved : e)) : [saved, ...items],
         );
         setEditing(null);
         report(true, 'Embed saved.');
@@ -140,9 +138,7 @@ export function EmbedsManager({
         const inPlace = Boolean(embed.messageId) && channelId === embed.channelId;
         setItems(
           items.map((e) =>
-            e.id === embed.id
-              ? { ...e, channelId, messageId: inPlace ? e.messageId : null }
-              : e,
+            e.id === embed.id ? { ...e, channelId, messageId: inPlace ? e.messageId : null } : e,
           ),
         );
         report(
@@ -165,7 +161,10 @@ export function EmbedsManager({
       {/* Editor */}
       {editing ? (
         <div className="glass flex flex-col gap-4 rounded-2xl p-5">
-          <Field label="Embed name" hint="Only shown in the dashboard — pick something recognizable, like “read-me”.">
+          <Field
+            label="Embed name"
+            hint="Only shown in the dashboard — pick something recognizable, like “read-me”."
+          >
             <input
               value={editing.name}
               onChange={(e) => setEditing({ ...editing, name: e.target.value })}
@@ -175,6 +174,7 @@ export function EmbedsManager({
             />
           </Field>
           <EmbedBuilder
+            guildId={guildId}
             value={editing.draft}
             onChange={(draft) => setEditing({ ...editing, draft })}
             content={editing.content}
@@ -183,9 +183,9 @@ export function EmbedsManager({
           />
           {editing.content.trim() && !draftHasContent(editing.draft) && (
             <p className="text-sm font-medium text-[var(--color-warning)]">
-              Heads up: the Message box posts as plain text. For the embed card (colored bar,
-              title, fields), put your text in the embed&apos;s <b>Description</b> below — the
-              Message box is only for an optional line above it.
+              Heads up: the Message box posts as plain text. For the embed card (colored bar, title,
+              fields), put your text in the embed&apos;s <b>Description</b> below — the Message box
+              is only for an optional line above it.
             </p>
           )}
           <div className="flex items-center gap-3">
@@ -211,7 +211,9 @@ export function EmbedsManager({
         <div>
           <button
             type="button"
-            onClick={() => setEditing({ id: null, name: '', content: '', draft: EMPTY_EMBED_DRAFT })}
+            onClick={() =>
+              setEditing({ id: null, name: '', content: '', draft: EMPTY_EMBED_DRAFT })
+            }
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-brand-strong)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-brand)]"
           >
             <Plus className="h-4 w-4" /> New embed
@@ -220,7 +222,9 @@ export function EmbedsManager({
       )}
 
       {msg && (
-        <p className={`text-sm ${failed ? 'font-medium text-[var(--color-danger)]' : 'text-white/60'}`}>
+        <p
+          className={`text-sm ${failed ? 'font-medium text-[var(--color-danger)]' : 'text-white/60'}`}
+        >
           {msg}
         </p>
       )}
@@ -228,7 +232,8 @@ export function EmbedsManager({
       {/* Saved embeds */}
       {items.length === 0 && !editing ? (
         <div className="glass rounded-2xl p-8 text-center text-sm text-white/50">
-          No embeds yet. Build one and deploy it to any channel — rules, read-me, FAQs, announcements.
+          No embeds yet. Build one and deploy it to any channel — rules, read-me, FAQs,
+          announcements.
         </div>
       ) : (
         items.map((embed) => {
@@ -277,7 +282,9 @@ export function EmbedsManager({
                     channels={channels}
                     only="text"
                     selected={target ? [target] : []}
-                    onChange={(ids) => setDeployTarget({ ...deployTarget, [embed.id]: ids[0] ?? '' })}
+                    onChange={(ids) =>
+                      setDeployTarget({ ...deployTarget, [embed.id]: ids[0] ?? '' })
+                    }
                     placeholder="Deploy to channel…"
                   />
                 </div>

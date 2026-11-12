@@ -14,6 +14,7 @@ import { Switch } from './ui/switch';
 import { SettingsSection } from './ui/settings-section';
 import { Field, SaveBar, inputClass, type SaveStatus } from './ui/form';
 import { MessageComposer, WELCOME_PLACEHOLDERS } from './ui/message-composer';
+import { ImageUrlField } from './ui/image-url-field';
 import {
   EmbedBuilder,
   draftToSpec,
@@ -95,7 +96,9 @@ export function WelcomeForm({
   function save(): void {
     const embed = draftToSpec(embedDraft);
     if (config.channelId && config.embedEnabled && !embed && !config.message.trim()) {
-      fail('The welcome embed is empty. Add some content, or turn the embed off and write a message.');
+      fail(
+        'The welcome embed is empty. Add some content, or turn the embed off and write a message.',
+      );
       return;
     }
     if (config.channelId && !config.embedEnabled && !config.message.trim()) {
@@ -114,6 +117,7 @@ export function WelcomeForm({
       embed: embed ?? {},
       // Empty string → null (schema is url|null).
       cardBackground: config.cardBackground?.trim() ? config.cardBackground.trim() : null,
+      bannerUrl: config.bannerUrl?.trim() ? config.bannerUrl.trim() : null,
     });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
@@ -148,6 +152,21 @@ export function WelcomeForm({
             </Field>
           </div>
 
+          <div className="max-w-2xl">
+            <Field
+              label="Banner"
+              hint="Optional. A picture shown at the top of every welcome. Wide images (about 3:1, e.g. 1200×400) look best. PNG, JPEG, GIF or WebP up to 8 MB."
+            >
+              <ImageUrlField
+                guildId={guildId}
+                value={config.bannerUrl ?? ''}
+                onChange={(url) => update('bannerUrl', url || null)}
+                placeholder="Paste an image link, or upload one"
+                previewClassName="h-20 max-w-80"
+              />
+            </Field>
+          </div>
+
           <ToggleRow
             title="Send as an embed"
             description="A rich card (title, description, colour, images) with optional text above it."
@@ -158,6 +177,8 @@ export function WelcomeForm({
           {config.embedEnabled ? (
             <>
               <EmbedBuilder
+                guildId={guildId}
+                bannerUrl={config.bannerUrl ?? undefined}
                 value={embedDraft}
                 onChange={updateEmbed}
                 variables={EMBED_VARIABLES}
@@ -210,14 +231,14 @@ export function WelcomeForm({
           />
           {config.cardEnabled && (
             <Field
-              label="Background image URL"
-              hint="Optional. A 1024×256 image works best; blank uses the default gradient."
+              label="Background image"
+              hint="Optional. Upload a picture or paste a link. A 1024×256 image works best; blank uses the default gradient."
             >
-              <input
-                className={inputClass}
-                placeholder="https://example.com/banner.png"
+              <ImageUrlField
+                guildId={guildId}
                 value={config.cardBackground ?? ''}
-                onChange={(e) => update('cardBackground', e.target.value || null)}
+                onChange={(url) => update('cardBackground', url || null)}
+                previewClassName="h-16 max-w-80"
               />
             </Field>
           )}

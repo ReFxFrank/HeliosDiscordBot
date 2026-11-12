@@ -48,6 +48,8 @@ export const welcomeConfigSchema = z.object({
   dmEnabled: z.boolean().default(false),
   dmMessage: z.string().default(''),
   cardEnabled: z.boolean().default(false),
+  /** Picture shown above the welcome (an image-only embed, so it sits at the top). Null = none. */
+  bannerUrl: z.string().url().nullable().default(null),
   cardBackground: z.string().url().nullable().default(null),
   leaveChannelId: z.string().nullable().default(null),
   leaveMessage: z

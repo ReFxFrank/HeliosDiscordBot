@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, Clock, Code2, Plus, X } from 'lucide-react';
 import type { EmbedSpec } from '@refx/shared';
 import { Field } from './form';
+import { ImageUrlField } from './image-url-field';
 
 /**
  * A reusable, live-previewing embed builder shared by every module that can
@@ -342,23 +343,43 @@ export function DiscordEmbedCard({ spec }: { spec: EmbedSpec }) {
   );
 }
 
+/** An image-only embed, as Discord draws one: the picture inside the coloured bar. */
+export function DiscordBannerCard({ url, color }: { url: string; color?: string }) {
+  const accent =
+    color && /^#?[0-9a-fA-F]{6}$/.test(color) ? `#${color.replace('#', '')}` : DEFAULT_COLOR;
+  return (
+    <div
+      className="mb-1.5 max-w-[432px] overflow-hidden rounded-[4px] border-l-4 bg-[#2b2d31] p-3"
+      style={{ borderLeftColor: accent }}
+    >
+      <img src={url} alt="" className="max-h-40 w-full rounded-[4px] object-cover" />
+    </div>
+  );
+}
+
 function Preview({
   draft,
   content,
   botName,
   botAvatarUrl,
+  bannerUrl,
 }: {
   draft: EmbedDraft;
   content?: string;
   botName?: string;
   botAvatarUrl?: string;
+  bannerUrl?: string;
 }) {
   const spec = draftToSpec(draft);
   const hasContent = Boolean(content && content.trim());
+  const banner = bannerUrl?.trim();
   return (
     <MessagePreviewShell botName={botName} botAvatarUrl={botAvatarUrl}>
       {hasContent && (
         <div className="mb-1.5 whitespace-pre-wrap break-words text-[#dbdee1]">{content}</div>
+      )}
+      {banner && /^https?:\/\//i.test(banner) && (
+        <DiscordBannerCard url={banner} color={spec?.color ?? draft.color} />
       )}
       {spec ? (
         <DiscordEmbedCard spec={spec} />
@@ -388,9 +409,15 @@ export function EmbedBuilder({
   contentPlaceholder = 'Write your message here!',
   botName,
   botAvatarUrl,
+  guildId,
+  bannerUrl,
 }: {
   value: EmbedDraft;
   onChange: (draft: EmbedDraft) => void;
+  /** Set to let the image fields upload files to this server's dashboard storage. */
+  guildId?: string;
+  /** An image shown above the embed in the preview (the welcome banner). */
+  bannerUrl?: string;
   /** Optional placeholder reference chips shown beneath the message/description. */
   variables?: EmbedVariable[];
   /** Optional plain message shown above the embed (the full "message builder"). */
@@ -545,20 +572,40 @@ export function EmbedBuilder({
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              className={`${smallInput} font-mono`}
-              value={value.thumbnailUrl}
-              onChange={(e) => patch({ thumbnailUrl: e.target.value })}
-              placeholder="Thumbnail URL"
-            />
-            <input
-              className={`${smallInput} font-mono`}
-              value={value.imageUrl}
-              onChange={(e) => patch({ imageUrl: e.target.value })}
-              placeholder="Image URL"
-            />
-          </div>
+          {guildId ? (
+            <div className="flex flex-col gap-3">
+              <ImageUrlField
+                guildId={guildId}
+                className={smallInput}
+                value={value.thumbnailUrl}
+                onChange={(url) => patch({ thumbnailUrl: url })}
+                placeholder="Thumbnail (small corner image): link or upload"
+                previewClassName="h-12 max-w-24"
+              />
+              <ImageUrlField
+                guildId={guildId}
+                className={smallInput}
+                value={value.imageUrl}
+                onChange={(url) => patch({ imageUrl: url })}
+                placeholder="Image (large, at the bottom): link or upload"
+              />
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                className={`${smallInput} font-mono`}
+                value={value.thumbnailUrl}
+                onChange={(e) => patch({ thumbnailUrl: e.target.value })}
+                placeholder="Thumbnail URL"
+              />
+              <input
+                className={`${smallInput} font-mono`}
+                value={value.imageUrl}
+                onChange={(e) => patch({ imageUrl: e.target.value })}
+                placeholder="Image URL"
+              />
+            </div>
+          )}
 
           {/* Fields */}
           <div className="flex flex-col gap-2">
@@ -684,7 +731,13 @@ export function EmbedBuilder({
         {/* Preview column */}
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-white/80">Preview</span>
-          <Preview draft={value} content={content} botName={botName} botAvatarUrl={botAvatarUrl} />
+          <Preview
+            draft={value}
+            content={content}
+            botName={botName}
+            botAvatarUrl={botAvatarUrl}
+            bannerUrl={bannerUrl}
+          />
         </div>
       </div>
     </div>

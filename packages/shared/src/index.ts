@@ -8,5 +8,6 @@ export * from './roles';
 export * from './schedule';
 export * from './social';
 export * from './embed';
+export * from './media';
 export * from './polls';
 export * from './config';

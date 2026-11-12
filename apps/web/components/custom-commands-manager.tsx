@@ -107,6 +107,7 @@ export function CustomCommandsManager({ guildId, tags }: { guildId: string; tags
             A plain message, a rich embed, or both. Supports {'{user}'} and {'{server}'}.
           </p>
           <EmbedBuilder
+            guildId={guildId}
             value={form.embed}
             onChange={(embed) => set('embed', embed)}
             variables={TAG_VARIABLES}

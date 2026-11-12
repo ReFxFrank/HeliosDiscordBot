@@ -148,6 +148,7 @@ model Guild {
   insightsDays      GuildInsightsDay[]
   applicationForms  ApplicationForm[]
   channelLocks      ChannelLock[]
+  mediaAssets       MediaAsset[]
   savedEmbeds       SavedEmbed[]
 
   @@index([ownerId])
@@ -777,4 +778,22 @@ model InviteUse {
   @@unique([guildId, invitedUserId])
   @@index([guildId, inviterId])
   @@index([guildId])
+}
+
+/// An image uploaded from the dashboard (welcome banner, card background, embed
+/// images). Served publicly at /media/<id>.<ext> so Discord and the bot can load
+/// it; the id is unguessable, and nothing else about the server is exposed there.
+model MediaAsset {
+  id          String   @id @default(cuid())
+  guildId     String
+  contentType String
+  byteSize    Int
+  data        Bytes
+  /// Discord user id of the admin who uploaded it.
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
 }
