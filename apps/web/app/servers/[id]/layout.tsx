@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import {
@@ -29,6 +28,7 @@ import { guardGuildAccess } from '../../../lib/auth-guards';
 import { groupedModuleMeta, moduleBySlug } from '../../../lib/modules';
 import { NavLink } from '../../../components/nav-link';
 import { MobileSidebar } from '../../../components/mobile-sidebar';
+import { SidebarModes } from '../../../components/sidebar-modes';
 import { ServerSwitcher } from '../../../components/server-switcher';
 import { SignOutButton } from '../../../components/auth-buttons';
 
@@ -120,9 +120,8 @@ export default async function GuildLayout({
     },
   ];
 
-  // The Twitch chat bot has its own sidebar; the switch at the top follows the
-  // page you're on (anything under /twitch is the Twitch side).
-  const twitchMode = slug === 'twitch';
+  // The Twitch chat bot has its own sidebar side (SidebarModes picks which
+  // side to show from the current path, on the client).
   const icon = (Icon: typeof Hash) => <Icon className="h-4 w-4 shrink-0" />;
   const t = (path: string) => `/servers/${id}/twitch${path}`;
   const twitchNav: { label: string; items: { href: string; label: string; icon: ReactNode }[] }[] =
@@ -215,65 +214,42 @@ export default async function GuildLayout({
             its own, or its lower links could never be reached. */}
         <nav className="flex flex-col gap-2 md:sticky md:top-6 md:max-h-[calc(100vh-3rem)] md:gap-4 md:self-start md:overflow-y-auto md:overscroll-contain md:pb-4 md:[scrollbar-color:rgba(255,255,255,0.15)_transparent] md:[scrollbar-width:thin]">
           <MobileSidebar>
-            <BotSwitch guildId={id} twitch={twitchMode} />
-            {twitchMode ? (
-              twitchNav.map((group) => (
+            <SidebarModes
+              guildId={id}
+              twitch={twitchNav.map((group) => (
                 <div key={group.label} className="flex flex-col gap-0.5">
                   <SectionLabel>{group.label}</SectionLabel>
                   {group.items.map((item) => (
                     <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
                   ))}
                 </div>
-              ))
-            ) : (
-              <>
-                {/* The city group (FiveM) sits above everything else. */}
-                {cityGroups.map(renderGroup)}
+              ))}
+              discord={
+                <>
+                  {/* The city group (FiveM) sits above everything else. */}
+                  {cityGroups.map(renderGroup)}
 
-                <div className="flex flex-col gap-0.5">
-                  <SectionLabel>Server</SectionLabel>
-                  {serverNav.map((item) => (
-                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-                  ))}
-                </div>
+                  <div className="flex flex-col gap-0.5">
+                    <SectionLabel>Server</SectionLabel>
+                    {serverNav.map((item) => (
+                      <NavLink
+                        key={item.href}
+                        href={item.href}
+                        label={item.label}
+                        icon={item.icon}
+                      />
+                    ))}
+                  </div>
 
-                {otherGroups.map(renderGroup)}
-              </>
-            )}
+                  {otherGroups.map(renderGroup)}
+                </>
+              }
+            />
           </MobileSidebar>
         </nav>
 
         <div className="min-w-0">{children}</div>
       </div>
-    </div>
-  );
-}
-
-/** Discord | Twitch: which bot the sidebar configures. */
-function BotSwitch({ guildId, twitch }: { guildId: string; twitch: boolean }) {
-  const base =
-    'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors';
-  return (
-    <div
-      className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1"
-      role="tablist"
-    >
-      <Link
-        href={`/servers/${guildId}`}
-        role="tab"
-        aria-selected={!twitch}
-        className={`${base} ${!twitch ? 'bg-[#5865F2]/25 text-white' : 'text-white/50 hover:text-white/80'}`}
-      >
-        Discord
-      </Link>
-      <Link
-        href={`/servers/${guildId}/twitch`}
-        role="tab"
-        aria-selected={twitch}
-        className={`${base} ${twitch ? 'bg-[#9146FF]/30 text-white' : 'text-white/50 hover:text-white/80'}`}
-      >
-        Twitch
-      </Link>
     </div>
   );
 }
