@@ -31,6 +31,7 @@ export const MODULES = [
   'FUN',
   'APPLICATIONS',
   'FIVEM',
+  'TWITCH_CHAT',
 ] as const;
 
 export type Module = (typeof MODULES)[number];

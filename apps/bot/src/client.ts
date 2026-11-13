@@ -44,6 +44,7 @@ import { syncAllGuilds } from './lib/guildSync';
 import { cacheAllGuildInvites } from './modules/inviteTracking';
 import { FivemService } from './modules/fivem';
 import { startFivemApi } from './services/fivemApi';
+import { TwitchChatService } from './modules/twitchChat';
 import type { BotContext } from './framework/context';
 
 /**
@@ -134,6 +135,7 @@ async function bootstrap(): Promise<void> {
   let stopHeartbeat: (() => void) | null = null;
   let stopInsights: (() => void) | null = null;
   let stopFivemApi: (() => Promise<void>) | null = null;
+  let twitchChat: TwitchChatService | null = null;
 
   client.once(Events.ClientReady, (ready) => {
     logger.info(
@@ -173,6 +175,11 @@ async function bootstrap(): Promise<void> {
     stopMetrics = startMetricsServer(ready.shard?.ids[0] ?? 0);
     stopHeartbeat = startHeartbeat(ready, ready.shard?.ids[0] ?? 0);
     stopInsights = startInsightsFlush(ready, prisma, redis, logger);
+    // Twitch chat bot: only when this instance has a Twitch app configured.
+    if (env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) {
+      twitchChat = new TwitchChatService(ctx);
+      twitchChat.start();
+    }
     if (FEATURES.fivem) {
       stopFivemApi = startFivemApi(base, ready.shard?.ids[0] ?? 0);
       fivem.start();
@@ -188,6 +195,7 @@ async function bootstrap(): Promise<void> {
       if (stopHeartbeat) stopHeartbeat();
       if (stopInsights) stopInsights();
       fivem.stop();
+      twitchChat?.stop();
       if (stopFivemApi) await stopFivemApi();
       await jobs.close();
       if (stopMetrics) await stopMetrics();

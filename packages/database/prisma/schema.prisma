@@ -51,6 +51,7 @@ enum Module {
   FUN
   APPLICATIONS
   FIVEM
+  TWITCH_CHAT
 }
 
 enum ApplicationStatus {
@@ -118,6 +119,8 @@ model Guild {
   ticketCounter Int        @default(0)
   /// Same atomic-increment scheme for per-guild suggestion numbers.
   suggestionCounter Int    @default(0)
+  /// Same atomic-increment scheme for Twitch chat quote numbers.
+  twitchQuoteCounter Int   @default(0)
   /// Slash commands the guild's admins have turned off (dispatch refuses them).
   disabledCommands  String[] @default([])
   /// Voice channel the bot parks itself in 24/7 (null = don't join anything).
@@ -150,6 +153,10 @@ model Guild {
   channelLocks      ChannelLock[]
   mediaAssets       MediaAsset[]
   savedEmbeds       SavedEmbed[]
+  twitchQuotes       TwitchQuote[]
+  twitchCounters     TwitchCounter[]
+  twitchModLogs      TwitchModLog[]
+  twitchSongRequests TwitchSongRequest[]
 
   @@index([ownerId])
 }
@@ -796,4 +803,93 @@ model MediaAsset {
   guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
 
   @@index([guildId, createdAt])
+}
+
+/// OAuth tokens for a Twitch account this instance acts as. One row per role:
+/// "bot" is the chat bot account connected on the dashboard. Tokens are
+/// AES-256-GCM encrypted with a key derived from TWITCH_CLIENT_SECRET.
+model TwitchAccount {
+  id           String   @id
+  twitchUserId String
+  login        String
+  displayName  String
+  accessToken  String
+  refreshToken String
+  scopes       String[]
+  expiresAt    DateTime
+  /// Discord user id of who connected it on the dashboard.
+  connectedBy  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// A Twitch chat quote (!quote). Numbers are per guild and never reused.
+model TwitchQuote {
+  id        String   @id @default(cuid())
+  guildId   String
+  number    Int
+  text      String
+  /// Category being streamed when it was added.
+  game      String?
+  addedBy   String
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, number])
+}
+
+/// A named Twitch chat counter (!count, $(count)). Command use counts are
+/// stored as "cmd:<commandId>".
+model TwitchCounter {
+  guildId   String
+  name      String
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@id([guildId, name])
+}
+
+/// What the Twitch bot did in chat: filter hits, blocked terms, nukes and
+/// commands changed from chat. Shown on the dashboard Logs page.
+model TwitchModLog {
+  id        String   @id @default(cuid())
+  guildId   String
+  /// filter | blocked_term | nuke | rollback | command | quote | counter | other
+  kind      String
+  /// The chatter acted on (or who acted, for chat management commands).
+  userLogin String?
+  userId    String?
+  /// delete | timeout | ban | warning | add | edit | remove ...
+  action    String
+  detail    String
+  /// Who triggered it: a mod login, "bot", or "dashboard:<discord id>".
+  actor     String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+}
+
+/// A song request (!sr) in the Twitch song queue.
+model TwitchSongRequest {
+  id              String    @id @default(cuid())
+  guildId         String
+  videoId         String
+  title           String
+  durationSeconds Int
+  requestedBy     String
+  requestedById   String
+  /// queued | playing | played | skipped | removed
+  status          String    @default("queued")
+  createdAt       DateTime  @default(now())
+  playedAt        DateTime?
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, status, createdAt])
 }

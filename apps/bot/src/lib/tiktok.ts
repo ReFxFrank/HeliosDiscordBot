@@ -73,9 +73,7 @@ export function tiktokVideoUrl(handle: string, id: string): string {
  * poller can tell "couldn't read" apart from "no videos yet".
  */
 export function parseTikTokEmbed(html: string, handle: string): TikTokVideo[] | null {
-  const match = html.match(
-    /<script id="__FRONTITY_CONNECT_STATE__"[^>]*>([\s\S]*?)<\/script>/,
-  );
+  const match = html.match(/<script id="__FRONTITY_CONNECT_STATE__"[^>]*>([\s\S]*?)<\/script>/);
   if (!match?.[1]) return null;
   let state: { source?: { data?: Record<string, unknown> } };
   try {

@@ -20,6 +20,7 @@ import type {
   SuggestionsConfig,
   TempVoiceConfig,
   TicketsConfig,
+  TwitchChatConfig,
   VerificationConfig,
   WelcomeConfig,
 } from '@refx/shared';
@@ -94,9 +95,7 @@ export async function setAllModulesEnabled(guildId: string, enabled: boolean): P
   const current = new Map(existing.map((row) => [row.module as Module, row.enabled]));
 
   const targets = MODULE_META.filter(
-    (meta) =>
-      !globallyOff.has(meta.module) &&
-      (current.get(meta.module) ?? false) !== enabled,
+    (meta) => !globallyOff.has(meta.module) && (current.get(meta.module) ?? false) !== enabled,
   );
 
   // Sequential on purpose: each apply audits + publishes its own invalidation,
@@ -177,7 +176,6 @@ export async function saveTicketsConfig(
   return saveConfig(guildId, 'TICKETS', input, 'tickets');
 }
 
-
 export async function saveCustomCommandsConfig(
   guildId: string,
   input: CustomCommandsConfig,
@@ -250,6 +248,13 @@ export async function saveGuildSettings(
   const result = await applyGuildSettings(guildId, input, session.user.id);
   if (result.ok) revalidatePath(`/servers/${guildId}/settings`);
   return result;
+}
+
+export async function saveTwitchChatConfig(
+  guildId: string,
+  input: TwitchChatConfig,
+): Promise<ActionResult> {
+  return saveConfig(guildId, 'TWITCH_CHAT', input, 'twitch-chat');
 }
 
 export async function saveFivemConfig(guildId: string, input: FivemConfig): Promise<ActionResult> {

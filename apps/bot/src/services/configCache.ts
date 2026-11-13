@@ -43,7 +43,14 @@ export class ConfigCache {
   private readonly commandToggles = new Map<string, { set: Set<string>; loadedAt: number }>();
   private readonly commandTogglesTtlMs = 30_000;
 
+  private readonly listeners: ((guildId: string, module: Module) => void)[] = [];
+
   constructor(private readonly ttlMs = 5 * 60 * 1000) {}
+
+  /** Be told after a dashboard write invalidates a guild's module config. */
+  onUpdate(listener: (guildId: string, module: Module) => void): void {
+    this.listeners.push(listener);
+  }
 
   /** Begin listening for invalidation messages. Call once at startup. */
   async start(): Promise<void> {
@@ -54,6 +61,13 @@ export class ConfigCache {
       try {
         const msg = JSON.parse(raw) as ConfigUpdateMessage;
         this.invalidate(msg.guildId, msg.module);
+        for (const listener of this.listeners) {
+          try {
+            listener(msg.guildId, msg.module);
+          } catch (err) {
+            logger.warn({ err }, 'Config update listener failed');
+          }
+        }
         logger.debug({ guildId: msg.guildId, module: msg.module }, 'Config cache invalidated');
       } catch (err) {
         logger.warn({ err, raw }, 'Ignoring malformed config:update message');

@@ -19,6 +19,7 @@ import { pollsConfigSchema } from './polls';
 import { verificationConfigSchema } from './verification';
 import { applicationsConfigSchema } from './applications';
 import { fivemConfigSchema } from './fivem';
+import { twitchChatConfigSchema } from './twitchChat';
 
 export * from './moderation';
 export * from './automod';
@@ -39,6 +40,7 @@ export * from './polls';
 export * from './verification';
 export * from './applications';
 export * from './fivem';
+export * from './twitchChat';
 export * from './serverTemplates';
 
 /**
@@ -68,6 +70,7 @@ export const MODULE_CONFIG_SCHEMAS = {
   VERIFICATION: verificationConfigSchema,
   APPLICATIONS: applicationsConfigSchema,
   FIVEM: fivemConfigSchema,
+  TWITCH_CHAT: twitchChatConfigSchema,
 } satisfies Partial<Record<Module, z.ZodTypeAny>>;
 
 export type ModuleWithSchema = keyof typeof MODULE_CONFIG_SCHEMAS;

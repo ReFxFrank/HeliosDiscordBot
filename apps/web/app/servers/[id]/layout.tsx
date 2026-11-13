@@ -1,7 +1,29 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { BarChart3, Hash, LayoutDashboard, PanelTop, Settings2, SquareSlash, Wand2 } from 'lucide-react';
+import {
+  Ban,
+  BarChart3,
+  BellRing,
+  Calculator,
+  Hash,
+  KeyRound,
+  LayoutDashboard,
+  ListChecks,
+  Music,
+  PanelTop,
+  Plug,
+  Quote,
+  Radiation,
+  ScrollText,
+  Settings2,
+  ShieldAlert,
+  SquareSlash,
+  TerminalSquare,
+  Timer,
+  Wand2,
+} from 'lucide-react';
 import { prisma } from '@refx/database';
 import { guardGuildAccess } from '../../../lib/auth-guards';
 import { groupedModuleMeta, moduleBySlug } from '../../../lib/modules';
@@ -61,18 +83,92 @@ export default async function GuildLayout({
   // component and React cannot serialize a component/function across that
   // boundary, so we must pass `<Icon />`, never `Icon`.
   const serverNav = [
-    { href: `/servers/${id}`, label: 'Overview', icon: <LayoutDashboard className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/setup`, label: 'Server Setup', icon: <Wand2 className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/insights`, label: 'Insights', icon: <BarChart3 className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/settings`, label: 'Settings', icon: <Settings2 className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/slash-commands`, label: 'Slash Commands', icon: <SquareSlash className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/channels`, label: 'Channels', icon: <Hash className="h-4 w-4 shrink-0" /> },
-    { href: `/servers/${id}/embeds`, label: 'Embeds', icon: <PanelTop className="h-4 w-4 shrink-0" /> },
+    {
+      href: `/servers/${id}`,
+      label: 'Overview',
+      icon: <LayoutDashboard className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/setup`,
+      label: 'Server Setup',
+      icon: <Wand2 className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/insights`,
+      label: 'Insights',
+      icon: <BarChart3 className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/settings`,
+      label: 'Settings',
+      icon: <Settings2 className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/slash-commands`,
+      label: 'Slash Commands',
+      icon: <SquareSlash className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/channels`,
+      label: 'Channels',
+      icon: <Hash className="h-4 w-4 shrink-0" />,
+    },
+    {
+      href: `/servers/${id}/embeds`,
+      label: 'Embeds',
+      icon: <PanelTop className="h-4 w-4 shrink-0" />,
+    },
   ];
 
+  // The Twitch chat bot has its own sidebar; the switch at the top follows the
+  // page you're on (anything under /twitch is the Twitch side).
+  const twitchMode = slug === 'twitch';
+  const icon = (Icon: typeof Hash) => <Icon className="h-4 w-4 shrink-0" />;
+  const t = (path: string) => `/servers/${id}/twitch${path}`;
+  const twitchNav: { label: string; items: { href: string; label: string; icon: ReactNode }[] }[] =
+    [
+      {
+        label: 'Twitch',
+        items: [
+          { href: t(''), label: 'Overview', icon: icon(LayoutDashboard) },
+          { href: t('/controls'), label: 'Bot Controls', icon: icon(Radiation) },
+          { href: t('/logs'), label: 'Logs', icon: icon(ScrollText) },
+        ],
+      },
+      {
+        label: 'Chat',
+        items: [
+          { href: t('/commands'), label: 'Commands', icon: icon(TerminalSquare) },
+          { href: t('/defaults'), label: 'Default Commands', icon: icon(ListChecks) },
+          { href: t('/keywords'), label: 'Keywords', icon: icon(KeyRound) },
+          { href: t('/timers'), label: 'Timers', icon: icon(Timer) },
+        ],
+      },
+      {
+        label: 'Moderation',
+        items: [
+          { href: t('/filters'), label: 'Spam Filters', icon: icon(ShieldAlert) },
+          { href: t('/blocked-terms'), label: 'Blocked Terms', icon: icon(Ban) },
+        ],
+      },
+      {
+        label: 'Community',
+        items: [
+          { href: t('/alerts'), label: 'Chat Alerts', icon: icon(BellRing) },
+          { href: t('/quotes'), label: 'Quotes', icon: icon(Quote) },
+          { href: t('/counters'), label: 'Counters', icon: icon(Calculator) },
+          { href: t('/songs'), label: 'Song Requests', icon: icon(Music) },
+        ],
+      },
+      {
+        label: 'Setup',
+        items: [{ href: t('/integrations'), label: 'Integrations', icon: icon(Plug) }],
+      },
+    ];
+
   // Modules are grouped MEE6-style: one sidebar section per group, each listing
-  // its config-page modules.
-  const moduleGroups = groupedModuleMeta();
+  // its config-page modules. The Twitch module lives on the Twitch side.
+  const moduleGroups = groupedModuleMeta().filter((entry) => entry.group !== 'Twitch');
   const cityGroups = moduleGroups.filter((entry) => entry.group === 'ReFx City');
   const otherGroups = moduleGroups.filter((entry) => entry.group !== 'ReFx City');
 
@@ -114,25 +210,70 @@ export default async function GuildLayout({
       </div>
 
       <div className="grid gap-6 md:grid-cols-[210px_1fr]">
-        {/* Sidebar — collapses behind a Menu button on phones (MobileSidebar). */}
-        <nav className="flex flex-col gap-2 md:sticky md:top-6 md:gap-4 md:self-start">
+        {/* Sidebar — collapses behind a Menu button on phones (MobileSidebar).
+            On md+ it is sticky; capped at the window height and scrolling on
+            its own, or its lower links could never be reached. */}
+        <nav className="flex flex-col gap-2 md:sticky md:top-6 md:max-h-[calc(100vh-3rem)] md:gap-4 md:self-start md:overflow-y-auto md:overscroll-contain md:pb-4 md:[scrollbar-color:rgba(255,255,255,0.15)_transparent] md:[scrollbar-width:thin]">
           <MobileSidebar>
-          {/* The city group (FiveM) sits above everything else. */}
-          {cityGroups.map(renderGroup)}
+            <BotSwitch guildId={id} twitch={twitchMode} />
+            {twitchMode ? (
+              twitchNav.map((group) => (
+                <div key={group.label} className="flex flex-col gap-0.5">
+                  <SectionLabel>{group.label}</SectionLabel>
+                  {group.items.map((item) => (
+                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+                  ))}
+                </div>
+              ))
+            ) : (
+              <>
+                {/* The city group (FiveM) sits above everything else. */}
+                {cityGroups.map(renderGroup)}
 
-          <div className="flex flex-col gap-0.5">
-            <SectionLabel>Server</SectionLabel>
-            {serverNav.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
-            ))}
-          </div>
+                <div className="flex flex-col gap-0.5">
+                  <SectionLabel>Server</SectionLabel>
+                  {serverNav.map((item) => (
+                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />
+                  ))}
+                </div>
 
-          {otherGroups.map(renderGroup)}
+                {otherGroups.map(renderGroup)}
+              </>
+            )}
           </MobileSidebar>
         </nav>
 
         <div className="min-w-0">{children}</div>
       </div>
+    </div>
+  );
+}
+
+/** Discord | Twitch: which bot the sidebar configures. */
+function BotSwitch({ guildId, twitch }: { guildId: string; twitch: boolean }) {
+  const base =
+    'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors';
+  return (
+    <div
+      className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1"
+      role="tablist"
+    >
+      <Link
+        href={`/servers/${guildId}`}
+        role="tab"
+        aria-selected={!twitch}
+        className={`${base} ${!twitch ? 'bg-[#5865F2]/25 text-white' : 'text-white/50 hover:text-white/80'}`}
+      >
+        Discord
+      </Link>
+      <Link
+        href={`/servers/${guildId}/twitch`}
+        role="tab"
+        aria-selected={twitch}
+        className={`${base} ${twitch ? 'bg-[#9146FF]/30 text-white' : 'text-white/50 hover:text-white/80'}`}
+      >
+        Twitch
+      </Link>
     </div>
   );
 }

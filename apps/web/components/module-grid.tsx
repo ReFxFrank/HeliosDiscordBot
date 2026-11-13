@@ -55,14 +55,18 @@ export function ModuleGrid({
   // the owner globally disabled are hidden, so users never see or reach them.
   const groups = useMemo(() => {
     const off = new Set(disabledModules);
-    return groupedModuleMeta()
-      .map((entry) => ({
-        ...entry,
-        modules: entry.modules.filter(
-          (m) => !off.has(m.module) && (filter === 'all' || m.category === filter),
-        ),
-      }))
-      .filter((entry) => entry.modules.length > 0);
+    return (
+      groupedModuleMeta()
+        // The Twitch bot is switched on from its own Overview page.
+        .filter((entry) => entry.group !== 'Twitch')
+        .map((entry) => ({
+          ...entry,
+          modules: entry.modules.filter(
+            (m) => !off.has(m.module) && (filter === 'all' || m.category === filter),
+          ),
+        }))
+        .filter((entry) => entry.modules.length > 0)
+    );
   }, [filter, disabledModules]);
 
   return (
@@ -84,7 +88,9 @@ export function ModuleGrid({
               )}
             >
               {t.label}
-              <span className={cn('text-xs tabular-nums', active ? 'text-white/70' : 'text-white/30')}>
+              <span
+                className={cn('text-xs tabular-nums', active ? 'text-white/70' : 'text-white/30')}
+              >
                 {countFor(t.key)}
               </span>
             </button>

@@ -27,6 +27,7 @@ import {
   Trophy,
   ClipboardList,
   Gamepad2,
+  Twitch,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -285,6 +286,15 @@ const META_ENTRIES = [
     configSlug: 'social',
   },
   {
+    module: 'TWITCH_CHAT',
+    name: 'Twitch Chat Bot',
+    description: 'Commands, timers and spam filters in your Twitch chat.',
+    icon: Twitch,
+    category: 'core',
+    accent: 'indigo',
+    configSlug: 'twitch',
+  },
+  {
     module: 'TEMP_VOICE',
     name: 'Temp Voice',
     description: 'Join-to-create voice channels.',
@@ -339,6 +349,7 @@ export const MODULE_GROUPS = [
   'Server Management',
   'Utilities',
   'Social Alerts',
+  'Twitch',
   'Games & Fun',
 ] as const;
 export type ModuleGroup = (typeof MODULE_GROUPS)[number];
@@ -367,6 +378,7 @@ const GROUP_BY_MODULE: Partial<Record<Module, ModuleGroup>> = {
   SUGGESTIONS: 'Utilities',
   AFK: 'Utilities',
   SOCIAL: 'Social Alerts',
+  TWITCH_CHAT: 'Twitch',
   GIVEAWAYS: 'Games & Fun',
   BIRTHDAYS: 'Games & Fun',
 };

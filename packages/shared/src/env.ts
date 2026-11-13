@@ -40,6 +40,11 @@ export const botEnvSchema = baseEnvSchema.extend({
    *  YouTube/Reddit/RSS work without any keys). */
   TWITCH_CLIENT_ID: z.string().optional(),
   TWITCH_CLIENT_SECRET: z.string().optional(),
+  /** Optional keys for the Twitch chat bot's $(lastfm), $(leagueoflegends),
+   *  $(teamfighttactics) and $(valorant) variables. */
+  LASTFM_API_KEY: z.string().optional(),
+  RIOT_API_KEY: z.string().optional(),
+  HENRIKDEV_API_KEY: z.string().optional(),
   /** Bot status line ("Watching …"). Defaults to the community name. */
   BRAND_PRESENCE: z.string().max(120).optional(),
   /** Public dashboard URL, for the bot's link buttons. Unset hides them. */
