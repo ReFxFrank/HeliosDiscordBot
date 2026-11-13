@@ -1,4 +1,4 @@
-import { type Client } from 'discord.js';
+import { AttachmentBuilder, type Client } from 'discord.js';
 import { prisma } from '@refx/database';
 import { QUEUE_NAMES } from '@refx/jobs';
 import { renderSocialMessage, type SocialMessageVars } from '@refx/shared';
@@ -10,6 +10,8 @@ import {
   buildTwitchLiveEmbed,
   buildTwitchWatchRow,
 } from '../lib/twitchAlert';
+import { downloadTikTokCover, fetchTikTokVideos, isNewerTikTok } from '../lib/tiktok';
+import { buildTikTokVideoEmbed, buildTikTokWatchRow } from '../lib/tiktokAlert';
 import type { JobService } from '../services/jobs';
 import type { Logger } from '../logger';
 
@@ -21,6 +23,7 @@ const MAX_POST_PER_POLL = 5;
 const PLATFORM_LABEL: Record<SocialPlatform, string> = {
   twitch: 'Twitch',
   youtube: 'YouTube',
+  tiktok: 'TikTok',
   reddit: 'Reddit',
   bluesky: 'Bluesky',
   rss: 'RSS',
@@ -53,6 +56,12 @@ export async function cancelSocialPoll(jobs: JobService, subscriptionId: string)
 export async function baselineSubscription(subscriptionId: string): Promise<void> {
   const sub = await prisma.socialSubscription.findUnique({ where: { id: subscriptionId } });
   if (!sub) return;
+  if (sub.platform === 'tiktok') {
+    // '0' marks "read, but no videos yet", so the very first upload still posts.
+    const videos = await fetchTikTokVideos(sub.target);
+    if (videos) await updateLastItem(sub.id, videos[0]?.id ?? TIKTOK_EMPTY_ANCHOR);
+    return;
+  }
   const items = await fetchLatest(sub.platform as SocialPlatform, sub.target, env);
   const newest = items[0];
   if (newest) {
@@ -90,6 +99,10 @@ export async function pollSubscription(subscriptionId: string, deps: PollDeps): 
     // Twitch is a live/offline STATE, not a feed, and has its own alert lifecycle.
     if (sub.platform === 'twitch') {
       await pollTwitch(deps, sub);
+      return;
+    }
+    if (sub.platform === 'tiktok') {
+      await pollTikTok(deps, sub);
       return;
     }
 
@@ -277,6 +290,51 @@ async function pollTwitch(deps: PollDeps, sub: Subscription): Promise<void> {
     data: { lastItemId: stream.startedAt, liveMessageId: sent?.id ?? null },
   });
   await setLiveRole(deps, sub, true);
+}
+
+// ── TikTok: new videos, compared by (time-ordered) id ───────────────────────
+
+const TIKTOK_EMPTY_ANCHOR = '0';
+
+async function pollTikTok(deps: PollDeps, sub: Subscription): Promise<void> {
+  const videos = await fetchTikTokVideos(sub.target);
+  // Couldn't read TikTok: change nothing, try again next poll.
+  if (!videos) return;
+  if (!sub.lastItemId) {
+    // First successful read: remember where the account is, post nothing.
+    await updateLastItem(sub.id, videos[0]?.id ?? TIKTOK_EMPTY_ANCHOR);
+    return;
+  }
+  const anchor = sub.lastItemId;
+  const fresh = videos
+    .filter((video) => isNewerTikTok(video.id, anchor))
+    .reverse() // oldest first
+    .slice(0, MAX_POST_PER_POLL);
+  if (fresh.length === 0) return;
+
+  const channel = await alertChannel(deps.client, sub.channelId);
+  if (!channel) return;
+  for (const video of fresh) {
+    const cover = video.coverUrl ? await downloadTikTokCover(video.coverUrl) : null;
+    const coverName = cover ? `tiktok-${video.id}.${cover.extension}` : null;
+    await channel
+      .send({
+        ...alertContent(sub, {
+          streamer: video.authorName,
+          title: video.description.split('\n')[0] ?? '',
+          game: '',
+          url: video.url,
+        }),
+        embeds: [buildTikTokVideoEmbed(video, coverName)],
+        components: [buildTikTokWatchRow(video.url)],
+        files: cover && coverName ? [new AttachmentBuilder(cover.data, { name: coverName })] : [],
+      })
+      .catch((err: unknown) =>
+        deps.logger.warn({ err, subscriptionId: sub.id }, 'TikTok alert post failed'),
+      );
+  }
+  const newest = fresh[fresh.length - 1];
+  if (newest) await updateLastItem(sub.id, newest.id);
 }
 
 /** Re-arm every subscription's poll scheduler on startup (idempotent upsert). */

@@ -278,7 +278,7 @@ const META_ENTRIES = [
   {
     module: 'SOCIAL',
     name: 'Social Alerts',
-    description: 'Twitch, YouTube, Reddit, Bluesky & RSS.',
+    description: 'Twitch, YouTube, TikTok, Reddit, Bluesky & RSS.',
     icon: Bell,
     category: 'core',
     accent: 'sky',

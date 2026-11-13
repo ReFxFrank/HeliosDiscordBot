@@ -1,14 +1,15 @@
 /**
- * Social Alerts fetchers. YouTube (via its public RSS feed), Reddit (public
- * JSON), Bluesky (public AppView API), and generic RSS/Atom need no API keys;
+ * Social Alerts fetchers. YouTube (via its public RSS feed), TikTok (its public
+ * creator embed page, see ./tiktok), Reddit (public JSON), Bluesky (public
+ * AppView API), and generic RSS/Atom need no API keys;
  * Twitch needs an app token from TWITCH_CLIENT_ID/SECRET. Each fetcher returns
  * items newest-first; the poller dedups against the stored lastItemId.
  */
-import { BRAND } from '@refx/shared';
+import { BRAND, SOCIAL_PLATFORMS, type SocialPlatform } from '@refx/shared';
 import { safeFetchText } from './safeFetch';
+import { fetchTikTokVideos } from './tiktok';
 
-export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'reddit', 'bluesky', 'rss'] as const;
-export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
+export { SOCIAL_PLATFORMS, type SocialPlatform };
 
 export interface SocialItem {
   id: string;
@@ -381,6 +382,16 @@ export async function fetchLatest(
   switch (platform) {
     case 'youtube':
       return fetchYouTube(target);
+    case 'tiktok': {
+      // The poller reads TikTok itself (it needs more than a title and link).
+      const videos = await fetchTikTokVideos(target);
+      return (videos ?? []).map((v) => ({
+        id: v.id,
+        title: v.description.split('\n')[0] || 'New TikTok',
+        url: v.url,
+        author: v.authorName,
+      }));
+    }
     case 'reddit':
       return fetchReddit(target);
     case 'bluesky':

@@ -6,12 +6,13 @@ import { z } from 'zod';
  * and posts new items (a stream going live, a new video or post) to a channel.
  */
 
-export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'reddit', 'bluesky', 'rss'] as const;
+export const SOCIAL_PLATFORMS = ['twitch', 'youtube', 'tiktok', 'reddit', 'bluesky', 'rss'] as const;
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
 export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
   twitch: 'Twitch (goes live)',
   youtube: 'YouTube (new videos)',
+  tiktok: 'TikTok (new videos)',
   reddit: 'Reddit (new posts)',
   bluesky: 'Bluesky (new posts)',
   rss: 'RSS / Atom feed',
@@ -21,6 +22,7 @@ export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
 export const SOCIAL_TARGET_HINTS: Record<SocialPlatform, string> = {
   twitch: 'Twitch username, e.g. ribbitretreat',
   youtube: 'YouTube channel id (starts with UC…)',
+  tiktok: 'TikTok username, e.g. thesleepyfroggo',
   reddit: 'Subreddit name, without r/',
   bluesky: 'Bluesky handle, e.g. name.bsky.social',
   rss: 'Public feed URL (https://…)',
@@ -53,10 +55,17 @@ export function isPublicHttpUrl(raw: string): boolean {
 const TARGET_RULES: Record<SocialPlatform, (target: string) => boolean> = {
   twitch: (t) => /^[a-zA-Z0-9_]{3,25}$/.test(t),
   youtube: (t) => /^UC[\w-]{20,24}$/.test(t),
+  // TikTok usernames: letters, numbers, underscores and periods, up to 24.
+  tiktok: (t) => /^[a-z0-9_.]{2,24}$/.test(t) && !t.endsWith('.'),
   reddit: (t) => /^[A-Za-z0-9_]{2,21}$/.test(t),
   bluesky: (t) => /^[a-zA-Z0-9.-]{3,253}$/.test(t) && t.includes('.'),
   rss: isPublicHttpUrl,
 };
+
+/** Whether an already-normalized target looks right for its platform. */
+export function isValidSocialTarget(platform: SocialPlatform, target: string): boolean {
+  return TARGET_RULES[platform](target);
+}
 
 /** Strip the decorations people paste: "@name", "r/sub", a twitch.tv URL. */
 export function normalizeSocialTarget(platform: SocialPlatform, raw: string): string {
@@ -67,6 +76,14 @@ export function normalizeSocialTarget(platform: SocialPlatform, raw: string): st
       .replace(/^https?:\/\/(www\.)?twitch\.tv\//i, '')
       .replace(/^@/, '')
       .replace(/\/.*$/, '')
+      .toLowerCase();
+  }
+  if (platform === 'tiktok') {
+    // "https://www.tiktok.com/@name?lang=en", "tiktok.com/@name/video/…", "@name"
+    return value
+      .replace(/^(https?:\/\/)?((www|m)\.)?tiktok\.com\//i, '')
+      .replace(/^@/, '')
+      .replace(/[/?#].*$/, '')
       .toLowerCase();
   }
   if (platform === 'reddit') return value.replace(/^\/?r\//i, '');

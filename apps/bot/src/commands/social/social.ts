@@ -3,7 +3,7 @@ import { prisma } from '@refx/database';
 import type { Command } from '../../framework/command';
 import { RequireGuild, RequireUserPermissions } from '../../lib/permissions';
 import { brandedEmbed, errorEmbed } from '../../lib/embeds';
-import { SOCIAL_MESSAGE_MAX } from '@refx/shared';
+import { SOCIAL_MESSAGE_MAX, isValidSocialTarget, normalizeSocialTarget } from '@refx/shared';
 import { env } from '../../env';
 import { isSafePublicUrl, isSocialPlatform, platformAvailable } from '../../lib/social';
 import { baselineSubscription, cancelSocialPoll, scheduleSocialPoll } from '../../modules/social';
@@ -13,7 +13,7 @@ const MAX_PER_GUILD = 25;
 const command: Command = {
   data: new SlashCommandBuilder()
     .setName('social')
-    .setDescription('Manage social media alerts (Twitch, YouTube, Reddit, Bluesky, RSS).')
+    .setDescription('Manage social media alerts (Twitch, YouTube, TikTok, Reddit, Bluesky, RSS).')
     .addSubcommand((s) =>
       s
         .setName('add')
@@ -26,6 +26,7 @@ const command: Command = {
             .addChoices(
               { name: 'Twitch (goes live)', value: 'twitch' },
               { name: 'YouTube (new videos)', value: 'youtube' },
+              { name: 'TikTok (new videos)', value: 'tiktok' },
               { name: 'Reddit (new posts)', value: 'reddit' },
               { name: 'Bluesky (new posts)', value: 'bluesky' },
               { name: 'RSS / Atom feed', value: 'rss' },
@@ -35,7 +36,7 @@ const command: Command = {
           o
             .setName('target')
             .setDescription(
-              'Twitch login · YouTube channel id (UC…) · subreddit · Bluesky handle · feed URL',
+              'Twitch login · YouTube channel id (UC…) · TikTok username · subreddit · Bluesky handle · feed URL',
             )
             .setRequired(true),
         )
@@ -157,7 +158,14 @@ const command: Command = {
       return;
     }
 
-    const target = interaction.options.getString('target', true).trim();
+    const target = normalizeSocialTarget(platform, interaction.options.getString('target', true));
+    if (platform === 'tiktok' && !isValidSocialTarget(platform, target)) {
+      await interaction.reply({
+        embeds: [errorEmbed('Give a TikTok username, e.g. `thesleepyfroggo` or `@thesleepyfroggo`.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     // SSRF guard: an rss target is a raw URL the bot will fetch — require a
     // public http(s) host (no localhost / private / link-local addresses).
     if (platform === 'rss' && !isSafePublicUrl(target)) {

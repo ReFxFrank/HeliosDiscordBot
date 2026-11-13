@@ -180,7 +180,7 @@ changing a `BRAND_*` value. To set an instance up:
 3. Start it (commands above), invite the bot, then run
    `/community-setup twitch:<username>` in the server. It links the modules to
    the channels and roles it finds by name and adds the go-live alert. More
-   alerts (YouTube, Reddit, Bluesky, RSS) are on the dashboard's Social Alerts page.
+   alerts (YouTube, TikTok, Reddit, Bluesky, RSS) are on the dashboard's Social Alerts page.
 
 When redeploying, ship the tarball into each instance folder and rebuild each.
 

@@ -21,7 +21,7 @@ it configured from a web dashboard.
 
 There's also moderation and automod, giveaways, polls, suggestions, reminders,
 scheduled messages, starboard, birthdays, stats counters, temp voice, social
-alerts (Twitch, YouTube, Reddit, Bluesky, RSS), custom commands and the embed
+alerts (Twitch, YouTube, TikTok, Reddit, Bluesky, RSS), custom commands and the embed
 builder.
 
 `/refx-setup` points every module at the ReFx channels and roles (found by

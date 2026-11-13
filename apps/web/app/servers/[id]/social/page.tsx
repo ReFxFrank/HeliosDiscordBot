@@ -37,8 +37,8 @@ export default async function SocialAlertsPage({ params }: { params: Promise<{ i
       <div>
         <h2 className="text-lg font-semibold text-white/90">Social alerts</h2>
         <p className="text-sm text-white/50">
-          Post in a channel when a Twitch stream goes live, or when a YouTube channel, subreddit,
-          Bluesky account or RSS feed has something new. Twitch alerts show the stream preview, game
+          Post in a channel when a Twitch stream goes live, or when a YouTube channel, TikTok
+          account, subreddit, Bluesky account or RSS feed has something new. Twitch alerts show the stream preview, game
           and viewers, update while the stream runs, and change to a summary when it ends.
         </p>
       </div>

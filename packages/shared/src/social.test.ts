@@ -100,6 +100,23 @@ describe('socialSubscriptionInputSchema', () => {
     expect(normalizeSocialTarget('reddit', 'r/frogs')).toBe('frogs');
     expect(normalizeSocialTarget('bluesky', '@name.bsky.social')).toBe('name.bsky.social');
   });
+
+  it('accepts TikTok usernames, @handles and profile links', () => {
+    expect(normalizeSocialTarget('tiktok', '@TheSleepyFroggo')).toBe('thesleepyfroggo');
+    expect(normalizeSocialTarget('tiktok', 'https://www.tiktok.com/@thesleepyfroggo?lang=en')).toBe(
+      'thesleepyfroggo',
+    );
+    expect(
+      normalizeSocialTarget('tiktok', 'tiktok.com/@khaby.lame/video/7704740944427388191'),
+    ).toBe('khaby.lame');
+    const parse = (target: string) =>
+      socialSubscriptionInputSchema.safeParse({ ...base, platform: 'tiktok', target });
+    expect(parse('@thesleepyfroggo').success).toBe(true);
+    expect(parse('khaby.lame').success).toBe(true);
+    expect(parse('has spaces').success).toBe(false);
+    expect(parse('ends.with.').success).toBe(false);
+    expect(parse('a'.repeat(25)).success).toBe(false);
+  });
 });
 
 describe('isPublicHttpUrl', () => {

@@ -21,6 +21,7 @@ describe('bluesky helpers', () => {
   it('registers bluesky as a platform', () => {
     expect(SOCIAL_PLATFORMS).toContain('bluesky');
     expect(isSocialPlatform('bluesky')).toBe(true);
-    expect(isSocialPlatform('tiktok')).toBe(false);
+    expect(isSocialPlatform('tiktok')).toBe(true);
+    expect(isSocialPlatform('myspace')).toBe(false);
   });
 });
