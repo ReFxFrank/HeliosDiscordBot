@@ -25,6 +25,8 @@ infra/caddy/certs/*
 
 # Logs
 logs/
+# ...but not dashboard routes that happen to be called "logs".
+!apps/web/app/**/logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
